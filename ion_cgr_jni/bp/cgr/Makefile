@@ -1,0 +1,21 @@
+
+#Define java includes
+J_INCLUDES = -I"/usr/lib/jvm/java-8-oracle/include" -I"/usr/lib/jvm/java-8-oracle/include/linux"
+INCLUDES = -I. -I.. -Iinclude -I../include
+#Options
+OPT = -c -g -Wall -fPIC $(INCLUDES)
+
+all : libcgr.o
+
+libcgr.a : libcgr.o
+	gcc -g -Wall -fPIC $(INCLUDES) $(J_INCLUDES) include/typedef.h ../psm.o ../smlist.o ../list.o ../utils.o *.c
+	ar rcs $@ *.o ../psm.o ../smlist.o ../list.o ../utils.o
+
+libcgr.so :
+	gcc -shared -g -Wall -fPIC  $(INCLUDES) $(J_INCLUDES) -o $@ *.c
+
+libcgr.o : libcgr.c
+	gcc $(OPT) $(J_INCLUDES) -o $@ $<
+	
+clean :
+	rm -rf *.o *.so *.a
