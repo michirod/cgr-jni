@@ -226,7 +226,7 @@ int	bpEnqueue(FwdDirective *directive, Bundle *bundle, Object bundleObj,
 Object	insertBpTimelineEvent(BpEvent *newEvent)
 {
 	//TODO stub
-	return NULL;
+	return 1;
 }
 
 void	removeBundleFromQueue(Bundle *bundle, Object bundleObj,

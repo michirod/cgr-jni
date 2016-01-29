@@ -1,8 +1,14 @@
 package test;
 
+import java.awt.List;
 import java.io.File;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 import cgr.Libcgr;
+import cgr.Utils;
+import core.DTNHost;
 import core.Message;
 import core.SimClock;
 import core.SimScenario;
@@ -14,10 +20,12 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 	private static final String CONTACT_PLAN_FILE = "resources/contactPlan_prova.txt";
 	private static final int NROF_HOSTS = 6;
 	private ContactGraphRouter r1,r2,r3,r4,r5,r6;
+	private Set<DTNHost> hosts = new HashSet<>();
+	private static ContactGraphRouterTest instance = null;
 	
 	@Override
 	public void setUp() throws Exception {
-		
+		instance = this;
 		ts.putSetting(MessageRouter.B_SIZE_S, ""+BUFFER_SIZE);
 		ts.putSetting(SimScenario.SCENARIO_NS + "." + 
 				SimScenario.NROF_GROUPS_S, "1");
@@ -25,10 +33,13 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 				core.SimScenario.NROF_HOSTS_S, "" + NROF_HOSTS);
 		ts.putSetting(Message.TTL_SECONDS_S, "true");
 		ts.putSetting(MessageRouter.MSG_TTL_S, "3600");
-		setRouterProto(new ContactGraphRouter(ts));
+		ContactGraphRouter routerProto = new ContactGraphRouter(ts);
+		setRouterProto(routerProto);
 		super.setUp();	
+		Utils.init(utils.getAllHosts());
 		String cp_path = (new File(CONTACT_PLAN_FILE)).getAbsolutePath();
 		System.out.println(SimClock.getIntTime());
+		
 		r1 = (ContactGraphRouter)h1.getRouter();
 		r2 = (ContactGraphRouter)h2.getRouter();
 		r3 = (ContactGraphRouter)h3.getRouter();
@@ -83,4 +94,24 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 		assertEquals(r6.getOutducts().get(h1).getQueue().size(), 0);		
 		
 		}
+	
+	public static ContactGraphRouterTest getInstance()
+	{
+		return instance;
+	}
+
+	public Collection<DTNHost> getHosts() {
+		return utils.getAllHosts();
+	}
+
+	public DTNHost getNodeFromNbr(long nodeNbr)
+	{
+		for(DTNHost host : SimScenario.getInstance().getHosts()){
+			if(host.getAddress() == nodeNbr){
+				return host;
+			}
+		}
+		return null;
+	}
+
 }

@@ -235,9 +235,11 @@ int cgrForwardONE(jobject bundleONE, jlong terminusNodeNbr)
 int bpEnqueONE(FwdDirective *directive, Bundle *bundle, Object bundleObj)
 {
 	uvast localNodeNbr, proximateNodeNbr;
+	Object ductAddr;
 	Outduct outduct;
 	localNodeNbr = getNodeNum();
-	sdr_read(getIonsdr(), (char*)&outduct, directive->outductElt, sizeof(Outduct));
+	ductAddr = sdr_list_data(getIonsdr(), directive->outductElt);
+	sdr_read(getIonsdr(), (char*)&outduct, ductAddr, sizeof(Outduct));
 	proximateNodeNbr = atol(outduct.name);
 	insertBundleIntoOutduct(localNodeNbr, currentMessage, proximateNodeNbr);
 	return 0;

@@ -8,6 +8,7 @@
 #include <jni.h>
 #include <stdio.h>
 
+#include "cgr.h"
 #include "ion.h"
 #include "ionadmin.h"
 #include "platform.h"
@@ -28,7 +29,7 @@ JNIEXPORT jint JNICALL Java_cgr_Libcgr_initializeNode(JNIEnv *env, jclass thisOb
 	setNodeNum(unodeNum);
 	result = ionInitialize(NULL, unodeNum);
 	if (result == 0)
-		result = cgr_start();
+		cgr_start();
 	else result = -10;
 	fflush(stdout);
 	return result;

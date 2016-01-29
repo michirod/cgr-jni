@@ -127,7 +127,7 @@ static LystCallback lyst_getDeleteFunction(Lyst list)
 {
 	JNIEnv * jniEnv = getThreadLocalEnv();
 	jclass listClass = (*jniEnv)->FindClass(jniEnv, myLystClass);
-	jmethodID getDeleteFunction = (*jniEnv)->GetStaticMethodID(jniEnv, listClass, "getDeleteFunction","()J");
+	jmethodID getDeleteFunction = (*jniEnv)->GetStaticMethodID(jniEnv, listClass, "getDeleteFunction","(Ljni/test/lyst/MyLyst;)J");
 	jlong result = (*jniEnv)->CallStaticLongMethod(jniEnv, listClass, getDeleteFunction, list);
 	return (LystCallback) (intptr_t) result;
 }
@@ -136,7 +136,7 @@ static void * lyst_getDeleteUserdata(Lyst list)
 {
 	JNIEnv * jniEnv = getThreadLocalEnv();
 	jclass listClass = (*jniEnv)->FindClass(jniEnv, myLystClass);
-	jmethodID getDeleteUserdata = (*jniEnv)->GetStaticMethodID(jniEnv, listClass, "getDeleteUserdata","()J");
+	jmethodID getDeleteUserdata = (*jniEnv)->GetStaticMethodID(jniEnv, listClass, "getDeleteUserdata","(Ljni/test/lyst/MyLyst;)J");
 	jlong result = (*jniEnv)->CallStaticLongMethod(jniEnv, listClass, getDeleteUserdata, list);
 	return (void *) (intptr_t) result;
 }

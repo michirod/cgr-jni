@@ -1,10 +1,11 @@
 package routing;
 import java.util.List;
+import java.util.Collection;
 import java.util.LinkedList;
-import java.util.Queue;
 import java.util.TreeMap;
 
 import cgr.Libcgr;
+import cgr.Utils;
 import core.Connection;
 import core.DTNHost;
 import core.Message;
@@ -72,18 +73,34 @@ public class ContactGraphRouter extends ActiveRouter {
 		public int getOutductSize(){
 			return this.getQueue().size();
 		}
+		
+		@Override
+		public String toString()
+		{
+			StringBuilder b = new StringBuilder();
+			b.append(" to: ");
+			b.append(host.toString());
+			b.append(", size: ");
+			b.append(queue.size());
+			b.append(", msgs: [ ");
+			for (Message m : queue)
+			{
+				b.append(m.toString() + ",");
+			}
+			b.insert(b.length() - 1, "]\n");
+			return b.toString();
+		}
 	}
 	
 	public static final String CGR_NS = "ContactGraphRouter";
 	private int nodeNum;
-	private Outduct limbo;
+	private Outduct limbo = new Outduct(null);
 	
 	//la chiave è il toNode
 	private TreeMap<DTNHost, Outduct> outducts = new TreeMap<DTNHost, Outduct>();
 
 	protected ContactGraphRouter(ActiveRouter r) {
 		super(r);
-		// TODO Auto-generated constructor stub
 	}
 	
 	public ContactGraphRouter(Settings s) {
@@ -96,8 +113,9 @@ public class ContactGraphRouter extends ActiveRouter {
 		super.init(host, mListeners);
 		initCGR();
 	}
-		
-	 public TreeMap<DTNHost, Outduct> getOutducts() {
+
+	public TreeMap<DTNHost, Outduct> getOutducts() {
+		updateOutducts(Utils.getAllNodes());
 		return this.outducts;
 	}	
 	 
@@ -158,7 +176,19 @@ public class ContactGraphRouter extends ActiveRouter {
 		}
 		return false;
 	}
-	
+
+	public void updateOutducts(Collection<DTNHost> hosts)
+	{
+		if (outducts.size() != hosts.size())
+		{
+			for (DTNHost h : hosts)
+			{
+				if (! outducts.keySet().contains(h))
+				outducts.put(h, new Outduct(h));
+			}
+		}
+	}
+
 	@Override
 	public String toString() {
 		return CGR_NS;

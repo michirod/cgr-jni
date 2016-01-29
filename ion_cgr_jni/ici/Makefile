@@ -1,18 +1,11 @@
-
-# Define a variable for classpath
-CLASS_PATH = ../bin/jni/test
-
 #Define java includes
-J_INCLUDES = -I"/usr/lib/jvm/java-8-oracle/include" -I"/usr/lib/jvm/java-8-oracle/include/linux"
-#Altri includes
+J_INCLUDES = -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/linux
+#includes
 INCLUDES = -Iinclude -I../jni_interface/include
 #lib
 LIB = -L.
 #Options
 OPT = -g -Wall -fPIC $(INCLUDES)
-
-# Define a virtual path for .class in the bin directory
-vpath %.class $(CLASS_PATH)
 
 all : libici_jni.so
 

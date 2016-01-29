@@ -92,13 +92,12 @@ Object	getIonDbObject()
 
 void	*allocFromIonMemory(const char *fileName, int lineNbr, size_t length)
 {
-	//TODO stub
-	return NULL;
+	return (void*) malloc(length);
 }
 
 void	releaseToIonMemory(const char *fileName, int lineNbr, void *block)
 {
-	//TODO stub
+	free(block);
 }
 
 static time_t	readTimestamp(char *timestampBuffer, time_t referenceTime,

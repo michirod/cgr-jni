@@ -54,8 +54,8 @@ int	psm_locate(PsmPartition partition , char *objName,	PsmAddress *objLocation, 
 		*entryElt = 0;
 		return 0;
 	}
-	*objLocation = result;
-	*entryElt = result;
+	*objLocation = (PsmAddress) result;
+	*entryElt = (PsmAddress) result;
 	return result;
 }
 

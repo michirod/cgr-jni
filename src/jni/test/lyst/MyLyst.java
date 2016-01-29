@@ -39,16 +39,6 @@ public class MyLyst {
 		list.addLast(el);
 		return el;
 	}
-	
-	public long getDeleteFunction()
-	{
-		return deleteCallbackFunction;
-	}
-	public long getDeleteUserdata()
-	{
-		return deleteFunctionUserdata;
-	}
-	
 		
 	public static MyLyst lyst_create_using(int idx)
 	{
@@ -83,22 +73,30 @@ public class MyLyst {
 	
 	public static MyLystElt lyst_first(MyLyst list)
 	{
+		if (list.list.isEmpty())
+			return null;
 		return list.list.getFirst();
 	}
 	
 	public static MyLystElt lyst_last(MyLyst list)
 	{
+		if (list.list.isEmpty())
+			return null;
 		return list.list.getLast();
 	}
 	
 	public static MyLystElt lyst_next(MyLystElt el)
 	{
 		LinkedList<MyLystElt> list = el.getList().list;
+		MyLystElt result = null;
 		int i = list.indexOf(el);
-		if (i == list.size())
-			return null; // el is the last element of the list
-		else
-			return list.get(i + 1);
+		try {
+			result = list.get(i + 1);
+		} catch (IndexOutOfBoundsException e)
+		{
+			return null;
+		}
+		return result;
 	}
 	
 	public static MyLystElt lyst_prev(MyLystElt el)
@@ -128,6 +126,16 @@ public class MyLyst {
 		list.deleteCallbackFunction = callbackFunction;
 		list.deleteFunctionUserdata = userdata;
 	}
+	
+	public static long getDeleteFunction(MyLyst list)
+	{
+		return list.deleteCallbackFunction;
+	}
+	public static long getDeleteUserdata(MyLyst list)
+	{
+		return list.deleteFunctionUserdata;
+	}
+	
 	
 	public static MyLyst getLyst(MyLystElt elt)
 	{

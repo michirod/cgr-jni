@@ -1,9 +1,9 @@
 
 # Define a variable for classpath
-CLASS_PATH = ../../bin/cgr:../../../ONE/bin/
+CLASS_PATH = ../../bin/:../../bin/cgr:/home/michele/workspacemars/ONE/bin
 
 #Define java includes
-J_INCLUDES = -I"/usr/lib/jvm/java-8-oracle/include" -I"/usr/lib/jvm/java-8-oracle/include/linux"
+J_INCLUDES = -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/linux
 #Altri includes
 INCLUDES = -Iinclude -I../ici/include -I../bp/include
 #lib

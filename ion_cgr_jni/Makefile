@@ -1,9 +1,10 @@
 
+
 # Define a variable for classpath
 CLASS_PATH = ../../bin/cgr
 
 #Define java includes
-J_INCLUDES = -I"/usr/lib/jvm/java-8-oracle/include" -I"/usr/lib/jvm/java-8-oracle/include/linux"
+J_INCLUDES = -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/linux
 #Altri includes
 INCLUDES = -I. -Iinclude 
 #lib
@@ -32,7 +33,7 @@ libnormal.so : libcgr.so
 	gcc $(OPT) $(J_INCLUDES) $(LIB) -Wl,--no-undefined -shared -o $@ *.c -lcgr -lpthread
 	
 bp.o : 
-	make -C bp
+	make -C bp 
 	
 ici.o : 
 	make -C ici

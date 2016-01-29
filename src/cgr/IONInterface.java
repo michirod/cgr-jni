@@ -7,10 +7,17 @@ import core.Message;
 import core.SimScenario;
 
 public class IONInterface {	
-	
-	static void cgrForward (int dtnNode, Message m){
-		
+
+	private static DTNHost getNodeFromNbr(long nodeNbr){
+		for(DTNHost host : Utils.getAllNodes()){
+			if(host.getAddress() == nodeNbr){
+				return host;
+			}
+		}
+		return null;
 	}
+	
+	//// STATIC METHODS ACCESSED FROM JNI /////
 	
 	static long getMessageSenderNbr(Message message){
 		return message.getFrom().getAddress();
@@ -40,7 +47,7 @@ public class IONInterface {
 	
 	static int getMaxPayloadLen(Outduct jOutduct)
 	{
-		return 0;
+		return 1024*1024*1024;
 	}
 	
 	static String getOutductName(Outduct jOutduct)
@@ -53,20 +60,10 @@ public class IONInterface {
 		DTNHost to= getNodeFromNbr(toNodeNbr);
 		
 		ContactGraphRouter localRouter = (ContactGraphRouter) local.getRouter();
-		return(localRouter.getOutducts().get(to));
+		Outduct result = localRouter.getOutducts().get(to);
+		return result;
 		
 	}
-		
-	static DTNHost getNodeFromNbr(long nodeNbr){
-		for(DTNHost host : SimScenario.getInstance().getHosts()){
-			if(host.getAddress() == nodeNbr){
-				return host;
-			}
-		}
-		return null;
-		
-	}
-	
 	static int insertBundleIntoOutduct(long localNodeNbr, Message message, long toNodeNbr)
 	{
 		DTNHost local = getNodeFromNbr(localNodeNbr);

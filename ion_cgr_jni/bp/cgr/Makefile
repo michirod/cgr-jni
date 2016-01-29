@@ -1,6 +1,6 @@
-
 #Define java includes
-J_INCLUDES = -I"/usr/lib/jvm/java-8-oracle/include" -I"/usr/lib/jvm/java-8-oracle/include/linux"
+J_INCLUDES = -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/linux
+#includes
 INCLUDES = -I. -I.. -Iinclude -I../include
 #Options
 OPT = -c -g -Wall -fPIC $(INCLUDES)
