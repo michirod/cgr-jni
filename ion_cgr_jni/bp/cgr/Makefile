@@ -4,6 +4,8 @@ J_INCLUDES = -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/linux
 INCLUDES = -I. -I.. -Iinclude -I../include
 #Options
 OPT = -c -g -Wall -fPIC $(INCLUDES)
+# Manage overbooking disabled
+OPT = $(OPT) -DMANAGE_OVERBOOKING=0
 
 all : libcgr.o
 

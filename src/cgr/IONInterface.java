@@ -39,6 +39,10 @@ public class IONInterface {
 	static long getMessageSize(Message message){
 		return message.getSize();		
 	}
+	static void updateMessageForfeitTime(Message message, long forfeitTime)
+	{
+		message.updateProperty(ContactGraphRouter.ROUTE_FORWARD_TIMELIMIT, forfeitTime);
+	}
 	
 	static boolean isOutductBlocked(Outduct jOutduct)
 	{
@@ -82,10 +86,5 @@ public class IONInterface {
 		ContactGraphRouter localRouter = (ContactGraphRouter) local.getRouter();
 		localRouter.putMessageIntoLimbo(message);
 		return 0;	
-	}
-	
-	static void updateForwardTimelimit(Message m, long timelimit)
-	{
-		m.updateProperty(ContactGraphRouter.ROUTE_FORWARD_TIMELIMIT, timelimit);
 	}
 }

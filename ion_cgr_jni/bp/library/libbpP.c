@@ -225,8 +225,19 @@ int	bpEnqueue(FwdDirective *directive, Bundle *bundle, Object bundleObj,
 
 Object	insertBpTimelineEvent(BpEvent *newEvent)
 {
-	//TODO stub
-	return 1;
+	Sdr		bpSdr = getIonsdr();
+	Address		addr;
+
+	addr = sdr_malloc(bpSdr, sizeof(BpEvent));
+	if (addr == 0)
+	{
+		putErrmsg("No space for timeline event.", NULL);
+		return 0;
+	}
+
+	sdr_write(bpSdr, addr, (char *) newEvent, sizeof(BpEvent));
+
+	return addr;
 }
 
 void	removeBundleFromQueue(Bundle *bundle, Object bundleObj,

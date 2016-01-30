@@ -65,6 +65,16 @@ static unsigned int getMessageSize(jobject message)
 	jlong result = (*jniEnv)->CallStaticLongMethod(jniEnv, interfaceClass, method, message);
 	return (uvast) result;
 }
+
+static void updateMessageForfeitTime(jobject message, time_t forfeitTime)
+{
+	JNIEnv * jniEnv = getThreadLocalEnv();
+	jclass interfaceClass = (*jniEnv)->FindClass(jniEnv, ONEtoION_interfaceClass);
+	time_t oneTime;
+	oneTime = convertIonTimeToOne(forfeitTime);
+	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv, interfaceClass, "updateMessageForfeitTime","(Lcore/Message;J)V");
+	(*jniEnv)->CallStaticVoidMethod(jniEnv, interfaceClass, method, message, oneTime);
+}
 /**
  * return true if the outduct is blocked (in ONE this should return always false)
  */
@@ -237,6 +247,9 @@ int bpEnqueONE(FwdDirective *directive, Bundle *bundle, Object bundleObj)
 	uvast localNodeNbr, proximateNodeNbr;
 	Object ductAddr;
 	Outduct outduct;
+	BpEvent forfeitEvent;
+	sdr_read(getIonsdr(), &forfeitEvent, bundle->overdueElt, sizeof(BpEvent));
+	updateMessageForfeitTime(currentMessage, forfeitEvent.time);
 	localNodeNbr = getNodeNum();
 	ductAddr = sdr_list_data(getIonsdr(), directive->outductElt);
 	sdr_read(getIonsdr(), (char*)&outduct, ductAddr, sizeof(Outduct));

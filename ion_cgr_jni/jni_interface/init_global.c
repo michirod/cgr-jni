@@ -7,6 +7,7 @@
 
 
 #include "init_global.h"
+#include "shared.h"
 
 #include <pthread.h>
 #include <time.h>
@@ -15,10 +16,10 @@
 #include "psm.h"
 #include "utils.h"
 
-static int initialized = 0;
 static time_t ONEreferenceTime = 0;
 pthread_key_t nodeNum_key;
 pthread_key_t jniEnv_key;
+//int initialized = 0;
 
 
 
@@ -81,4 +82,39 @@ void setONEReferenceTime(time_t ref)
 		ONEreferenceTime = time(NULL);
 	else
 		ONEreferenceTime = ref;
+}
+int getTimeFromONE()
+{
+	JNIEnv * jniEnv = getThreadLocalEnv();
+	jclass oneClockClass = (*jniEnv)->FindClass(jniEnv, ONEClockClass);
+	if (oneClockClass == NULL) //not using ONE environment
+	{
+		(*jniEnv)->ExceptionClear(jniEnv);
+		return -1;
+	}
+	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv, oneClockClass, "getIntTime","()I");
+	if (method == NULL) //not using ONE environment
+	{
+		(*jniEnv)->ExceptionDescribe(jniEnv);
+		(*jniEnv)->ExceptionClear(jniEnv);
+
+		return -1;
+	}
+	jint result = (*jniEnv)->CallStaticIntMethod(jniEnv, oneClockClass, method);
+	return result;
+}
+
+time_t getSimulatedUTCTime()
+{
+	int timeFromOne = getTimeFromONE();
+	if (timeFromOne < 0) // not using ONE environment
+		return time(NULL);
+	return (time_t) getONEReferenceTime() + timeFromOne;
+}
+
+time_t convertIonTimeToOne(time_t ionTime)
+{
+	if (getTimeFromONE() < 0) // not using ONE environment
+		return ionTime;
+	return ionTime - getONEReferenceTime();
 }

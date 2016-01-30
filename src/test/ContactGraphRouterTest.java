@@ -117,12 +117,7 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 
 	public DTNHost getNodeFromNbr(long nodeNbr)
 	{
-		for(DTNHost host : SimScenario.getInstance().getHosts()){
-			if(host.getAddress() == nodeNbr){
-				return host;
-			}
-		}
-		return null;
+		return Utils.getNodeFromNumber(nodeNbr);
 	}
 
 }

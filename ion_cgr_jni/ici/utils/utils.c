@@ -129,31 +129,3 @@ IonVdb * createIonVdb(char * ionvdbName)
 	return vdb;
 }
 
-int getTimeFromONE()
-{
-	JNIEnv * jniEnv = getThreadLocalEnv();
-	jclass oneClockClass = (*jniEnv)->FindClass(jniEnv, ONEClockClass);
-	if (oneClockClass == NULL) //not using ONE environment
-	{
-		(*jniEnv)->ExceptionClear(jniEnv);
-		return -1;
-	}
-	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv, oneClockClass, "getIntTime","()I");
-	if (method == NULL) //not using ONE environment
-	{
-		(*jniEnv)->ExceptionDescribe(jniEnv);
-		(*jniEnv)->ExceptionClear(jniEnv);
-
-		return -1;
-	}
-	jint result = (*jniEnv)->CallStaticIntMethod(jniEnv, oneClockClass, method);
-	return result;
-}
-
-time_t getSimulatedUTCTime()
-{
-	int timeFromOne = getTimeFromONE();
-	if (timeFromOne < 0) // not using ONE environment
-		return time(NULL);
-	return (time_t) getONEReferenceTime() + timeFromOne;
-}
