@@ -56,7 +56,7 @@ int	psm_locate(PsmPartition partition , char *objName,	PsmAddress *objLocation, 
 	}
 	*objLocation = (PsmAddress) result;
 	*entryElt = (PsmAddress) result;
-	return result;
+	return 0;
 }
 
 int	Psm_catlg(const char * s, int n, PsmPartition partition, char *objName, PsmAddress objLocation)

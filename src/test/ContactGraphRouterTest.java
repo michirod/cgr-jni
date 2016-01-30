@@ -26,7 +26,6 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 	@Override
 	public void setUp() throws Exception {
 		instance = this;
-		ts.putSetting(MessageRouter.B_SIZE_S, ""+BUFFER_SIZE);
 		ts.putSetting(SimScenario.SCENARIO_NS + "." + 
 				SimScenario.NROF_GROUPS_S, "1");
 		ts.putSetting(SimScenario.GROUP_NS + "." + 
@@ -59,24 +58,25 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 			
 	}
 	
-	public void testRouting(){
+	public void testRouting1(){
 			
-		Message m1 = new Message(h1,h2, msgId2, 1000);
+		Message m1 = new Message(h1,h3, msgId1, 10);
 		h1.createNewMessage(m1);
-		Message m2 = new Message(h2,h3, msgId3, 1000);
+		Message m2 = new Message(h2,h3, msgId2, 10);
 		h2.createNewMessage(m2);
-		Message m3 = new Message(h3,h4, msgId4, 1000);
+		Message m3 = new Message(h3,h4, msgId3, 10);
 		h3.createNewMessage(m3);
-		Message m4 = new Message(h4,h5, msgId5, 1000); 
+		Message m4 = new Message(h4,h5, msgId4, 10); 
 		h4.createNewMessage(m4);
-		Message m5 = new Message(h5,h6, msgId5, 1000);
+		Message m5 = new Message(h5,h6, msgId5, 10);
 		h5.createNewMessage(m5);
-		Message m6 = new Message(h6,h1, "pippo", 1000);
+		Message m6 = new Message(h6,h1, "pippo", 10);
 		h6.createNewMessage(m6);
-		
 		checkCreates(6);
 		
-		assertEquals(r1.getOutducts().get(h2).getQueue().size(), 1);
+		updateAllNodes();
+		
+ 		assertEquals(r1.getOutducts().get(h2).getQueue().size(), 1);
 		assertEquals(r2.getOutducts().get(h3).getQueue().size(), 1);
 		assertEquals(r3.getOutducts().get(h4).getQueue().size(), 1);
 		assertEquals(r4.getOutducts().get(h5).getQueue().size(), 1);
@@ -84,8 +84,19 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 		assertEquals(r6.getOutducts().get(h1).getQueue().size(), 1);
 		
 		clock.advance(11);
-		updateAllNodes();
-		
+		h1.forceConnection(h2, null, true);
+		h2.forceConnection(h3, null, true);
+		h3.forceConnection(h4, null, true);
+		h4.forceConnection(h5, null, true);
+		h5.forceConnection(h6, null, true);
+		h6.forceConnection(h1, null, true);
+
+		for (int i = 0; i < 2000; i++)
+		{
+			clock.advance(1);
+			updateAllNodes();
+		}
+
 		assertEquals(r1.getOutducts().get(h2).getQueue().size(), 0);
 		assertEquals(r2.getOutducts().get(h3).getQueue().size(), 0);
 		assertEquals(r3.getOutducts().get(h4).getQueue().size(), 0);

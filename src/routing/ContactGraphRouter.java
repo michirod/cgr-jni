@@ -1,6 +1,9 @@
 package routing;
 import java.util.List;
+import java.util.Map;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.TreeMap;
 
@@ -11,6 +14,8 @@ import core.DTNHost;
 import core.Message;
 import core.MessageListener;
 import core.Settings;
+import core.SimClock;
+import util.Tuple;
 
 public class ContactGraphRouter extends ActiveRouter {
 	
@@ -42,8 +47,14 @@ public class ContactGraphRouter extends ActiveRouter {
 			for(Message m1 : this.getQueue()){
 				if( m.equals(m1)){
 					this.getQueue().remove(m1);
+					m.updateProperty(OUTDUCT_REF, -2);
 				}
 			}
+		}
+		
+		public boolean containsMessage(Message message)
+		{
+			return queue.contains(message);
 		}
 		
 		public Outduct containsMessagesForNodeNbr(int toNodeNbr){
@@ -66,10 +77,21 @@ public class ContactGraphRouter extends ActiveRouter {
 				return null;
 		}
 		
-		public void insertBundleIntoOutduct( Message message){
+		public void insertBundleIntoOutduct(Message message){
 			this.queue.add(message);
+			boolean thisIsLimbo = host == null;
+			if (thisIsLimbo)
+			{
+				message.updateProperty(OUTDUCT_REF, -1);
+				return;
+			}
+			else if (isMessageIntoLimbo(message))
+			{
+				removeMessageFromLimbo(message);
+			}
+			message.updateProperty(OUTDUCT_REF, host.getAddress());
 		}
-		
+
 		public int getOutductSize(){
 			return this.getQueue().size();
 		}
@@ -79,7 +101,10 @@ public class ContactGraphRouter extends ActiveRouter {
 		{
 			StringBuilder b = new StringBuilder();
 			b.append(" to: ");
-			b.append(host.toString());
+			if (host != null)
+				b.append(host.toString());
+			else 
+				b.append("Limbo");
 			b.append(", size: ");
 			b.append(queue.size());
 			b.append(", msgs: [ ");
@@ -93,6 +118,8 @@ public class ContactGraphRouter extends ActiveRouter {
 	}
 	
 	public static final String CGR_NS = "ContactGraphRouter";
+	public static final String ROUTE_FORWARD_TIMELIMIT = "ForwardTimelimit";
+	public static final String OUTDUCT_REF = "OutducReference";
 	private int nodeNum;
 	private Outduct limbo = new Outduct(null);
 	
@@ -118,64 +145,140 @@ public class ContactGraphRouter extends ActiveRouter {
 		updateOutducts(Utils.getAllNodes());
 		return this.outducts;
 	}	
-	 
-	public Outduct getLimbo(){
-		return this.limbo; 
+
+	public void putMessageIntoLimbo(Message message)
+	{
+		int outductNum = (int) message.getProperty(OUTDUCT_REF);
+		if (outductNum >= 0)
+			getOutducts().get(Utils.getNodeFromNumber(outductNum)).removeMessageFromOutduct(message);
+		limbo.insertBundleIntoOutduct(message);
+		message.updateProperty(OUTDUCT_REF, -1);
+	}
+	public void removeMessageFromLimbo(Message message)
+	{
+		limbo.removeMessageFromOutduct(message);
+		message.updateProperty(OUTDUCT_REF, -2);
+	}
+	public boolean isMessageIntoLimbo(Message message)
+	{
+		return limbo.containsMessage(message);
 	}
 	
+	protected void tryRouteForMessageIntoLimbo()
+	{
+		for (Message m : limbo.getQueue())
+		{
+			cgrForward(m, m.getTo());
+		}
+	}
+
+	protected void checkExpiredRoutes()
+	{
+		for (Outduct o : getOutducts().values())
+		{
+			for (Message m : o.getQueue())
+			{
+				long fwdTimelimit = (long) m.getProperty(ROUTE_FORWARD_TIMELIMIT);
+				if (fwdTimelimit == 0) // This Message hasn't been routed yet
+					return;
+				if (SimClock.getIntTime() > fwdTimelimit)
+				{
+					o.removeMessageFromOutduct(m);
+					putMessageIntoLimbo(m);
+				}
+			}
+		}
+	}
+
 	@Override
 	public void update(){
+		checkExpiredRoutes();
+		tryRouteForMessageIntoLimbo();
 		super.update();
 		if (isTransferring() || !canStartTransfer()) {
 			return; // transferring, don't try other connections yet
 		}
-		
-		// Try first the messages that can be delivered to final recipient
-		if (exchangeDeliverableMessages() != null) {
-			return; // started a transfer, don't try others (yet)
-		}		
-		
+
 		List<Connection> connections = super.getConnections();
 		for(Connection c : connections){
-			Outduct o = outducts.get(c.getOtherNode(getHost()));
-			while(!o.getQueue().isEmpty()){
-				for(Message m : o.getQueue()){
-					if(super.startTransfer(m, c) == RCV_OK){
-						o.removeMessageFromOutduct(m);
-					}
+			Outduct o = getOutducts().get(c.getOtherNode(getHost()));
+			for(Message m : o.getQueue()){
+				if(super.startTransfer(m, c) == RCV_OK)
+				{
+					System.out.println("Inizio trasmissione " + m + " " + c);
 				}
-				
+				else 
+					break;
 			}
-						
+
 		}			
+	}
+
+	@Override
+	protected void addToMessages(Message m, boolean newMessage) 
+	{
+		putMessageIntoLimbo(m);
+		super.addToMessages(m, newMessage);
+	}
+
+	@Override 
+	public boolean createNewMessage(Message m) {
+		m.addProperty(ROUTE_FORWARD_TIMELIMIT, (long)0);
+		m.addProperty(OUTDUCT_REF, 0);
+		return super.createNewMessage(m);
+	}
+	
+	protected Message removeFromOutducts(String id)
+	{
+		Message removed;
+		int outductNum;
+		Outduct o;
+		removed = getMessage(id);
+		if (removed != null)
+		{
+			outductNum = (int) removed.getProperty(OUTDUCT_REF);
+			if (outductNum == -1) // this message is into limbo
+				o = limbo;
+			else if (outductNum == -2) // this message isn't in any outduct
+				o = null;
+			else
+				o = getOutducts().get(Utils.getNodeFromNumber(outductNum));
+			if (o != null)
+				o.removeMessageFromOutduct(removed);
+			else return null;
+		}
+		return removed;
 	}
 	
 	@Override
-	public int receiveMessage(Message m, DTNHost from) {
-		if(m.getTo().equals(this.getHost()))
-			return super.receiveMessage(m, from);
-		else{
-			cgrForward(m, m.getTo());
-			return super.receiveMessage(m, from);
-		}
+	protected Message removeFromMessages(String id) 
+	{
+		removeFromOutducts(id);
+		return super.removeFromMessages(id);
+	}
+
+	@Override 
+	protected void transferDone(Connection con)
+	{
+		super.transferDone(con);
+		Message transferred = con.getMessage();
+		removeFromOutducts(transferred.getId());
 	}
 	
-
+	@Override
+	public Message messageTransferred(String id, DTNHost from)
+	{
+		Message transferred = super.messageTransferred(id, from);
+		return transferred;
+	}
+	
 	@Override
 	public MessageRouter replicate() {
 		// TODO Auto-generated method stub
 		return new ContactGraphRouter(this);
 	}
 	
-	@Override 
-	public boolean createNewMessage(Message m) {
-		if (super.createNewMessage(m))	
-		{
-			cgrForward(m, m.getTo());
-			return true;
-		}
-		return false;
-	}
+	
 
 	public void updateOutducts(Collection<DTNHost> hosts)
 	{
@@ -187,6 +290,67 @@ public class ContactGraphRouter extends ActiveRouter {
 				outducts.put(h, new Outduct(h));
 			}
 		}
+	}
+	
+	@Override 
+	protected List<Tuple<Message,Connection>> getMessagesForConnected() 
+	{
+		if (getNrofMessages() == 0 || getConnections().size() == 0) {
+			/* no messages -> empty list */
+			return new ArrayList<Tuple<Message, Connection>>(0); 
+		}
+
+		List<Tuple<Message, Connection>> forTuples = new ArrayList<Tuple<Message, Connection>>();
+		for (Connection con : getConnections())
+		{
+			DTNHost to = con.getOtherNode(getHost());
+			Outduct outduct = getOutducts().get(to);
+			if (outduct == null)
+				continue;
+			for (Message m : outduct.getQueue())
+			{
+				forTuples.add(new Tuple<Message, Connection>(m, con));
+			}
+		}
+		
+		return forTuples;
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override 
+	protected List<Tuple<Message, Connection>> sortByQueueMode(List list) 
+	{
+		List<Tuple<Message, Connection>> result = new ArrayList<Tuple<Message, Connection>>();
+		Map<Connection, Integer> connections = new HashMap<>();
+		int connectionsNum;
+		for (Tuple<Message, Connection> t : (List<Tuple<Message, Connection>>) list)
+		{
+			if (connections.containsKey(t.getValue()))
+				connections.put(t.getValue(), connections.get(t.getValue()) + 1);
+			else
+				connections.put(t.getValue(), 1);
+		}
+		connectionsNum = connections.size();
+		return list;
+	}
+	
+	@Override
+	protected Connection exchangeDeliverableMessages()
+	{
+		List<Connection> connections = getConnections();
+
+		if (connections.size() == 0) {
+			return null;
+		}
+		
+		@SuppressWarnings(value = "unchecked")
+		Tuple<Message, Connection> t =
+			tryMessagesForConnected(sortByQueueMode(getMessagesForConnected()));
+
+		if (t != null) {
+			return t.getValue(); // started transfer
+		}
+		return null;
 	}
 
 	@Override
@@ -209,9 +373,9 @@ public class ContactGraphRouter extends ActiveRouter {
 		Libcgr.processLine(this.getHost().getAddress(), line);
 	}
 	
-	public void cgrForward(Message m, DTNHost terminusNode)
+	public int cgrForward(Message m, DTNHost terminusNode)
 	{
-		Libcgr.cgrForward(this.getHost().getAddress(), m, terminusNode.getAddress());
+		return Libcgr.cgrForward(this.getHost().getAddress(), m, terminusNode.getAddress());
 	}
 
 }

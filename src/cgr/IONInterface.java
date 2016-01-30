@@ -80,7 +80,12 @@ public class IONInterface {
 	{
 		DTNHost local = getNodeFromNbr(localNodeNbr);
 		ContactGraphRouter localRouter = (ContactGraphRouter) local.getRouter();
-		localRouter.getLimbo().insertBundleIntoOutduct(message);
+		localRouter.putMessageIntoLimbo(message);
 		return 0;	
+	}
+	
+	static void updateForwardTimelimit(Message m, long timelimit)
+	{
+		m.updateProperty(ContactGraphRouter.ROUTE_FORWARD_TIMELIMIT, timelimit);
 	}
 }
