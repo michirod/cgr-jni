@@ -27,7 +27,6 @@ JNIEXPORT jint JNICALL Java_jni_test_JNITest_doSomething(JNIEnv *env, jobject th
 	if (javaVM == NULL)
 		(*env)->GetJavaVM(env, &javaVM);
 	setThreadLocalEnv(env);
-	JNIEnv * jniEnv = getThreadLocalEnv();
 	const char *nativeString = (*env)->GetStringUTFChars(env, string, 0);
 	return doSomething(nodeNum, (char *)nativeString);
 }
@@ -38,7 +37,6 @@ JNIEXPORT jint JNICALL Java_jni_test_JNITest_doSomethingWithLists(JNIEnv *env, j
 	if (javaVM == NULL)
 		(*env)->GetJavaVM(env, &javaVM);
 	setThreadLocalEnv(env);
-	JNIEnv * jniEnv = getThreadLocalEnv();
 	jsize len = (*env)->GetArrayLength(env, array);
 	char * strings[len];
 	int i;
@@ -57,7 +55,6 @@ JNIEXPORT jint JNICALL Java_jni_test_JNITest_doSomethingWithPsm (JNIEnv *env, jo
 	if (javaVM == NULL)
 		(*env)->GetJavaVM(env, &javaVM);
 	setThreadLocalEnv(env);
-	JNIEnv * jniEnv = getThreadLocalEnv();
 	jsize len = (*env)->GetArrayLength(env, array);
 	char * strings[len];
 	int i;

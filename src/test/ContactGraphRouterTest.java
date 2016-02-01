@@ -14,6 +14,7 @@ import core.SimClock;
 import core.SimScenario;
 import routing.ContactGraphRouter;
 import routing.MessageRouter;
+import routing.util.RoutingInfo;
 
 public class ContactGraphRouterTest extends AbstractRouterTest {
 	
@@ -60,7 +61,7 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 	
 	public void testRouting1(){
 			
-		Message m1 = new Message(h1,h3, msgId1, 10);
+		Message m1 = new Message(h1,h2, msgId1, 10);
 		h1.createNewMessage(m1);
 		Message m2 = new Message(h2,h3, msgId2, 10);
 		h2.createNewMessage(m2);
@@ -102,7 +103,9 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 		assertEquals(r3.getOutducts().get(h4).getQueue().size(), 0);
 		assertEquals(r4.getOutducts().get(h5).getQueue().size(), 0);
 		assertEquals(r5.getOutducts().get(h6).getQueue().size(), 0);
-		assertEquals(r6.getOutducts().get(h1).getQueue().size(), 0);		
+		assertEquals(r6.getOutducts().get(h1).getQueue().size(), 0);	
+		
+		assertEquals(true, r2.isDeliveredMessage(m1));
 		
 		}
 	

@@ -24,7 +24,6 @@ JNIEXPORT jint JNICALL Java_cgr_Libcgr_initializeNode(JNIEnv *env, jclass thisOb
 		(*env)->GetJavaVM(env, &javaVM);
 	init_global();
 	setThreadLocalEnv(env);
-	JNIEnv * jniEnv = getThreadLocalEnv();
 	uvast unodeNum = (uvast) nodeNum;
 	setNodeNum(unodeNum);
 	result = ionInitialize(NULL, unodeNum);
@@ -42,7 +41,6 @@ JNIEXPORT jint JNICALL Java_cgr_Libcgr_readContactPlan(JNIEnv *env, jclass thisO
 		(*env)->GetJavaVM(env, &javaVM);
 	init_global();
 	setThreadLocalEnv(env);
-	JNIEnv * jniEnv = getThreadLocalEnv();
 	uvast unodeNum = (uvast) nodeNum;
 	setNodeNum(unodeNum);
 	const char *nativeString = (*env)->GetStringUTFChars(env, fileName, 0);
@@ -58,7 +56,6 @@ JNIEXPORT jint JNICALL Java_cgr_Libcgr_processLine(JNIEnv *env, jclass thisObj, 
 		(*env)->GetJavaVM(env, &javaVM);
 	init_global();
 	setThreadLocalEnv(env);
-	JNIEnv * jniEnv = getThreadLocalEnv();
 	uvast unodeNum = (uvast) nodeNum;
 	setNodeNum(unodeNum);
 	const char *nativeString = (*env)->GetStringUTFChars(env, line, 0);
@@ -74,7 +71,6 @@ JNIEXPORT jint JNICALL Java_cgr_Libcgr_cgrForward(JNIEnv *env, jclass thisObj, j
 		(*env)->GetJavaVM(env, &javaVM);
 	init_global();
 	setThreadLocalEnv(env);
-	JNIEnv * jniEnv = getThreadLocalEnv();
 	uvast unodeNum = (uvast) nodeNum;
 	setNodeNum(unodeNum);
 	result = cgrForwardONE(message, terminusNodeNbr);
@@ -88,7 +84,6 @@ JNIEXPORT jint JNICALL Java_cgr_Libcgr_genericTest  (JNIEnv *env, jclass thisObj
 		(*env)->GetJavaVM(env, &javaVM);
 	init_global();
 	setThreadLocalEnv(env);
-	JNIEnv * jniEnv = getThreadLocalEnv();
 	uvast unodeNum = (uvast) nodeNum;
 	setNodeNum(unodeNum);
 	result = testMessage(message);

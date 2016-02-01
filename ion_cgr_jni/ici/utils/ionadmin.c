@@ -284,21 +284,13 @@ static void	executeList(int tokenCount, char **tokens)
 void initializeNode(int tokenCount, char **tokens)
 {
 	char		*ownNodeNbrString = tokens[1];
-	char		*configFileName = tokens[2];
 	IonParms	parms;
 
 	if (tokenCount < 2 || *ownNodeNbrString == '\0')
 	{
-		//writeMemo("[?] No node number, can't initialize node.");
 		return;
 	}
-/**
-	if (readIonParms(configFileName, &parms) < 0)
-	{
-		putErrmsg("ionadmin can't get SDR parms.", NULL);
-		return;
-	}
-**/
+
 	if (ionInitialize(&parms, strtouvast(ownNodeNbrString)) < 0)
 	{
 		putErrmsg("ionadmin can't initialize ION.", NULL);
@@ -314,8 +306,6 @@ int	processLine(char *line, int lineLength)
 	char		buffer[80];
 	time_t		refTime;
 	time_t		currentTime;
-	struct timeval	done_time;
-	struct timeval	cur_time;
 
 	tokenCount = 0;
 	for (cursor = line, i = 0; i < 9; i++)

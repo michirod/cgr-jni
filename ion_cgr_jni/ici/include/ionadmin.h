@@ -9,8 +9,8 @@
 #define JNI_INCLUDE_IONADMIN_H_
 
 
-int	runIonadmin(char *cmdFileName);
-int	processLine(char *line, int lineLength);
+int	runIonadmin(const char *cmdFileName);
+int	processLine(const char *line, int lineLength);
 void initializeNode(int tokenCount, char **tokens);
 
 #endif /* JNI_INCLUDE_IONADMIN_H_ */

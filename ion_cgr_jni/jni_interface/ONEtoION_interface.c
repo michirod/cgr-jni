@@ -141,7 +141,7 @@ static int insertBundleIntoOutduct(uvast localNodeNbr, jobject message, uvast to
 	JNIEnv * jniEnv = getThreadLocalEnv();
 	jclass interfaceClass = (*jniEnv)->FindClass(jniEnv, ONEtoION_interfaceClass);
 	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv, interfaceClass, "insertBundleIntoOutduct","(JLcore/Message;J)I");
-	jint result = (*jniEnv)->CallStaticObjectMethod(jniEnv, interfaceClass, method, localNodeNbr, message, toNodeNbr);
+	jint result = (*jniEnv)->CallStaticIntMethod(jniEnv, interfaceClass, method, localNodeNbr, message, toNodeNbr);
 	return (int) result;
 }
 /**
@@ -152,7 +152,7 @@ static int insertBundleIntoLimbo(uvast localNodeNbr, jobject message)
 	JNIEnv * jniEnv = getThreadLocalEnv();
 	jclass interfaceClass = (*jniEnv)->FindClass(jniEnv, ONEtoION_interfaceClass);
 	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv, interfaceClass, "insertBundleIntoLimbo","(JLcore/Message;J)I");
-	jint result = (*jniEnv)->CallStaticObjectMethod(jniEnv, interfaceClass, method, localNodeNbr, message);
+	jint result = (*jniEnv)->CallStaticIntMethod(jniEnv, interfaceClass, method, localNodeNbr, message);
 	return (int) result;
 }
 
@@ -248,7 +248,7 @@ int bpEnqueONE(FwdDirective *directive, Bundle *bundle, Object bundleObj)
 	Object ductAddr;
 	Outduct outduct;
 	BpEvent forfeitEvent;
-	sdr_read(getIonsdr(), &forfeitEvent, bundle->overdueElt, sizeof(BpEvent));
+	sdr_read(getIonsdr(), (char*) &forfeitEvent, bundle->overdueElt, sizeof(BpEvent));
 	updateMessageForfeitTime(currentMessage, forfeitEvent.time);
 	localNodeNbr = getNodeNum();
 	ductAddr = sdr_list_data(getIonsdr(), directive->outductElt);
@@ -273,17 +273,5 @@ int testMessage(jobject message)
 	bundleObj = sdr_malloc(getIonsdr(), sizeof(Bundle));
 	sdr_write(getIonsdr(), bundleObj, (char*) bundle, sizeof(Bundle));
 	free(bundle);
-	return 0;
-}
-
-int testOuduct(jobject jOutduct)
-{
-	Outduct outduct;
-	Object outductObj;
-	Object outductElt;
-	ion_outduct(&outduct, jOutduct);
-	outductObj = sdr_malloc(getIonsdr(), sizeof(Outduct));
-	sdr_write(getIonsdr(), outductObj, &outduct, sizeof(Outduct));
-	outductElt = sdr_list_insert_first(getIonsdr(), outductList, outductObj);
 	return 0;
 }

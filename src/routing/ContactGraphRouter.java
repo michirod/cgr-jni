@@ -352,6 +352,12 @@ public class ContactGraphRouter extends ActiveRouter {
 		}
 		return null;
 	}
+	
+	@Override
+	public boolean isDeliveredMessage(Message m)
+	{
+		return super.isDeliveredMessage(m);
+	}
 
 	@Override
 	public String toString() {

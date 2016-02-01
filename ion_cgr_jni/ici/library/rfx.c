@@ -758,7 +758,7 @@ PsmAddress	rfx_insert_contact(time_t fromTime, time_t toTime,
 		}
 
 		isprintf(contactIdString, sizeof contactIdString,
-				"at %lu, %lu->%lu", fromTime, fromNode, toNode);
+				"at %lu, %llu->%llu", fromTime, fromNode, toNode);
 		writeMemoNote("[?] Contact data rate not revised",
 				contactIdString);
 		sdr_exit_xn(sdr);
@@ -853,7 +853,7 @@ char	*rfx_print_contact(PsmAddress cxaddr, char *buffer)
 node " UVAST_FIELDSPEC " to node " UVAST_FIELDSPEC " is %10lu bytes/sec, \
 probability %f.",
 			fromTimeBuffer, toTimeBuffer, contact->fromNode,
-			contact->toNode, contact->xmitRate, contact->prob);
+			contact->toNode, (unsigned long) contact->xmitRate, contact->prob);
 	return buffer;
 }
 
@@ -1045,7 +1045,7 @@ int	rfx_remove_contact(time_t fromTime, uvast fromNode, uvast toNode)
 
 /*	*	RFX range list management functions	*	*	*/
 
-static int	insertRXref(IonRXref *rxref)
+static PsmAddress	insertRXref(IonRXref *rxref)
 {
 	PsmPartition	ionwm = getIonwm();
 	IonVdb		*vdb = getIonVdb();
@@ -1326,7 +1326,7 @@ Object	rfx_insert_range(time_t fromTime, time_t toTime, uvast fromNode,
 			}
 
 			isprintf(rangeIdString, sizeof rangeIdString,
-					"from %lu, %lu->%lu", fromTime,
+					"from %lu, %llu->%llu", fromTime,
 					fromNode, toNode);
 			writeMemoNote("[?] Range OWLT not revised",
 					rangeIdString);

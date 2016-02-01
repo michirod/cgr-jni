@@ -55,7 +55,7 @@ Object	Sdr_string_create(const char *file, int line, Sdr sdrv, char *from)
 
 	stringBuf[0] = length;
 	memcpy(stringBuf + 1, from, length);
-	sdr_write(sdrv, string, stringBuf, length + 1);
+	sdr_write(sdrv, string, (char*) stringBuf, length + 1);
 	return string;
 }
 
@@ -64,7 +64,7 @@ int	sdr_string_length(Sdr sdrv, Object string)
 	unsigned char	length;
 
 	CHKERR(string);
-	sdr_read(sdrv, length, string, 1);
+	sdr_read(sdrv, (char*) &length, string, 1);
 
 	return length;
 }
