@@ -1,20 +1,14 @@
 package test;
 
-import java.awt.List;
 import java.io.File;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 
-import cgr_jni.Libcgr;
 import cgr_jni.Utils;
 import core.DTNHost;
 import core.Message;
-import core.SimClock;
 import core.SimScenario;
 import routing.ContactGraphRouter;
 import routing.MessageRouter;
-import routing.util.RoutingInfo;
 
 public class ContactGraphRouterTest extends AbstractRouterTest {
 	
@@ -36,8 +30,6 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 		setRouterProto(routerProto);
 		super.setUp();	
 		Utils.init(utils.getAllHosts());
-		String cp_path = (new File(CONTACT_PLAN_FILE)).getAbsolutePath();
-		System.out.println(SimClock.getIntTime());
 		
 		r1 = (ContactGraphRouter)h1.getRouter();
 		r2 = (ContactGraphRouter)h2.getRouter();
@@ -45,16 +37,6 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 		r4 = (ContactGraphRouter)h4.getRouter();
 		r5 = (ContactGraphRouter)h5.getRouter();
 		r6 = (ContactGraphRouter)h6.getRouter();
-		r1.readContactPlan(cp_path);
-		r2.readContactPlan(cp_path);
-		r3.readContactPlan(cp_path);
-		r4.readContactPlan(cp_path);
-		r5.readContactPlan(cp_path);
-		r6.readContactPlan(cp_path);
-		
-		//test visuale
-		r3.processLine("l range");
-		r3.processLine("l contact");	
 	}
 	
 	@Override
@@ -69,7 +51,19 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 	}
 	
 	public void testRouting1(){
-			
+		
+		String cp_path = (new File(CONTACT_PLAN_FILE)).getAbsolutePath();
+		r1.readContactPlan(cp_path);
+		r2.readContactPlan(cp_path);
+		r3.readContactPlan(cp_path);
+		r4.readContactPlan(cp_path);
+		r5.readContactPlan(cp_path);
+		r6.readContactPlan(cp_path);
+		
+		//test visuale
+		r3.processLine("l range");
+		r3.processLine("l contact");
+		
 		Message m1 = new Message(h1,h2, msgId1, 10);
 		h1.createNewMessage(m1);
 		Message m2 = new Message(h2,h3, msgId2, 10);
@@ -118,8 +112,16 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 		
 		}
 	
-	public void testRouter2()
+	public void testRouting2()
 	{
+		String cp_path = (new File(CONTACT_PLAN_FILE)).getAbsolutePath();
+		r1.readContactPlan(cp_path);
+		r2.readContactPlan(cp_path);
+		r3.readContactPlan(cp_path);
+		r4.readContactPlan(cp_path);
+		r5.readContactPlan(cp_path);
+		r6.readContactPlan(cp_path);
+		
 		Message m;
 		int i;
 		disconnect(h1);
