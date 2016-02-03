@@ -13,6 +13,7 @@ import routing.MessageRouter;
 public class ContactGraphRouterTest extends AbstractRouterTest {
 	
 	private static final String CONTACT_PLAN_FILE = "resources/contactPlan_prova.txt";
+	private static final String CONTACT_PLAN_FILE2 = "resources/cp_prova2.txt";
 	private static final int NROF_HOSTS = 6;
 	private ContactGraphRouter r1,r2,r3,r4,r5,r6;
 	private static ContactGraphRouterTest instance = null;
@@ -155,6 +156,15 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 	}
 	
 	public void testRouting3(){
+	 
+	    String cp_path = (new File(CONTACT_PLAN_FILE2)).getAbsolutePath();
+		r1.readContactPlan(cp_path);
+		r2.readContactPlan(cp_path);
+		r3.readContactPlan(cp_path);
+		r4.readContactPlan(cp_path);
+		r5.readContactPlan(cp_path);
+		r6.readContactPlan(cp_path);
+		
 		Message m1 = new Message(h1,h3, msgId1, 10);
 		h1.createNewMessage(m1);
 		Message m2 = new Message(h2,h4, msgId2, 10);
@@ -214,12 +224,10 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 		{
 			clock.advance(1);
 			updateAllNodes();
-		}
-		
+		}	
 		
 		disconnect(h2);
-		disconnect(h3);
-		
+		disconnect(h3);		
 		
 		assertEquals(r1.getOutducts().get(h2).getQueue().size(), 0);
 		assertEquals(r2.getOutducts().get(h3).getQueue().size(), 0);
@@ -275,12 +283,10 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 		{
 			clock.advance(1);
 			updateAllNodes();
-		}
-		
+		}		
 		
 		disconnect(h4);
-		disconnect(h5);
-		
+		disconnect(h5);		
 		
 		assertEquals(r1.getOutducts().get(h2).getQueue().size(), 0);
 		assertEquals(r2.getOutducts().get(h3).getQueue().size(), 0);
@@ -297,11 +303,9 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 		{
 			clock.advance(1);
 			updateAllNodes();
-		}
+		}		
 		
-		
-		h5.forceConnection(h6, null, true);
-		
+		h5.forceConnection(h6, null, true);		
 
 		for (int i = 0; i < 50; i++)
 		{
