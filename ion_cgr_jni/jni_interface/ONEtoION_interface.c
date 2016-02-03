@@ -282,7 +282,7 @@ int cgrForwardONE(jobject bundleONE, jlong terminusNodeNbr)
 	Object plans = (Object) 42; // this value will never be read but it is needed to pass the null check in cgr_forward()
 	int result;
 	interfaceInfo = malloc(sizeof(InterfaceInfo));
-	interfaceInfo->forwardResult = 0;
+	interfaceInfo->forwardResult = -1;
 	interfaceInfo->currentMessage = bundleONE;
 	interfaceInfo->outductList = NULL;
 	setInterfaceInfo(interfaceInfo);
