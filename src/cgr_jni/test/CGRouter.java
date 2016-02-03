@@ -1,6 +1,6 @@
-package jni.test;
+package cgr_jni.test;
 
-import cgr.Libcgr;
+import cgr_jni.Libcgr;
 import core.DTNHost;
 import core.Message;
 import routing.ContactGraphRouter;

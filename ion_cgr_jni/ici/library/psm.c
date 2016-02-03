@@ -14,26 +14,23 @@
 
 PsmAddress	Psm_zalloc(const char * s, int n, PsmPartition partition, unsigned long length)
 {
-	//JNIEnv * jniEnv = getThreadLocalEnv();
+	JNIEnv * jniEnv = getThreadLocalEnv();
 	void * pointer = (void *) malloc(length);
-	//jclass psmPartitionClass = (*jniEnv)->FindClass(jniEnv, PsmPartitionClass);
-	//jmethodID zalloc = (*jniEnv)->GetMethodID(jniEnv, psmPartitionClass, "psmAlloc","(J)Ljni/test/psm/PsmAddress;");
-	//jobject result = (*jniEnv)->CallObjectMethod(jniEnv, partition, zalloc, (jlong) pointer);
-	//return (PsmAddress) result;
+	jclass psmPartitionClass = (*jniEnv)->FindClass(jniEnv, PsmPartitionClass);
+	jmethodID zalloc = (*jniEnv)->GetMethodID(jniEnv, psmPartitionClass, "psmAlloc","(J)J");
+	jlong result = (*jniEnv)->CallLongMethod(jniEnv, partition, zalloc, (jlong) pointer);
+	if (pointer != (void*)(intptr_t) result)
+		return NULL;
 	return pointer;
 }
 
 void Psm_free(const char * s, int n, PsmPartition partition, PsmAddress address)
 {
-	//JNIEnv * jniEnv = getThreadLocalEnv();
-	//jclass psmAddressClass = (*jniEnv)->FindClass(jniEnv, PsmAddressClass);
-	//jmethodID getPointer = (*jniEnv)->GetMethodID(jniEnv, psmAddressClass, "getPointer","()J");
-	//jlong pointer = (*jniEnv)->CallLongMethod(jniEnv, address, getPointer);
-	//free((void *) pointer);
+	JNIEnv * jniEnv = getThreadLocalEnv();
+	jclass psmPartitionClass = (*jniEnv)->FindClass(jniEnv, PsmPartitionClass);
+	jmethodID method = (*jniEnv)->GetMethodID(jniEnv, psmPartitionClass, "psmFree","(J)V");
+	(*jniEnv)->CallVoidMethod(jniEnv, partition, method, address);
 	free((void *)address);
-	//jclass psmPartitionClass = (*jniEnv)->FindClass(jniEnv, PsmPartitionClass);
-	//jmethodID free = (*jniEnv)->GetMethodID(jniEnv, psmPartitionClass, "psmFree","(Ljni/test/psm/PsmAddress;)V");
-	//(*jniEnv)->CallVoidMethod(jniEnv, partition, free, address);
 }
 
 int	psm_locate(PsmPartition partition , char *objName,	PsmAddress *objLocation, PsmAddress *entryElt)

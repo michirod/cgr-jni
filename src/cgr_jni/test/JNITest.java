@@ -1,4 +1,4 @@
-package jni.test;
+package cgr_jni.test;
 
 public class JNITest {
 	
@@ -13,7 +13,7 @@ public class JNITest {
 		 System.loadLibrary("cgr_jni");
 //		 System.loadLibrary("normal");
 //		 System.loadLibrary("test");
-//		 System.loadLibrary("cgr");
+//		 System.loadLibrary("cgr_jni");
 	}
 
 	public native int doSomething(long node, String string);

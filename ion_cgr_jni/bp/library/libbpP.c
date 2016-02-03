@@ -16,7 +16,8 @@
 void	computePriorClaims(ClProtocol *protocol, Outduct *duct, Bundle *bundle,
 		Scalar *priorClaims, Scalar *totalBacklog)
 {
-	//TODO stub
+	loadScalar(priorClaims, 0);
+	copyScalar(totalBacklog, &(duct->stdBacklog));
 }
 
 int	guessBundleSize(Bundle *bundle)
@@ -29,70 +30,16 @@ int	guessBundleSize(Bundle *bundle)
 }
 int	computeECCC(int bundleSize, ClProtocol *protocol)
 {
-	int	framesNeeded;
+	//int	framesNeeded;
 
 	/*	Compute estimated consumption of contact capacity.	*/
-
+	/*
 	framesNeeded = bundleSize / protocol->payloadBytesPerFrame;
 	framesNeeded += (bundleSize % protocol->payloadBytesPerFrame) ? 1 : 0;
 	framesNeeded += (framesNeeded == 0) ? 1 : 0;
 	return bundleSize + (protocol->overheadPerFrame * framesNeeded);
-}
-
-int	orderBpEvents(PsmPartition partition, PsmAddress nodeData,
-		void *dataBuffer)
-{
-	Sdr	sdr = getIonsdr();
-	BpEvent	*argEvent;
-	Object	elt;
-	BpEvent	event;
-
-	if (partition == NULL || nodeData == 0 || dataBuffer == 0)
-	{
-		putErrmsg("Error calling smrbt BP timeline compare function.",
-				NULL);
-		return 0;
-	}
-
-	argEvent = (BpEvent *) dataBuffer;
-	elt = (Object) nodeData;
-	sdr_read(sdr, (char *) &event, sdr_list_data(sdr, elt),
-			sizeof(BpEvent));
-	if (event.time < argEvent->time)
-	{
-		return -1;
-	}
-
-	if (event.time > argEvent->time)
-	{
-		return 1;
-	}
-
-	/*	Same time.						*/
-
-	if (event.ref < argEvent->ref)
-	{
-		return -1;
-	}
-
-	if (event.ref > argEvent->ref)
-	{
-		return 1;
-	}
-
-	/*	Same object.						*/
-
-	if (event.type < argEvent->type)
-	{
-		return -1;
-	}
-
-	if (event.type > argEvent->type)
-	{
-		return 1;
-	}
-
-	return 0;
+	*/
+	return bundleSize;
 }
 
 int	bpEnqueue(FwdDirective *directive, Bundle *bundle, Object bundleObj,

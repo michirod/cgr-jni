@@ -1,12 +1,13 @@
-package jni.test.psm;
+package cgr_jni.psm;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.TreeSet;
 
 public class PsmPartition {
 	private int id;
-	private TreeSet<PsmAddress> addresses;
+	private TreeSet<Long> addresses;
 	private LinkedHashMap<String, Long> catalog;
 	
 	public PsmPartition(int id)
@@ -60,28 +61,34 @@ public class PsmPartition {
 		return 0;
 	}
 	
-	public PsmAddress psmAlloc(long pointer)
+	public long psmAlloc(long pointer)
 	{
-		PsmAddress a = new PsmAddress(pointer);
-		if (addresses.add(a) == false)
-			return null;
-		return a;
+		if (addresses.add(pointer) == false)
+			return -1;
+		return pointer;
 	}
 	
-	public void psmFree(PsmAddress address)
+	public void psmFree(long address)
 	{
+		String key = null;
 		addresses.remove(address);
+		for (String cur : catalog.keySet())
+		{
+			if (catalog.get(cur) == address)
+			{
+				key = cur;
+				break;
+			}
+		}
+		if (key != null)
+			catalog.remove(key);
 	}
 	
-	public PsmAddress getAddress(long pointer)
+	public long getAddress(long pointer)
 	{
-		PsmAddress temp = new PsmAddress(pointer);
-		for (PsmAddress a : addresses)
-		{
-			if (a.equals(temp))
-				return a;
-		}
-		return null; 
+		if (addresses.contains(pointer))
+				return pointer;
+		return -1;
 	}
 
 }

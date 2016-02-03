@@ -9,18 +9,24 @@
 
 #include "ion.h"
 #include "sdr.h"
+#include "rfx.h"
 #include "shared.h"
 #include "init_global.h"
+
+#define WM_PSM_PARTITION 0
+#define SDR_PSM_PARTITION 1
+
+char * getIonvdbName();
 
 PsmPartition getIonPsmPartition(long nodeNum, int partNum)
 {
 	JNIEnv * jniEnv = getThreadLocalEnv();
 	jclass psmPartitionManagerClass = (*jniEnv)->FindClass(jniEnv, PsmPartitionManagerClass);
-	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv, psmPartitionManagerClass, "getPartition","(JI)Ljni/test/psm/PsmPartition;");
+	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv, psmPartitionManagerClass, "getPartition","(JI)Lcgr_jni/psm/PsmPartition;");
 	jobject partition = (*jniEnv)->CallStaticObjectMethod(jniEnv, psmPartitionManagerClass, method, nodeNum, partNum);
 	if (partition == NULL)
 	{
-		method = (*jniEnv)->GetStaticMethodID(jniEnv, psmPartitionManagerClass, "newPartition","(JI)Ljni/test/psm/PsmPartition;");
+		method = (*jniEnv)->GetStaticMethodID(jniEnv, psmPartitionManagerClass, "newPartition","(JI)Lcgr_jni/psm/PsmPartition;");
 		partition = (*jniEnv)->CallStaticObjectMethod(jniEnv, psmPartitionManagerClass, method, nodeNum, partNum);
 	}
 	return (PsmPartition) partition;
@@ -30,20 +36,36 @@ PsmPartition newIonPsmPartition(long nodeNum, int partNum)
 {
 	JNIEnv * jniEnv = getThreadLocalEnv();
 	jclass psmPartitionManagerClass = (*jniEnv)->FindClass(jniEnv, PsmPartitionManagerClass);
-	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv, psmPartitionManagerClass, "newPartition","(JI)Ljni/test/psm/PsmPartition;");
+	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv, psmPartitionManagerClass, "newPartition","(JI)Lcgr_jni/psm/PsmPartition;");
 	jobject partition = (*jniEnv)->CallStaticObjectMethod(jniEnv, psmPartitionManagerClass, method, nodeNum, partNum);
 	return (PsmPartition) partition;
+}
+
+void eraseIonPsmPartition(long nodeNum, int partNum)
+{
+	JNIEnv * jniEnv = getThreadLocalEnv();
+	jclass psmPartitionManagerClass = (*jniEnv)->FindClass(jniEnv, PsmPartitionManagerClass);
+	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv, psmPartitionManagerClass, "erasePartition","(JI)V");
+	(*jniEnv)->CallStaticVoidMethod(jniEnv, psmPartitionManagerClass, method, nodeNum, partNum);
+}
+
+void initIonWm()
+{
+	newIonPsmPartition(getNodeNum(), WM_PSM_PARTITION);
+}
+void initIonSdr()
+{
+	newIonPsmPartition(getNodeNum(), SDR_PSM_PARTITION);
 }
 
 IonDB * createIonDb(Sdr ionsdr, IonDB * iondbPtr)
 {
 	if (iondbPtr == NULL)
 		iondbPtr = (IonDB*) malloc(sizeof(IonDB));
-	#define iondbBuf (*iondbPtr)
-	memset((char *) &iondbBuf, 0, sizeof(IonDB));
-	iondbBuf.ownNodeNbr = getNodeNum();
-	iondbBuf.productionRate = -1;	/*	Unknown.	*/
-	iondbBuf.consumptionRate = -1;	/*	Unknown.	*/
+	memset((char *) iondbPtr, 0, sizeof(IonDB));
+	iondbPtr->ownNodeNbr = getNodeNum();
+	iondbPtr->productionRate = -1;	/*	Unknown.	*/
+	iondbPtr->consumptionRate = -1;	/*	Unknown.	*/
 	//limit = (sdr_heap_size(ionsdr) / 100) * (100 - ION_SEQUESTERED);
 
 	/*	By default, let outbound ZCOs occupy up to
@@ -58,12 +80,26 @@ IonDB * createIonDb(Sdr ionsdr, IonDB * iondbPtr)
 
 	//iondbBuf.occupancyCeiling = zco_get_max_file_occupancy(ionsdr, ZcoOutbound);
 	//iondbBuf.occupancyCeiling += (limit/4);
-	iondbBuf.contacts = sdr_list_create(ionsdr);
-	iondbBuf.ranges = sdr_list_create(ionsdr);
-	iondbBuf.maxClockError = 0;
-	iondbBuf.clockIsSynchronized = 1;
+	iondbPtr->contacts = sdr_list_create(ionsdr);
+	iondbPtr->ranges = sdr_list_create(ionsdr);
+	iondbPtr->maxClockError = 0;
+	iondbPtr->clockIsSynchronized = 1;
     //memcpy(&iondbBuf.parmcopy, parms, sizeof(IonParms));
 	return iondbPtr;
+}
+
+void destroyIonDb(char *iondbName)
+{
+	Sdr sdr = getIonsdr();
+	IonDB iondbBuf;
+	Object iondbObj;
+	iondbObj = sdr_find(sdr, iondbName, NULL);
+	if (iondbObj == NULL)
+		return;
+	sdr_read(sdr, (char *) &iondbBuf, iondbObj, sizeof(IonDB));
+	sdr_list_destroy(sdr, iondbBuf.contacts, NULL, NULL);
+	sdr_list_destroy(sdr, iondbBuf.ranges, NULL, NULL);
+	sdr_free(sdr, iondbObj);
 }
 
 IonVdb * createIonVdb(char * ionvdbName)
@@ -127,5 +163,91 @@ IonVdb * createIonVdb(char * ionvdbName)
 	sdr_exit_xn(sdr);	/*	Unlock memory.		*/
 
 	return vdb;
+}
+
+static void	destroyIonNode(PsmPartition partition, PsmAddress eltData,
+			void *argument)
+{
+	IonNode	*node = (IonNode *) psp(partition, eltData);
+
+	sm_list_destroy(partition, node->embargoes, rfx_erase_data, NULL);
+	psm_free(partition, eltData);
+}
+
+static void	dropVdb(PsmPartition wm, PsmAddress vdbAddress)
+{
+	IonVdb		*vdb;
+	int		i;
+	PsmAddress	elt;
+	PsmAddress	nextElt;
+	PsmAddress	addr;
+	Requisition	*req;
+
+	vdb = (IonVdb *) psp(wm, vdbAddress);
+
+	/*	Time-ordered list of probes can simply be destroyed.	*/
+
+	sm_list_destroy(wm, vdb->probes, rfx_erase_data, NULL);
+
+	/*	Three of the red-black tables in the Vdb are
+	 *	emptied and recreated by rfx_stop().  Destroy them.	*/
+
+	sm_rbt_destroy(wm, vdb->contactIndex, NULL, NULL);
+	sm_rbt_destroy(wm, vdb->rangeIndex, NULL, NULL);
+	sm_rbt_destroy(wm, vdb->timeline, NULL, NULL);
+
+	/*	cgr_stop clears all routing objects, so nodes and
+	 *	neighbors themselves can now be deleted.		*/
+
+	sm_rbt_destroy(wm, vdb->nodes, destroyIonNode, NULL);
+	sm_rbt_destroy(wm, vdb->neighbors, rfx_erase_data, NULL);
+
+	/*	Safely shut down the ZCO flow control system.		*/
+
+	for (i = 0; i < 1; i++)
+	{
+		for (elt = sm_list_first(wm, vdb->requisitions[i]); elt;
+				elt = nextElt)
+		{
+			nextElt = sm_list_next(wm, elt);
+			addr = sm_list_data(wm, elt);
+			req = (Requisition *) psp(wm, addr);
+			sm_SemEnd(req->semaphore);
+			psm_free(wm, addr);
+			sm_list_delete(wm, elt, NULL, NULL);
+		}
+	}
+
+	//zco_unregister_callback();
+}
+
+static void	ionDropVdb(char * vdbName)
+{
+	PsmPartition	wm = getIonwm();
+	char		*ionvdbName = vdbName;
+	PsmAddress	vdbAddress;
+	PsmAddress	elt;
+
+	if (psm_locate(wm, ionvdbName, &vdbAddress, &elt) < 0)
+	{
+		putErrmsg("Failed searching for vdb.", NULL);
+		return;
+	}
+
+	if (elt)
+	{
+		dropVdb(wm, vdbAddress);	/*	Destroy Vdb.	*/
+		if (psm_uncatlg(wm, ionvdbName) < 0)
+		{
+			putErrmsg("Failed uncataloging vdb.", NULL);
+		}
+		psm_free(wm, vdbAddress);
+	}
+
+}
+
+void destroyIonVdb(char * ionvdbName)
+{
+	ionDropVdb(ionvdbName);
 }
 

@@ -1,4 +1,4 @@
-package jni.test.psm;
+package cgr_jni.psm;
 
 public class PsmAddress implements Comparable<PsmAddress>{
 	private long value;		// the psm address

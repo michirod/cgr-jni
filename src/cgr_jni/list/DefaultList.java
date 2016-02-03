@@ -1,4 +1,4 @@
-package jni.test.list;
+package cgr_jni.list;
 
 import java.util.LinkedList;
 import java.util.concurrent.locks.Lock;

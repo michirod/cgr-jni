@@ -1,10 +1,9 @@
-package cgr;
+package cgr_jni;
 
 import routing.ContactGraphRouter;
 import routing.ContactGraphRouter.Outduct;
 import core.DTNHost;
 import core.Message;
-import core.SimScenario;
 
 public class IONInterface {	
 
@@ -57,6 +56,11 @@ public class IONInterface {
 	static String getOutductName(Outduct jOutduct)
 	{
 		return "" + jOutduct.getHost().getAddress();
+	}
+	
+	static long getOutductTotalEnququedBytes(Outduct jOutduct)
+	{
+		return jOutduct.getTotalEnqueuedBytes();
 	}
 	
 	static Outduct getONEOutductToNode(long localNodeNbr, long toNodeNbr){

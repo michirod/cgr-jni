@@ -18,9 +18,9 @@
 #include <jni.h>
 
 #include "platform.h"
-#define PsmPartitionClass "jni/test/psm/PsmPartition"
-#define PsmAddressClass "jni/test/psm/PsmAddress"
-#define PsmPartitionManagerClass "jni/test/psm/PsmPartitionManager"
+#define PsmPartitionClass "cgr_jni/psm/PsmPartition"
+#define PsmAddressClass "cgr_jni/psm/PsmAddress"
+#define PsmPartitionManagerClass "cgr_jni/psm/PsmPartitionManager"
 
 typedef struct
 {

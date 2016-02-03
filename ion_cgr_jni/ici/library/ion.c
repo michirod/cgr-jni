@@ -4,10 +4,11 @@
  *  Created on: 18 nov 2015
  *      Author: michele
  */
-#include "ion.h"
 
 #include <pthread.h>
 
+#include "ion.h"
+#include "rfx.h"
 #include "platform.h"
 #include "shared.h"
 #include "utils.h"
@@ -32,6 +33,11 @@ static char	*_iondbName()
 static char	*_ionvdbName()
 {
 	return "ionvdb";
+}
+
+char * getIonvdbName()
+{
+	return _ionvdbName();
 }
 
 IonVdb	*getIonVdb()
@@ -62,14 +68,22 @@ IonVdb	*getIonVdb()
 
 PsmPartition getIonwm()
 {
-	return getIonPsmPartition(getNodeNum(), 0);
+	return getIonPsmPartition(getNodeNum(), WM_PSM_PARTITION);
+}
+static void destroyIonwm()
+{
+	eraseIonPsmPartition(getNodeNum(), WM_PSM_PARTITION);
 }
 
 Sdr	getIonsdr()
 {
-	//TODO stub
-	return getIonPsmPartition(getNodeNum(), 1);
+	return getIonPsmPartition(getNodeNum(), SDR_PSM_PARTITION);
 }
+static void destroyIonsdr()
+{
+	eraseIonPsmPartition(getNodeNum(), SDR_PSM_PARTITION);
+}
+
 uvast	getOwnNodeNbr()
 {
 	return getNodeNum();
@@ -513,4 +527,12 @@ int	ionInitialize(IonParms *parms, uvast ownNodeNbr)
 		return -1;
 	}
 	return 0;
+}
+
+void	ionTerminate()
+{
+	destroyIonVdb(_ionvdbName());
+	destroyIonDb(_iondbName());
+	destroyIonsdr();
+	destroyIonwm();
 }

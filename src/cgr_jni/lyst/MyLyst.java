@@ -1,4 +1,4 @@
-package jni.test.lyst;
+package cgr_jni.lyst;
 
 import java.util.LinkedList;
 /**

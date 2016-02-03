@@ -1,4 +1,4 @@
-package jni.test.psm;
+package cgr_jni.psm;
 
 import java.util.HashMap;
 

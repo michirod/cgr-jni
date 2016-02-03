@@ -1,4 +1,4 @@
-package jni.test.list;
+package cgr_jni.list;
 
 public class DefaultListElt {
 	

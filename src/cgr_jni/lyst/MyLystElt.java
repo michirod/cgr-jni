@@ -1,4 +1,4 @@
-package jni.test.lyst;
+package cgr_jni.lyst;
 
 /**
  * Classe che implementa un elemento di LinkedList

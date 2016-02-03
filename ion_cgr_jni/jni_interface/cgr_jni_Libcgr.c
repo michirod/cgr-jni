@@ -17,16 +17,18 @@
 #include "normal_c.h"
 #include "ONEtoION_interface.h"
 
-JNIEXPORT jint JNICALL Java_cgr_Libcgr_initializeNode(JNIEnv *env, jclass thisObj, jint nodeNum)
+
+JavaVM *javaVM = NULL;
+
+JNIEXPORT jint JNICALL Java_cgr_1jni_Libcgr_initializeNode(JNIEnv *env, jclass thisObj, jint nodeNum)
 {
 	jint result;
 	if (javaVM == NULL)
 		(*env)->GetJavaVM(env, &javaVM);
 	init_global();
 	setThreadLocalEnv(env);
-	uvast unodeNum = (uvast) nodeNum;
-	setNodeNum(unodeNum);
-	result = ionInitialize(NULL, unodeNum);
+	init_node((uvast) nodeNum);
+	result = ionInitialize(NULL, (uvast) nodeNum);
 	if (result == 0)
 		cgr_start();
 	else result = -10;
@@ -34,7 +36,19 @@ JNIEXPORT jint JNICALL Java_cgr_Libcgr_initializeNode(JNIEnv *env, jclass thisOb
 	return result;
 }
 
-JNIEXPORT jint JNICALL Java_cgr_Libcgr_readContactPlan(JNIEnv *env, jclass thisObj, jint nodeNum, jstring fileName)
+JNIEXPORT jint JNICALL Java_cgr_1jni_Libcgr_finalizeNode(JNIEnv *env, jclass thisObj, jint nodeNum)
+{
+
+	if (javaVM == NULL)
+		(*env)->GetJavaVM(env, &javaVM);
+	setThreadLocalEnv(env);
+	setNodeNum(nodeNum);
+	//cgr_stop();
+	ionTerminate();
+	return 0;
+}
+
+JNIEXPORT jint JNICALL Java_cgr_1jni_Libcgr_readContactPlan(JNIEnv *env, jclass thisObj, jint nodeNum, jstring fileName)
 {
 	jint result;
 	if (javaVM == NULL)
@@ -49,7 +63,7 @@ JNIEXPORT jint JNICALL Java_cgr_Libcgr_readContactPlan(JNIEnv *env, jclass thisO
 	return result;
 }
 
-JNIEXPORT jint JNICALL Java_cgr_Libcgr_processLine(JNIEnv *env, jclass thisObj, jint nodeNum, jstring line)
+JNIEXPORT jint JNICALL Java_cgr_1jni_Libcgr_processLine(JNIEnv *env, jclass thisObj, jint nodeNum, jstring line)
 {
 	jint result;
 	if (javaVM == NULL)
@@ -64,7 +78,7 @@ JNIEXPORT jint JNICALL Java_cgr_Libcgr_processLine(JNIEnv *env, jclass thisObj, 
 	return result;
 }
 
-JNIEXPORT jint JNICALL Java_cgr_Libcgr_cgrForward(JNIEnv *env, jclass thisObj, jint nodeNum, jobject message, jlong terminusNodeNbr)
+JNIEXPORT jint JNICALL Java_cgr_1jni_Libcgr_cgrForward(JNIEnv *env, jclass thisObj, jint nodeNum, jobject message, jlong terminusNodeNbr)
 {
 	jint result;
 	if (javaVM == NULL)
@@ -77,7 +91,7 @@ JNIEXPORT jint JNICALL Java_cgr_Libcgr_cgrForward(JNIEnv *env, jclass thisObj, j
 	return result;
 }
 
-JNIEXPORT jint JNICALL Java_cgr_Libcgr_genericTest  (JNIEnv *env, jclass thisObj, jint nodeNum, jobject message)
+JNIEXPORT jint JNICALL Java_cgr_1jni_Libcgr_genericTest  (JNIEnv *env, jclass thisObj, jint nodeNum, jobject message)
 {
 	jint result;
 	if (javaVM == NULL)

@@ -19,7 +19,6 @@
  * Faccio qualche conversione e invoco i metodi delle librerie C
  */
 
-JavaVM *javaVM = NULL;
 
 JNIEXPORT jint JNICALL Java_jni_test_JNITest_doSomething(JNIEnv *env, jobject thisObj, jlong nodeNum, jstring string)
 {

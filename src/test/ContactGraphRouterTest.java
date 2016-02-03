@@ -6,8 +6,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import cgr.Libcgr;
-import cgr.Utils;
+import cgr_jni.Libcgr;
+import cgr_jni.Utils;
 import core.DTNHost;
 import core.Message;
 import core.SimClock;
@@ -21,7 +21,6 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 	private static final String CONTACT_PLAN_FILE = "resources/contactPlan_prova.txt";
 	private static final int NROF_HOSTS = 6;
 	private ContactGraphRouter r1,r2,r3,r4,r5,r6;
-	private Set<DTNHost> hosts = new HashSet<>();
 	private static ContactGraphRouterTest instance = null;
 	
 	@Override
@@ -55,8 +54,18 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 		
 		//test visuale
 		r3.processLine("l range");
-		r3.processLine("l contact");
-			
+		r3.processLine("l contact");	
+	}
+	
+	@Override
+	public void tearDown() throws Exception 
+	{
+		r1.finalize();
+		r2.finalize();
+		r3.finalize();
+		r4.finalize();
+		r5.finalize();
+		r6.finalize();
 	}
 	
 	public void testRouting1(){
@@ -108,6 +117,40 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 		assertEquals(true, r2.isDeliveredMessage(m1));
 		
 		}
+	
+	public void testRouter2()
+	{
+		Message m;
+		int i;
+		disconnect(h1);
+		for (i = 0; i < 20; i++)
+		{
+			m = new Message(h1, getNodeFromNbr((i % 5) + 1), "MSG_" + i, 10);
+			h1.createNewMessage(m);
+		}
+		updateAllNodes();
+		clock.advance(11);
+		h1.forceConnection(h2, null, true);
+		h2.forceConnection(h3, null, true);
+		h3.forceConnection(h4, null, true);
+		h4.forceConnection(h5, null, true);
+		h5.forceConnection(h6, null, true);
+
+		for (int j = 0; j < 2000; j++)
+		{
+			clock.advance(1);
+			updateAllNodes();
+		}
+		
+		int deliveredCount = 0;
+		for (DTNHost h : Utils.getAllNodes())
+		{
+			ContactGraphRouter r = (ContactGraphRouter) h.getRouter();
+			deliveredCount += r.getDeliveredCount();
+		}
+		
+		assertEquals(20, deliveredCount);
+	}
 	
 	public static ContactGraphRouterTest getInstance()
 	{

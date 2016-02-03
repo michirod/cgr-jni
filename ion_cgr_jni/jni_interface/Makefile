@@ -1,6 +1,6 @@
 
 # Define a variable for classpath
-CLASS_PATH = ../../bin/:../../bin/cgr:/home/michele/workspacemars/ONE/bin
+CLASS_PATH = ../../bin/:../../bin/cgr_jni:/home/michele/workspacemars/ONE/bin
 
 #Define java includes
 J_INCLUDES = -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/linux
@@ -23,7 +23,7 @@ jni_int.o : Libcgr.h
 	gcc -c $(OPT) $(J_INCLUDES) *.c
 	
 Libcgr.h : Libcgr.class
-	javah -classpath $(CLASS_PATH) cgr.$*
+	javah -classpath $(CLASS_PATH) cgr_jni.$*
 	
 clean :
 	rm -f *.o *.so

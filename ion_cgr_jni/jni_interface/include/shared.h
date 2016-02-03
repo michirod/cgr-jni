@@ -23,5 +23,6 @@ extern JavaVM * javaVM;
 extern int initialized;
 extern pthread_key_t nodeNum_key;
 extern pthread_key_t jniEnv_key;
+extern pthread_key_t interfaceInfo_key;
 
 #endif /* JNI_SHARED_H_ */

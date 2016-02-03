@@ -15,9 +15,32 @@
 
 const char * jMessageClass = "core/Message";
 const char * jOuductClass = "routing/ContactGraphRouting$Outduct";
-const char * ONEtoION_interfaceClass = "cgr/IONInterface";
-jobject currentMessage;
-Object outductList = NULL;
+const char * ONEtoION_interfaceClass = "cgr_jni/IONInterface";
+
+pthread_key_t interfaceInfo_key;
+
+struct InterfaceInfo_t {
+	jobject currentMessage;
+	Object outductList;
+	int forwardResult;
+};
+typedef struct InterfaceInfo_t InterfaceInfo;
+
+InterfaceInfo * interfaceInfo;
+
+
+static InterfaceInfo * setInterfaceInfo(InterfaceInfo * interfaceInfo)
+{
+	if ((pthread_getspecific(interfaceInfo_key)) == NULL)
+	{
+		pthread_setspecific(interfaceInfo_key, interfaceInfo);
+	}
+	return interfaceInfo;
+}
+static InterfaceInfo * getInterfaceInfo()
+{
+	return pthread_getspecific(interfaceInfo_key);
+}
 
 static uvast getMessageSenderNbr(jobject message)
 {
@@ -128,6 +151,15 @@ static jobject getONEOutductToNode(uvast localNodeNbr, uvast toNodeNbr)
 	return result;
 }
 
+static long getOutductTotalEnqueuedBytes(jobject jOutduct)
+{
+	JNIEnv * jniEnv = getThreadLocalEnv();
+	jclass interfaceClass = (*jniEnv)->FindClass(jniEnv, ONEtoION_interfaceClass);
+	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv, interfaceClass, "getOutductTotalEnququedBytes","(Lrouting/ContactGraphRouter$Outduct;)J");
+	jlong result = (*jniEnv)->CallStaticLongMethod(jniEnv, interfaceClass, method, jOutduct);
+	return (long) result;
+}
+
 static jobject cloneMessage(jobject jMessage)
 {
 	return NULL;
@@ -183,16 +215,26 @@ void ion_bundle(Bundle * bundle, jobject message)
  */
 void ion_outduct(Outduct * duct, jobject jOutduct)
 {
+	long totEnqueued;
 	memset(duct, 0, sizeof(Outduct));
 	strcpy(duct->name, getOutductName(jOutduct));
 	duct->blocked = isOutductBlocked(jOutduct);
 	duct->maxPayloadLen = getMaxPayloadLen(jOutduct);
+	totEnqueued = getOutductTotalEnqueuedBytes(jOutduct);
+	loadScalar(&(duct->stdBacklog), totEnqueued);
 	strncpy(duct->name, getOutductName(jOutduct), MAX_CL_DUCT_NAME_LEN);
 }
 
 void init_ouduct_list()
 {
-	outductList = sdr_list_create(getIonsdr());
+	interfaceInfo->outductList = sdr_list_create(getIonsdr());
+}
+void wipe_outduct_list()
+{
+	Sdr sdr = getIonsdr();
+	if (interfaceInfo->outductList != NULL)
+		sdr_list_destroy(sdr, interfaceInfo->outductList, NULL, NULL);
+	interfaceInfo->outductList = NULL;
 }
 
 /**
@@ -212,17 +254,21 @@ int	getONEDirective(uvast nodeNbr, Object plans, Bundle *bundle,
 	if (jOutduct != NULL)
 	{
 		// init outduct list if not yet initialized
-		if (outductList == NULL)
+		if (interfaceInfo->outductList == NULL)
 			init_ouduct_list();
-		// allocate memory for outduct. Must be freed when done.
-		outduct = malloc(sizeof(Outduct));
-		// convert java outduct object into ION Outduct struct
-		ion_outduct(outduct, jOutduct);
-		// init sdr outduct object
-		outductObj = sdr_malloc(getIonsdr(), sizeof(Outduct));
-		sdr_write(getIonsdr(), outductObj, (char*)outduct, sizeof(Outduct));
-		// put outduct into sdr list
-		outductElt = sdr_list_insert_first(getIonsdr(), outductList, outductObj);
+		if ((outductElt = sdr_find(getIonsdr(), getOutductName(jOutduct), NULL)) == 0)
+		{
+			// allocate memory for outduct. Must be freed when done.
+			outduct = malloc(sizeof(Outduct));
+			// convert java outduct object into ION Outduct struct
+			ion_outduct(outduct, jOutduct);
+			// init sdr outduct object
+			outductObj = sdr_malloc(getIonsdr(), sizeof(Outduct));
+			sdr_write(getIonsdr(), outductObj, (char*)outduct, sizeof(Outduct));
+			// put outduct into sdr list
+			outductElt = sdr_list_insert_first(getIonsdr(), interfaceInfo->outductList, outductObj);
+			sdr_catlg(getIonsdr(), getOutductName(jOutduct), 0, outductElt);
+		}
 		directive->outductElt = outductElt;
 		return 1;
 	}
@@ -234,12 +280,22 @@ int cgrForwardONE(jobject bundleONE, jlong terminusNodeNbr)
 	Bundle *bundle;
 	Object bundleObj;
 	Object plans = (Object) 42; // this value will never be read but it is needed to pass the null check in cgr_forward()
-	currentMessage = bundleONE;
+	int result;
+	interfaceInfo = malloc(sizeof(InterfaceInfo));
+	interfaceInfo->forwardResult = 0;
+	interfaceInfo->currentMessage = bundleONE;
+	interfaceInfo->outductList = NULL;
+	setInterfaceInfo(interfaceInfo);
 	bundle = malloc(sizeof(Bundle));
 	ion_bundle(bundle, bundleONE);
 	bundleObj = sdr_malloc(getIonsdr(), sizeof(Bundle));
 	sdr_write(getIonsdr(), bundleObj, (char*)bundle, sizeof(Bundle));
-	return cgr_forward(bundle, bundleObj, (uvast) terminusNodeNbr, plans, getONEDirective, NULL);
+	result = cgr_forward(bundle, bundleObj, (uvast) terminusNodeNbr, plans, getONEDirective, NULL);
+	wipe_outduct_list();
+	if (result >= 0)
+		result = interfaceInfo->forwardResult;
+	free(interfaceInfo);
+	return result;
 }
 
 int bpEnqueONE(FwdDirective *directive, Bundle *bundle, Object bundleObj)
@@ -249,12 +305,13 @@ int bpEnqueONE(FwdDirective *directive, Bundle *bundle, Object bundleObj)
 	Outduct outduct;
 	BpEvent forfeitEvent;
 	sdr_read(getIonsdr(), (char*) &forfeitEvent, bundle->overdueElt, sizeof(BpEvent));
-	updateMessageForfeitTime(currentMessage, forfeitEvent.time);
+	updateMessageForfeitTime(interfaceInfo->currentMessage, forfeitEvent.time);
 	localNodeNbr = getNodeNum();
 	ductAddr = sdr_list_data(getIonsdr(), directive->outductElt);
 	sdr_read(getIonsdr(), (char*)&outduct, ductAddr, sizeof(Outduct));
 	proximateNodeNbr = atol(outduct.name);
-	insertBundleIntoOutduct(localNodeNbr, currentMessage, proximateNodeNbr);
+	insertBundleIntoOutduct(localNodeNbr, interfaceInfo->currentMessage, proximateNodeNbr);
+	interfaceInfo->forwardResult = proximateNodeNbr;
 	return 0;
 }
 
@@ -267,7 +324,7 @@ int testMessage(jobject message)
 {
 	Bundle *bundle;
 	Object bundleObj;
-	currentMessage = message;
+	interfaceInfo->currentMessage = message;
 	bundle = malloc(sizeof(Bundle));
 	ion_bundle(bundle, message);
 	bundleObj = sdr_malloc(getIonsdr(), sizeof(Bundle));

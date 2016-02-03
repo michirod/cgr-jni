@@ -1,4 +1,4 @@
-package cgr;
+package cgr_jni;
 
 import java.util.Collection;
 

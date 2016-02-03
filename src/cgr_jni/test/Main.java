@@ -1,4 +1,4 @@
-package jni.test;
+package cgr_jni.test;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;

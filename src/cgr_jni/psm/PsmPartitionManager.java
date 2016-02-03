@@ -1,4 +1,4 @@
-package jni.test.psm;
+package cgr_jni.psm;
 
 import java.util.HashMap;
 
@@ -30,7 +30,7 @@ public class PsmPartitionManager {
 			return null;
 	}
 	
-	public static void removePartition(long nodeNum, int partNum)
+	public static void erasePartition(long nodeNum, int partNum)
 	{
 		PsmNodePartitionManager nodeMan = nodes.get(nodeNum);
 		if (nodeMan != null)

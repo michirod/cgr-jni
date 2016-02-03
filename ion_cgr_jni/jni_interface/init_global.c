@@ -16,6 +16,9 @@
 #include "psm.h"
 #include "utils.h"
 
+#define WM_PSM_PARTITION 0
+#define SDR_PSM_PARTITION 1
+
 static time_t ONEreferenceTime = 0;
 pthread_key_t nodeNum_key;
 pthread_key_t jniEnv_key;
@@ -49,8 +52,12 @@ void init_node(long nodeNum)
 {
 	init_global();
 	setNodeNum(nodeNum);
-	newIonPsmPartition(nodeNum, 1);
-	newIonPsmPartition(nodeNum, 2);
+	initIonWm();
+	initIonSdr();
+}
+
+void destroy_node()
+{
 
 }
 

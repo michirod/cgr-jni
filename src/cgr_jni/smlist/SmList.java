@@ -1,7 +1,7 @@
-package jni.test.smlist;
+package cgr_jni.smlist;
 
-import jni.test.list.DefaultList;
-import jni.test.psm.PsmAddress;
+import cgr_jni.list.DefaultList;
+import cgr_jni.psm.PsmAddress;
 
 public class SmList extends DefaultList{
 	
