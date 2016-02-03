@@ -154,6 +154,209 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 		assertEquals(20, deliveredCount);
 	}
 	
+	public void testRouting3(){
+		Message m1 = new Message(h1,h3, msgId1, 10);
+		h1.createNewMessage(m1);
+		Message m2 = new Message(h2,h4, msgId2, 10);
+		h2.createNewMessage(m2);
+		Message m3 = new Message(h3,h5, msgId3, 10);
+		h3.createNewMessage(m3);
+		Message m4 = new Message(h4,h6, msgId4, 10); 
+		h4.createNewMessage(m4);
+		Message m5 = new Message(h5,h6, msgId5, 10);
+		h5.createNewMessage(m5);
+		Message m6 = new Message(h6,h1, "pippo", 10);
+		h6.createNewMessage(m6);
+		checkCreates(6);
+		
+		updateAllNodes();
+		
+ 		assertEquals(r1.getOutducts().get(h2).getQueue().size(), 1);
+		assertEquals(r2.getOutducts().get(h3).getQueue().size(), 1);
+		assertEquals(r3.getOutducts().get(h4).getQueue().size(), 1);
+		assertEquals(r4.getOutducts().get(h5).getQueue().size(), 1);
+		assertEquals(r5.getOutducts().get(h6).getQueue().size(), 1);
+		assertEquals(r6.getOutducts().get(h1).getQueue().size(), 1);
+		//1st round, contact 10-30
+		clock.advance(10);
+		h1.forceConnection(h2, null, true);
+		
+
+		for (int i = 0; i < 20; i++)
+		{
+			clock.advance(1);
+			updateAllNodes();
+		}
+		//inserisco la disconnect 
+		
+		disconnect(h1);
+		disconnect(h2);		
+		
+		assertEquals(r1.getOutducts().get(h2).getQueue().size(), 0);
+		assertEquals(r2.getOutducts().get(h3).getQueue().size(), 2);
+		assertEquals(r3.getOutducts().get(h4).getQueue().size(), 1);
+		assertEquals(r4.getOutducts().get(h5).getQueue().size(), 1);
+		assertEquals(r5.getOutducts().get(h6).getQueue().size(), 1);
+		assertEquals(r6.getOutducts().get(h1).getQueue().size(), 1);	
+		
+		//no message delivered, 1st deliver h3 no contact available
+		
+		//2nd round contact 40-80
+		for (int i = 0; i < 10; i++)
+		{
+			clock.advance(1);
+			updateAllNodes();
+		}	
+		
+		h2.forceConnection(h3, null, true);		
+
+		for (int i = 0; i < 40; i++)
+		{
+			clock.advance(1);
+			updateAllNodes();
+		}
+		
+		
+		disconnect(h2);
+		disconnect(h3);
+		
+		
+		assertEquals(r1.getOutducts().get(h2).getQueue().size(), 0);
+		assertEquals(r2.getOutducts().get(h3).getQueue().size(), 0);
+		assertEquals(r3.getOutducts().get(h4).getQueue().size(), 2);
+		assertEquals(r4.getOutducts().get(h5).getQueue().size(), 1);
+		assertEquals(r5.getOutducts().get(h6).getQueue().size(), 1);
+		assertEquals(r6.getOutducts().get(h1).getQueue().size(), 1);
+		
+		//m1 delivered  
+		assertEquals(true, r3.isDeliveredMessage(m1));
+		
+		//3rd round contact 100-150
+		
+		for (int i = 0; i < 20; i++)
+		{
+			clock.advance(1);
+			updateAllNodes();
+		}		
+		
+		h3.forceConnection(h4, null, true);		
+
+		for (int i = 0; i < 50; i++)
+		{
+			clock.advance(1);
+			updateAllNodes();
+		}		
+		
+		disconnect(h3);
+		disconnect(h4);		
+		
+		assertEquals(r1.getOutducts().get(h2).getQueue().size(), 0);
+		assertEquals(r2.getOutducts().get(h3).getQueue().size(), 0);
+		assertEquals(r3.getOutducts().get(h4).getQueue().size(), 0);
+		assertEquals(r4.getOutducts().get(h5).getQueue().size(), 2);
+		assertEquals(r5.getOutducts().get(h6).getQueue().size(), 1);
+		assertEquals(r6.getOutducts().get(h1).getQueue().size(), 1);
+		
+		//m2 delivered
+		
+		assertEquals(true, r4.isDeliveredMessage(m2));
+		//4th round contact 170-200
+		
+		for (int i = 0; i < 20; i++)
+		{
+			clock.advance(1);
+			updateAllNodes();
+		}
+		
+		
+		h4.forceConnection(h5, null, true);
+		
+		for (int i = 0; i < 30; i++)
+		{
+			clock.advance(1);
+			updateAllNodes();
+		}
+		
+		
+		disconnect(h4);
+		disconnect(h5);
+		
+		
+		assertEquals(r1.getOutducts().get(h2).getQueue().size(), 0);
+		assertEquals(r2.getOutducts().get(h3).getQueue().size(), 0);
+		assertEquals(r3.getOutducts().get(h4).getQueue().size(), 0);
+		assertEquals(r4.getOutducts().get(h5).getQueue().size(), 0);
+		assertEquals(r5.getOutducts().get(h6).getQueue().size(), 2);
+		assertEquals(r6.getOutducts().get(h1).getQueue().size(), 1);
+		
+		//m3 delivered
+		assertEquals(true, r5.isDeliveredMessage(m3));
+		//5th round contact 250-300
+		
+		for (int i = 0; i < 50; i++)
+		{
+			clock.advance(1);
+			updateAllNodes();
+		}
+		
+		
+		h5.forceConnection(h6, null, true);
+		
+
+		for (int i = 0; i < 50; i++)
+		{
+			clock.advance(1);
+			updateAllNodes();
+		}
+		
+		
+		disconnect(h5);
+		disconnect(h6);
+		
+		assertEquals(r1.getOutducts().get(h2).getQueue().size(), 0);
+		assertEquals(r2.getOutducts().get(h3).getQueue().size(), 0);
+		assertEquals(r3.getOutducts().get(h4).getQueue().size(), 0);
+		assertEquals(r4.getOutducts().get(h5).getQueue().size(), 0);
+		assertEquals(r5.getOutducts().get(h6).getQueue().size(), 0);
+		assertEquals(r6.getOutducts().get(h1).getQueue().size(), 1);
+		
+		//m4 delivered
+		assertEquals(true, r6.isDeliveredMessage(m4));
+		//m5 delivered
+		assertEquals(true, r6.isDeliveredMessage(m5));
+		//6th round
+		
+		for (int i = 0; i < 20; i++)
+		{
+			clock.advance(1);
+			updateAllNodes();
+		}
+		
+		
+		h6.forceConnection(h1, null, true);
+
+		for (int i = 0; i < 60; i++)
+		{
+			clock.advance(1);
+			updateAllNodes();
+		}
+		
+		disconnect(h1);
+		disconnect(h6);
+		
+		assertEquals(r1.getOutducts().get(h2).getQueue().size(), 0);
+		assertEquals(r2.getOutducts().get(h3).getQueue().size(), 0);
+		assertEquals(r3.getOutducts().get(h4).getQueue().size(), 0);
+		assertEquals(r4.getOutducts().get(h5).getQueue().size(), 0);
+		assertEquals(r5.getOutducts().get(h6).getQueue().size(), 0);
+		assertEquals(r6.getOutducts().get(h1).getQueue().size(), 0);
+		
+		//m6 delivered
+		assertEquals(true, r1.isDeliveredMessage(m6));
+		
+
+	}
+	
 	public static ContactGraphRouterTest getInstance()
 	{
 		return instance;
