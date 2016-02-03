@@ -14,9 +14,14 @@ OPT = -g -Wall -fPIC $(INCLUDES)
 
 # Define a virtual path for .class in the bin directory
 vpath %.class $(CLASS_PATH)
-VPATH = ../../bin/cgr
 
+ifeq ($(strip $(ONE_CLASSPATH)),)
+all: help
+else ifeq ($(strip $(JAVA_HOME)),)
+all: java_home_notset
+else 
 all : libcgr_jni.so
+endif
 
 libcgr_jni.so : bp.o ici.o jni_interface.o
 	gcc $(LIB) -Wl,--no-undefined -Wall -fPIC -shared -o $@ bp/*.o ici/*.o jni_interface/*.o -pthread
@@ -39,7 +44,7 @@ ici.o :
 	make -C ici
 	
 jni_interface.o :
-	make -C jni_interface
+	make -C jni_interface ONE_CLASSPATH=$(ONE_CLASSPATH)
 	
 # $* matches the target filename without the extension
 JNITest.h : JNITest.class
@@ -50,3 +55,13 @@ clean:
 	make -C ici clean
 	make -C jni_interface clean
 	rm -rf *.so *.o
+	
+help:
+	@echo "Usage:"
+	@echo "make ONE_CLASSPATH=<ONE_classpath>"
+
+java_home_notset:
+	@echo "ERROR:"
+	@echo "env var JAVA_HOME needs to be set"
+
+	

@@ -1,6 +1,6 @@
 
 # Define a variable for classpath
-CLASS_PATH = ../../bin/:../../bin/cgr_jni:/home/michele/workspacemars/ONE/bin
+CLASS_PATH = ../../bin/:../../bin/cgr_jni:$(ONE_CLASSPATH)
 
 #Define java includes
 J_INCLUDES = -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/linux
