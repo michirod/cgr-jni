@@ -128,6 +128,7 @@ public class ContactGraphRouter extends ActiveRouter {
 
 	protected ContactGraphRouter(ActiveRouter r) {
 		super(r);
+		contactPlanPath = ((ContactGraphRouter) r).contactPlanPath;
 	}
 	
 	public ContactGraphRouter(Settings s) {
