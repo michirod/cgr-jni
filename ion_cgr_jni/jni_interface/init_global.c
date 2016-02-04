@@ -37,28 +37,24 @@ void init_global()
 	}
 }
 
-pthread_key_t get_nodeNum_key()
+void finalize_global()
 {
-	init_global();
-	return nodeNum_key;
-}
-pthread_key_t get_jniEnv_key()
-{
-	init_global();
-	return jniEnv_key;
+	pthread_key_delete(nodeNum_key);
+	pthread_key_delete(jniEnv_key);
+	initialized = 0;
 }
 
-void init_node(long nodeNum)
+void init_node()
 {
 	init_global();
-	setNodeNum(nodeNum);
 	initIonWm();
 	initIonSdr();
 }
 
 void destroy_node()
 {
-
+	destroyIonWm();
+	destroyIonSdr();
 }
 
 long getNodeNum()

@@ -35,6 +35,13 @@ static char	*_ionvdbName()
 	return "ionvdb";
 }
 
+PsmPartition getIonwm(){
+	return getIonWm();
+}
+Sdr getIonsdr(){
+	return getIonSdr();
+}
+
 char * getIonvdbName()
 {
 	return _ionvdbName();
@@ -64,24 +71,6 @@ IonVdb	*getIonVdb()
 	}
 
 	return NULL;
-}
-
-PsmPartition getIonwm()
-{
-	return getIonPsmPartition(getNodeNum(), WM_PSM_PARTITION);
-}
-static void destroyIonwm()
-{
-	eraseIonPsmPartition(getNodeNum(), WM_PSM_PARTITION);
-}
-
-Sdr	getIonsdr()
-{
-	return getIonPsmPartition(getNodeNum(), SDR_PSM_PARTITION);
-}
-static void destroyIonsdr()
-{
-	eraseIonPsmPartition(getNodeNum(), SDR_PSM_PARTITION);
 }
 
 uvast	getOwnNodeNbr()
@@ -533,6 +522,4 @@ void	ionTerminate()
 {
 	destroyIonVdb(_ionvdbName());
 	destroyIonDb(_iondbName());
-	destroyIonsdr();
-	destroyIonwm();
 }

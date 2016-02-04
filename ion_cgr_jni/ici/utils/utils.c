@@ -53,9 +53,26 @@ void initIonWm()
 {
 	newIonPsmPartition(getNodeNum(), WM_PSM_PARTITION);
 }
+void destroyIonWm()
+{
+	eraseIonPsmPartition(getNodeNum(), WM_PSM_PARTITION);
+}
+PsmPartition getIonWm()
+{
+	return getIonPsmPartition(getNodeNum(), WM_PSM_PARTITION);
+}
+
 void initIonSdr()
 {
 	newIonPsmPartition(getNodeNum(), SDR_PSM_PARTITION);
+}
+void destroyIonSdr()
+{
+	eraseIonPsmPartition(getNodeNum(), SDR_PSM_PARTITION);
+}
+Sdr	getIonSdr()
+{
+	return getIonPsmPartition(getNodeNum(), SDR_PSM_PARTITION);
 }
 
 IonDB * createIonDb(Sdr ionsdr, IonDB * iondbPtr)

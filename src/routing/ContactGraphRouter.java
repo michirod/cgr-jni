@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.TreeMap;
+import java.util.Vector;
 
 import cgr_jni.Libcgr;
 import cgr_jni.Utils;
@@ -56,7 +57,7 @@ public class ContactGraphRouter extends ActiveRouter {
 			return false;
 		}
 		
-		public void insertBundleIntoOutduct(Message message){
+		public void insertMessageIntoOutduct(Message message){
 			this.queue.add(message);
 			boolean thisIsLimbo = host == null;
 			if (thisIsLimbo)
@@ -146,6 +147,19 @@ public class ContactGraphRouter extends ActiveRouter {
 		updateOutducts(Utils.getAllNodes());
 		return this.outducts;
 	}	
+	
+	public int getOutductSize(DTNHost h)
+	{
+		Outduct o = outducts.get(h);
+		if (o == null)
+			return -1;
+		return o.getEnqueuedMessageNum();
+	}
+	
+	public int getLimboSize()
+	{
+		return limbo.getEnqueuedMessageNum();
+	}
 
 	public int getDeliveredCount() {
 		return deliveredCount;
@@ -156,7 +170,7 @@ public class ContactGraphRouter extends ActiveRouter {
 		int outductNum = (int) message.getProperty(OUTDUCT_REF);
 		if (outductNum >= 0)
 			getOutducts().get(Utils.getNodeFromNumber(outductNum)).removeMessageFromOutduct(message);
-		limbo.insertBundleIntoOutduct(message);
+		limbo.insertMessageIntoOutduct(message);
 		message.updateProperty(OUTDUCT_REF, -1);
 	}
 	public void removeMessageFromLimbo(Message message)
@@ -171,18 +185,16 @@ public class ContactGraphRouter extends ActiveRouter {
 	
 	protected void tryRouteForMessageIntoLimbo()
 	{
-		boolean forwarded = true;
-		while (forwarded)
+		/* I can't operate directly on the queue itself or a 
+		 * ConcurrentModificationException would be thrown.
+		 * insertBundleIntoOutduct() will remove the Message from the limbo.
+		 */
+		Object[] temp = (Object[]) limbo.getQueue().toArray();
+		for (int i = 0; i < temp.length; i++)
 		{
-			forwarded = false;
-			for (Message m : limbo.getQueue())
-			{
-				if (cgrForward(m, m.getTo()) >= 0)
-				{
-					forwarded = true;
-					break;
-				}
-			}
+			Message m = (Message) temp[i];
+			cgrForward(m, m.getTo());
+			//cgrForward(temp[i], temp[i].getTo());
 		}
 	}
 
@@ -394,15 +406,21 @@ public class ContactGraphRouter extends ActiveRouter {
 
 	@Override
 	public String toString() {
-		return CGR_NS;
+		StringBuilder b = new StringBuilder();
+		b.append(CGR_NS);
+		b.append(" node " + getHost().getAddress());
+		b.append('\n');
+		b.append(limbo.toString());
+		b.append(outducts.toString());
+		return b.toString();
 	}
 	
-	public void initCGR()
+	protected void initCGR()
 	{
 		Libcgr.initializeNode(getHost().getAddress());
 	}
 	
-	public void finalizeCGR()
+	protected void finalizeCGR()
 	{
 		Libcgr.finalizeNode(getHost().getAddress());
 	}

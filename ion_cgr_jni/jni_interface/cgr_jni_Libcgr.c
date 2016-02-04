@@ -27,7 +27,8 @@ JNIEXPORT jint JNICALL Java_cgr_1jni_Libcgr_initializeNode(JNIEnv *env, jclass t
 		(*env)->GetJavaVM(env, &javaVM);
 	init_global();
 	setThreadLocalEnv(env);
-	init_node((uvast) nodeNum);
+	setNodeNum(nodeNum);
+	init_node();
 	result = ionInitialize(NULL, (uvast) nodeNum);
 	if (result == 0)
 		cgr_start();
@@ -45,6 +46,7 @@ JNIEXPORT jint JNICALL Java_cgr_1jni_Libcgr_finalizeNode(JNIEnv *env, jclass thi
 	setNodeNum(nodeNum);
 	//cgr_stop();
 	ionTerminate();
+	destroy_node();
 	return 0;
 }
 

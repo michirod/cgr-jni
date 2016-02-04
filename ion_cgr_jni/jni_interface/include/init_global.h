@@ -14,8 +14,9 @@
 #define ONEClockClass "core/SimClock"
 
 void init_global();
-pthread_key_t get_nodeNum_key();
-void init_node(long nodeNum);
+void finalize_global();
+void init_node();
+void destroy_node();
 long getNodeNum();
 void setNodeNum(long nodeNum_new);
 time_t getONEReferenceTime();

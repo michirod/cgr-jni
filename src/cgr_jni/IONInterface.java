@@ -78,7 +78,7 @@ public class IONInterface {
 		DTNHost to = getNodeFromNbr(toNodeNbr);
 		ContactGraphRouter localRouter = (ContactGraphRouter) local.getRouter();
 		if(localRouter.getOutducts().containsKey(to)){
-			localRouter.getOutducts().get(to).insertBundleIntoOutduct(message);
+			localRouter.getOutducts().get(to).insertMessageIntoOutduct(message);
 			return 0;
 		}
 		return -1;

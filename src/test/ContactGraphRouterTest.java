@@ -43,14 +43,20 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 	@Override
 	public void tearDown() throws Exception 
 	{
-		r1.finalize();
-		r2.finalize();
-		r3.finalize();
-		r4.finalize();
-		r5.finalize();
-		r6.finalize();
+		for (DTNHost h : Utils.getAllNodes())
+		{
+			ContactGraphRouter r = (ContactGraphRouter) h.getRouter();
+			r.finalize();
+		}
 	}
 	
+	/**
+	 * TEST 1
+	 * Each node has a contact with his previous and next nodeNbr
+	 * All contacts happen simultaneously.
+	 * Each node create a message for his next nodeNbr.
+	 * Messages should be delivered through a single hop route.
+	 */
 	public void testRouting1(){
 		
 		String cp_path = (new File(CONTACT_PLAN_FILE)).getAbsolutePath();
@@ -112,7 +118,15 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 		assertEquals(true, r2.isDeliveredMessage(m1));
 		
 		}
-	
+
+	/**
+	 * TEST 2
+	 * Each node has a contact with his previous and next nodeNbr
+	 * All contacts happen simultaneously.
+	 * Node 1 creates 20 Messages whose destination are all the simulated
+	 * nodes (node 1 included)
+	 * All messages should be delivered within the end of the contacts.
+	 */
 	public void testRouting2()
 	{
 		String cp_path = (new File(CONTACT_PLAN_FILE)).getAbsolutePath();
@@ -155,9 +169,14 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 		assertEquals(20, deliveredCount);
 	}
 	
+	/**
+	 * TEST 3
+	 * Each node has a contact with his previous and next nodeNbr
+	 * Contacts happen sequentially with disconnected intervals.
+	 */
 	public void testRouting3(){
 	 
-	    String cp_path = (new File(CONTACT_PLAN_FILE2)).getAbsolutePath();
+	    String cp_path = (new File(CONTACT_PLAN_FILE)).getAbsolutePath();
 		r1.readContactPlan(cp_path);
 		r2.readContactPlan(cp_path);
 		r3.readContactPlan(cp_path);
@@ -359,6 +378,211 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 		assertEquals(true, r1.isDeliveredMessage(m6));
 		
 
+	}
+	
+	/**
+	 * TEST 4
+	 * Each node has a contact with his previous and next nodeNbr
+	 * Contacts happen sequentially with disconnected intervals.
+	 * NO CONTACT PLAN PROVIDED TO THE CGR lib, therefore no messages
+	 * should be forwarded. All messages should remain into limbo.
+	 * 
+	 */
+	public void testRouting4()
+	{
+		 /*
+		  * NO CONTACT PLAN PROVIDED
+		  * Same connections as testRouting3
+		  * Messages should remain into limbo
+		  */
+			
+			Message m1 = new Message(h1,h3, msgId1, 10);
+			h1.createNewMessage(m1);
+			Message m2 = new Message(h2,h4, msgId2, 10);
+			h2.createNewMessage(m2);
+			Message m3 = new Message(h3,h5, msgId3, 10);
+			h3.createNewMessage(m3);
+			Message m4 = new Message(h4,h6, msgId4, 10); 
+			h4.createNewMessage(m4);
+			Message m5 = new Message(h5,h6, msgId5, 10);
+			h5.createNewMessage(m5);
+			Message m6 = new Message(h6,h1, "pippo", 10);
+			h6.createNewMessage(m6);
+			checkCreates(6);
+			
+			updateAllNodes();
+			
+			//check all messages are into limbo
+	 		assertEquals(1, r1.getLimboSize());
+	 		assertEquals(1, r2.getLimboSize());
+	 		assertEquals(1, r3.getLimboSize());
+	 		assertEquals(1, r4.getLimboSize());
+	 		assertEquals(1, r5.getLimboSize());
+	 		assertEquals(1, r6.getLimboSize());
+	 		
+			//1st round, contact 10-30
+			clock.advance(10);
+			h1.forceConnection(h2, null, true);
+			
+
+			for (int i = 0; i < 20; i++)
+			{
+				clock.advance(1);
+				updateAllNodes();
+			}
+			//inserisco la disconnect 
+			
+			disconnect(h1);
+			disconnect(h2);		
+			
+			//check all message are into limbo
+	 		assertEquals(1, r1.getLimboSize());
+	 		assertEquals(1, r2.getLimboSize());
+	 		assertEquals(1, r3.getLimboSize());
+	 		assertEquals(1, r4.getLimboSize());
+	 		assertEquals(1, r5.getLimboSize());
+	 		assertEquals(1, r6.getLimboSize());
+			
+			//no message delivered, 1st deliver h3 no contact available
+			
+			//2nd round contact 40-80
+			for (int i = 0; i < 10; i++)
+			{
+				clock.advance(1);
+				updateAllNodes();
+			}	
+			
+			h2.forceConnection(h3, null, true);		
+
+			for (int i = 0; i < 40; i++)
+			{
+				clock.advance(1);
+				updateAllNodes();
+			}	
+			
+			disconnect(h2);
+			disconnect(h3);		
+
+			//check all message are into limbo
+	 		assertEquals(1, r1.getLimboSize());
+	 		assertEquals(1, r2.getLimboSize());
+	 		assertEquals(1, r3.getLimboSize());
+	 		assertEquals(1, r4.getLimboSize());
+	 		assertEquals(1, r5.getLimboSize());
+	 		assertEquals(1, r6.getLimboSize());
+			
+			//3rd round contact 100-150
+			
+			for (int i = 0; i < 20; i++)
+			{
+				clock.advance(1);
+				updateAllNodes();
+			}		
+			
+			h3.forceConnection(h4, null, true);		
+
+			for (int i = 0; i < 50; i++)
+			{
+				clock.advance(1);
+				updateAllNodes();
+			}		
+			
+			disconnect(h3);
+			disconnect(h4);		
+
+			//check all message are into limbo
+	 		assertEquals(1, r1.getLimboSize());
+	 		assertEquals(1, r2.getLimboSize());
+	 		assertEquals(1, r3.getLimboSize());
+	 		assertEquals(1, r4.getLimboSize());
+	 		assertEquals(1, r5.getLimboSize());
+	 		assertEquals(1, r6.getLimboSize());
+			
+			//4th round contact 170-200
+			
+			for (int i = 0; i < 20; i++)
+			{
+				clock.advance(1);
+				updateAllNodes();
+			}
+			
+			
+			h4.forceConnection(h5, null, true);
+			
+			for (int i = 0; i < 30; i++)
+			{
+				clock.advance(1);
+				updateAllNodes();
+			}		
+			
+			disconnect(h4);
+			disconnect(h5);		
+
+			//check all message are into limbo
+	 		assertEquals(1, r1.getLimboSize());
+	 		assertEquals(1, r2.getLimboSize());
+	 		assertEquals(1, r3.getLimboSize());
+	 		assertEquals(1, r4.getLimboSize());
+	 		assertEquals(1, r5.getLimboSize());
+	 		assertEquals(1, r6.getLimboSize());
+	 		
+			//5th round contact 250-300
+			
+			for (int i = 0; i < 50; i++)
+			{
+				clock.advance(1);
+				updateAllNodes();
+			}		
+			
+			h5.forceConnection(h6, null, true);		
+
+			for (int i = 0; i < 50; i++)
+			{
+				clock.advance(1);
+				updateAllNodes();
+			}
+			
+			
+			disconnect(h5);
+			disconnect(h6);
+			
+
+			//check all message are into limbo
+	 		assertEquals(1, r1.getLimboSize());
+	 		assertEquals(1, r2.getLimboSize());
+	 		assertEquals(1, r3.getLimboSize());
+	 		assertEquals(1, r4.getLimboSize());
+	 		assertEquals(1, r5.getLimboSize());
+	 		assertEquals(1, r6.getLimboSize());
+			
+			//6th round
+			
+			for (int i = 0; i < 20; i++)
+			{
+				clock.advance(1);
+				updateAllNodes();
+			}
+			
+			
+			h6.forceConnection(h1, null, true);
+
+			for (int i = 0; i < 60; i++)
+			{
+				clock.advance(1);
+				updateAllNodes();
+			}
+			
+			disconnect(h1);
+			disconnect(h6);
+
+			//check all message are into limbo
+	 		assertEquals(1, r1.getLimboSize());
+	 		assertEquals(1, r2.getLimboSize());
+	 		assertEquals(1, r3.getLimboSize());
+	 		assertEquals(1, r4.getLimboSize());
+	 		assertEquals(1, r5.getLimboSize());
+	 		assertEquals(1, r6.getLimboSize());
+			
 	}
 	
 	public static ContactGraphRouterTest getInstance()

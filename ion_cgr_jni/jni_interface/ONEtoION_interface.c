@@ -113,20 +113,21 @@ static bool_t isOutductBlocked(jobject jOutduct)
  * return the outduct name
  * in ONE, the outduct name is a property of the class Outduct
  * and the name is the nodeNbr associated to the outduct.
- * User must free the result string after use.
- *
+ * outductName must be initialized.
+ * Returns a pointer to outductName
  */
-static char * getOutductName(jobject jOutduct)
+static char * getOutductName(jobject jOutduct, char * outductName)
 {
+	if (outductName == NULL)
+		return NULL;
 	JNIEnv * jniEnv = getThreadLocalEnv();
 	jclass interfaceClass = (*jniEnv)->FindClass(jniEnv, ONEtoION_interfaceClass);
 	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv, interfaceClass, "getOutductName","(Lrouting/ContactGraphRouter$Outduct;)Ljava/lang/String;");
 	jstring result = (*jniEnv)->CallStaticObjectMethod(jniEnv, interfaceClass, method, jOutduct);
 	const char * nativeString = (*jniEnv)->GetStringUTFChars(jniEnv, result, NULL);
-	char * string = malloc(strlen(nativeString) + 1);
-	strcpy(string, nativeString);
+	strcpy(outductName, nativeString);
 	(*jniEnv)->ReleaseStringUTFChars(jniEnv, result, nativeString);
-	return string;
+	return outductName;
 }
 /**
  * arbitrary defined
@@ -151,6 +152,9 @@ static jobject getONEOutductToNode(uvast localNodeNbr, uvast toNodeNbr)
 	return result;
 }
 
+/**
+ * Returns the total number of bytes already enqueued on this outduct
+ */
 static long getOutductTotalEnqueuedBytes(jobject jOutduct)
 {
 	JNIEnv * jniEnv = getThreadLocalEnv();
@@ -166,7 +170,7 @@ static jobject cloneMessage(jobject jMessage)
 }
 
 /**
- * insert a message into an outduct
+ * Enqueues a message into an outduct
  */
 static int insertBundleIntoOutduct(uvast localNodeNbr, jobject message, uvast toNodeNbr)
 {
@@ -216,13 +220,13 @@ void ion_bundle(Bundle * bundle, jobject message)
 void ion_outduct(Outduct * duct, jobject jOutduct)
 {
 	long totEnqueued;
+	char buf[MAX_CL_DUCT_NAME_LEN];
 	memset(duct, 0, sizeof(Outduct));
-	strcpy(duct->name, getOutductName(jOutduct));
 	duct->blocked = isOutductBlocked(jOutduct);
 	duct->maxPayloadLen = getMaxPayloadLen(jOutduct);
 	totEnqueued = getOutductTotalEnqueuedBytes(jOutduct);
 	loadScalar(&(duct->stdBacklog), totEnqueued);
-	strncpy(duct->name, getOutductName(jOutduct), MAX_CL_DUCT_NAME_LEN);
+	strncpy(duct->name, getOutductName(jOutduct, buf), MAX_CL_DUCT_NAME_LEN);
 }
 
 void init_ouduct_list()
@@ -232,42 +236,54 @@ void init_ouduct_list()
 void wipe_outduct_list()
 {
 	Sdr sdr = getIonsdr();
+	Object outductElt;
+	Object outductObj;
 	if (interfaceInfo->outductList != NULL)
+	{
+		outductElt = sdr_list_first(sdr, interfaceInfo->outductList);
+		while (outductElt != NULL)
+		{
+			outductObj = sdr_list_data(sdr, outductElt);
+			sdr_free(sdr, outductObj);
+			outductElt = sdr_list_next(sdr, outductElt);
+		}
 		sdr_list_destroy(sdr, interfaceInfo->outductList, NULL, NULL);
+	}
 	interfaceInfo->outductList = NULL;
 }
 
 /**
  * get the outduct to nodeNbr
+ * retrieves information from ONE runtime and sets directive->outductElt
  * plans should be NULL.
- * Return 0 if no directive can be found.
- * directive->outductElt must be sdr_freed after use.
+ * Returns 0 if no directive can be found.
+ * Returns 1 if success
  */
 int	getONEDirective(uvast nodeNbr, Object plans, Bundle *bundle,
 			FwdDirective *directive)
 {
 	jobject jOutduct;
-	Outduct * outduct;
+	Outduct outduct;
 	Object outductObj;
 	Object outductElt;
 	jOutduct = getONEOutductToNode(getNodeNum(), nodeNbr);
+	char outductName[MAX_CL_DUCT_NAME_LEN];
 	if (jOutduct != NULL)
 	{
 		// init outduct list if not yet initialized
 		if (interfaceInfo->outductList == NULL)
 			init_ouduct_list();
-		if ((outductElt = sdr_find(getIonsdr(), getOutductName(jOutduct), NULL)) == 0)
+		getOutductName(jOutduct, outductName);
+		if ((outductElt = sdr_find(getIonsdr(), outductName, NULL)) == 0)
 		{
-			// allocate memory for outduct. Must be freed when done.
-			outduct = malloc(sizeof(Outduct));
 			// convert java outduct object into ION Outduct struct
-			ion_outduct(outduct, jOutduct);
+			ion_outduct(&outduct, jOutduct);
 			// init sdr outduct object
 			outductObj = sdr_malloc(getIonsdr(), sizeof(Outduct));
-			sdr_write(getIonsdr(), outductObj, (char*)outduct, sizeof(Outduct));
+			sdr_write(getIonsdr(), outductObj, (char*)&outduct, sizeof(Outduct));
 			// put outduct into sdr list
 			outductElt = sdr_list_insert_first(getIonsdr(), interfaceInfo->outductList, outductObj);
-			sdr_catlg(getIonsdr(), getOutductName(jOutduct), 0, outductElt);
+			sdr_catlg(getIonsdr(), outductName, 0, outductElt);
 		}
 		directive->outductElt = outductElt;
 		return 1;
@@ -275,6 +291,15 @@ int	getONEDirective(uvast nodeNbr, Object plans, Bundle *bundle,
 	return 0;
 }
 
+/**
+ * Entry point for Contact Graph Router library
+ * Tries to find the best route to terminusNodeNbr using libcgr.
+ * If a feasible route is found, the bundle is enqueued into an outduct using bpEnqueONE().
+ * If not, no operations are performed.
+ * Returns the nodeNbr of the proximate node that the bundle has been enqueued to
+ * or 0 if no proximate nodes have been found
+ * or -1 in case of any error.
+ */
 int cgrForwardONE(jobject bundleONE, jlong terminusNodeNbr)
 {
 	Bundle *bundle;
@@ -282,7 +307,7 @@ int cgrForwardONE(jobject bundleONE, jlong terminusNodeNbr)
 	Object plans = (Object) 42; // this value will never be read but it is needed to pass the null check in cgr_forward()
 	int result;
 	interfaceInfo = malloc(sizeof(InterfaceInfo));
-	interfaceInfo->forwardResult = -1;
+	interfaceInfo->forwardResult = 0;
 	interfaceInfo->currentMessage = bundleONE;
 	interfaceInfo->outductList = NULL;
 	setInterfaceInfo(interfaceInfo);
@@ -295,9 +320,14 @@ int cgrForwardONE(jobject bundleONE, jlong terminusNodeNbr)
 	if (result >= 0)
 		result = interfaceInfo->forwardResult;
 	free(interfaceInfo);
+	free(bundle);
 	return result;
 }
 
+/**
+ * Enqueues the bundle into an outduct.
+ * This also update the bundle forfeit time.
+ */
 int bpEnqueONE(FwdDirective *directive, Bundle *bundle, Object bundleObj)
 {
 	uvast localNodeNbr, proximateNodeNbr;
