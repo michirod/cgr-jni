@@ -537,7 +537,7 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 	 * should be forwarded. All messages should remain into limbo.
 	 * 
 	 */
-	public void testRouting4()
+	public void testRouting5()
 	{
 		 /*
 		  * NO CONTACT PLAN PROVIDED
