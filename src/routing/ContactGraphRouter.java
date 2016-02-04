@@ -115,10 +115,13 @@ public class ContactGraphRouter extends ActiveRouter {
 	}
 	
 	public static final String CGR_NS = "ContactGraphRouter";
+	public static final String CONTACT_PLAN_PATH_S = "ContactPlanPath";
 	public static final String ROUTE_FORWARD_TIMELIMIT = "ForwardTimelimit";
 	public static final String OUTDUCT_REF = "OutducReference";
 	private Outduct limbo = new Outduct(null);
 	protected int deliveredCount = 0;
+	
+	protected String contactPlanPath;
 	
 	//la chiave è il toNode
 	private TreeMap<DTNHost, Outduct> outducts = new TreeMap<DTNHost, Outduct>();
@@ -129,13 +132,18 @@ public class ContactGraphRouter extends ActiveRouter {
 	
 	public ContactGraphRouter(Settings s) {
 		super(s);
-		Settings cgrSettings = new Settings(CGR_NS);	
+		Settings cgrSettings = new Settings(CGR_NS);
+		contactPlanPath = cgrSettings.getSetting(CONTACT_PLAN_PATH_S, "");
 	}
 	
 	@Override
 	public void init(DTNHost host, List<MessageListener> mListeners) {
 		super.init(host, mListeners);
 		initCGR();
+		if(contactPlanPath.equals(""))
+			return;
+		else
+			readContactPlan(contactPlanPath);		
 	}
 	
 	public void finalize()
