@@ -4,8 +4,10 @@ import java.io.File;
 import java.util.Collection;
 
 import cgr_jni.Utils;
+import core.Connection;
 import core.DTNHost;
 import core.Message;
+import core.NetworkInterface;
 import core.SimScenario;
 import routing.ContactGraphRouter;
 import routing.MessageRouter;
@@ -19,6 +21,7 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 	private static final int NROF_HOSTS = 6;
 	private ContactGraphRouter r1,r2,r3,r4,r5,r6;
 	private static ContactGraphRouterTest instance = null;
+	protected static final int TRANSMIT_SPEED = 10000;
 	
 	@Override
 	public void setUp() throws Exception {
@@ -33,6 +36,10 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 		setRouterProto(routerProto);
 		super.setUp();	
 		Utils.init(utils.getAllHosts());
+		for (DTNHost h : utils.getAllHosts())
+		{
+			disconnect(h);
+		}
 		
 		r1 = (ContactGraphRouter)h1.getRouter();
 		r2 = (ContactGraphRouter)h2.getRouter();
@@ -178,7 +185,7 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 	 */
 	public void testRouting3(){
 	 
-	    String cp_path = (new File(CONTACT_PLAN_FILE)).getAbsolutePath();
+	    String cp_path = (new File(CONTACT_PLAN_FILE2)).getAbsolutePath();
 		r1.readContactPlan(cp_path);
 		r2.readContactPlan(cp_path);
 		r3.readContactPlan(cp_path);
@@ -530,7 +537,7 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 	}
 	
 	/**
-	 * TEST 4
+	 * TEST 5
 	 * Each node has a contact with his previous and next nodeNbr
 	 * Contacts happen sequentially with disconnected intervals.
 	 * NO CONTACT PLAN PROVIDED TO THE CGR lib, therefore no messages

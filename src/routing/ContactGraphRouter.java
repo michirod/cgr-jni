@@ -304,6 +304,7 @@ public class ContactGraphRouter extends ActiveRouter {
 		super.transferDone(con);
 		Message transferred = con.getMessage();
 		removeFromOutducts(transferred.getId());
+		System.out.println("End transmission " + transferred + " " + con);
 	}
 	
 	@Override
