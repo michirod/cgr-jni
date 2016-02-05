@@ -27,14 +27,14 @@
  *
  */
 
-const char * myLystClass = "cgr_jni/lyst/MyLyst";
-const char * myLystEltClass = "cgr_jni/lyst/MylystElt";
+const char * LystClass = "cgr_jni/lyst/Lyst";
+const char * LystEltClass = "cgr_jni/lyst/LystElt";
 
 Lyst Lyst_create_using(const char * s, int n, int idx)
 {
 	JNIEnv * jniEnv = getThreadLocalEnv();
-	jclass listClass = (*jniEnv)->FindClass(jniEnv, myLystClass);
-	jmethodID create_using = (*jniEnv)->GetStaticMethodID(jniEnv, listClass, "lyst_create_using","(I)Lcgr_jni/lyst/MyLyst;");
+	jclass listClass = (*jniEnv)->FindClass(jniEnv, LystClass);
+	jmethodID create_using = (*jniEnv)->GetStaticMethodID(jniEnv, listClass, "lyst_create_using","(I)Lcgr_jni/lyst/Lyst;");
 	jobject result = (*jniEnv)->CallStaticObjectMethod(jniEnv, listClass, create_using, idx);
 	return (Lyst) result;
 
@@ -43,8 +43,8 @@ Lyst Lyst_create_using(const char * s, int n, int idx)
 LystElt Lyst_insert_last(const char * s, int n, Lyst list, void * data)
 {
 	JNIEnv * jniEnv = getThreadLocalEnv();
-	jclass listClass = (*jniEnv)->FindClass(jniEnv, myLystClass);
-	jmethodID insert_last = (*jniEnv)->GetStaticMethodID(jniEnv, listClass, "lyst_insert_last","(Lcgr_jni/lyst/MyLyst;J)Lcgr_jni/lyst/MyLystElt;");
+	jclass listClass = (*jniEnv)->FindClass(jniEnv, LystClass);
+	jmethodID insert_last = (*jniEnv)->GetStaticMethodID(jniEnv, listClass, "lyst_insert_last","(Lcgr_jni/lyst/Lyst;J)Lcgr_jni/lyst/LystElt;");
 	jlong pointer = (jlong) (intptr_t) data;
 	jobject result = (*jniEnv)->CallStaticObjectMethod(jniEnv, listClass, insert_last, list, pointer);
 	return (LystElt) result;
@@ -53,8 +53,8 @@ LystElt Lyst_insert_last(const char * s, int n, Lyst list, void * data)
 LystElt lyst_first(Lyst list)
 {
 	JNIEnv * jniEnv = getThreadLocalEnv();
-	jclass listClass = (*jniEnv)->FindClass(jniEnv, myLystClass);
-	jmethodID first = (*jniEnv)->GetStaticMethodID(jniEnv, listClass, "lyst_first","(Lcgr_jni/lyst/MyLyst;)Lcgr_jni/lyst/MyLystElt;");
+	jclass listClass = (*jniEnv)->FindClass(jniEnv, LystClass);
+	jmethodID first = (*jniEnv)->GetStaticMethodID(jniEnv, listClass, "lyst_first","(Lcgr_jni/lyst/Lyst;)Lcgr_jni/lyst/LystElt;");
 	jobject result = (*jniEnv)->CallStaticObjectMethod(jniEnv, listClass, first, list);
 	return (LystElt) result;
 }
@@ -62,8 +62,8 @@ LystElt lyst_first(Lyst list)
 LystElt lyst_last(Lyst list)
 {
 	JNIEnv * jniEnv = getThreadLocalEnv();
-	jclass listClass = (*jniEnv)->FindClass(jniEnv, myLystClass);
-	jmethodID last = (*jniEnv)->GetStaticMethodID(jniEnv, listClass, "lyst_last","(Lcgr_jni/lyst/MyLyst;)Lcgr_jni/lyst/MyLystElt;");
+	jclass listClass = (*jniEnv)->FindClass(jniEnv, LystClass);
+	jmethodID last = (*jniEnv)->GetStaticMethodID(jniEnv, listClass, "lyst_last","(Lcgr_jni/lyst/Lyst;)Lcgr_jni/lyst/LystElt;");
 	jobject result = (*jniEnv)->CallStaticObjectMethod(jniEnv, listClass, last, list);
 	return (LystElt) result;
 }
@@ -71,8 +71,8 @@ LystElt lyst_last(Lyst list)
 LystElt lyst_next(LystElt elt)
 {
 	JNIEnv * jniEnv = getThreadLocalEnv();
-	jclass listClass = (*jniEnv)->FindClass(jniEnv, myLystClass);
-	jmethodID next = (*jniEnv)->GetStaticMethodID(jniEnv, listClass, "lyst_next","(Lcgr_jni/lyst/MyLystElt;)Lcgr_jni/lyst/MyLystElt;");
+	jclass listClass = (*jniEnv)->FindClass(jniEnv, LystClass);
+	jmethodID next = (*jniEnv)->GetStaticMethodID(jniEnv, listClass, "lyst_next","(Lcgr_jni/lyst/LystElt;)Lcgr_jni/lyst/LystElt;");
 	jobject result = (*jniEnv)->CallStaticObjectMethod(jniEnv, listClass, next, elt);
 	return (LystElt) result;
 }
@@ -80,8 +80,8 @@ LystElt lyst_next(LystElt elt)
 void * lyst_data(LystElt elt)
 {
 	JNIEnv * jniEnv = getThreadLocalEnv();
-	jclass listClass = (*jniEnv)->FindClass(jniEnv, myLystClass);
-	jmethodID data = (*jniEnv)->GetStaticMethodID(jniEnv, listClass, "lyst_data","(Lcgr_jni/lyst/MyLystElt;)J");
+	jclass listClass = (*jniEnv)->FindClass(jniEnv, LystClass);
+	jmethodID data = (*jniEnv)->GetStaticMethodID(jniEnv, listClass, "lyst_data","(Lcgr_jni/lyst/LystElt;)J");
 	jlong result = (*jniEnv)->CallStaticLongMethod(jniEnv, listClass, data, elt);
 	return (void *) (intptr_t) result;
 
@@ -91,8 +91,8 @@ void
 lyst_delete_set(Lyst list, LystCallback fn, void *arg)
 {
 	JNIEnv * jniEnv = getThreadLocalEnv();
-	jclass listClass = (*jniEnv)->FindClass(jniEnv, myLystClass);
-	jmethodID delete_set = (*jniEnv)->GetStaticMethodID(jniEnv, listClass, "lyst_delete_set","(Lcgr_jni/lyst/MyLyst;JJ)V");
+	jclass listClass = (*jniEnv)->FindClass(jniEnv, LystClass);
+	jmethodID delete_set = (*jniEnv)->GetStaticMethodID(jniEnv, listClass, "lyst_delete_set","(Lcgr_jni/lyst/Lyst;JJ)V");
 	(*jniEnv)->CallStaticVoidMethod(jniEnv, listClass, delete_set, list, (jlong) (intptr_t) fn, (jlong) (intptr_t) arg);
 }
 void
@@ -108,8 +108,8 @@ void *
 lyst_data_set(LystElt elt, void *new)
 {
 	JNIEnv * jniEnv = getThreadLocalEnv();
-	jclass listClass = (*jniEnv)->FindClass(jniEnv, myLystClass);
-	jmethodID data_set = (*jniEnv)->GetStaticMethodID(jniEnv, listClass, "lyst_data_set","(Lcgr_jni/lyst/MyLystElt;J)J");
+	jclass listClass = (*jniEnv)->FindClass(jniEnv, LystClass);
+	jmethodID data_set = (*jniEnv)->GetStaticMethodID(jniEnv, listClass, "lyst_data_set","(Lcgr_jni/lyst/LystElt;J)J");
 	jlong result = (*jniEnv)->CallStaticLongMethod(jniEnv, listClass, data_set, elt, (jlong) (intptr_t) new);
 	return (void *) (intptr_t) result;
 }
@@ -117,8 +117,8 @@ lyst_data_set(LystElt elt, void *new)
 static jobject getLyst(LystElt elt)
 {
 	JNIEnv * jniEnv = getThreadLocalEnv();
-	jclass listClass = (*jniEnv)->FindClass(jniEnv, myLystClass);
-	jmethodID getLyst = (*jniEnv)->GetStaticMethodID(jniEnv, listClass, "getLyst","(Lcgr_jni/lyst/MyLystElt;)Lcgr_jni/lyst/MyLyst;");
+	jclass listClass = (*jniEnv)->FindClass(jniEnv, LystClass);
+	jmethodID getLyst = (*jniEnv)->GetStaticMethodID(jniEnv, listClass, "getLyst","(Lcgr_jni/lyst/LystElt;)Lcgr_jni/lyst/Lyst;");
 	jobject result = (*jniEnv)->CallStaticObjectMethod(jniEnv, listClass, getLyst, elt);
 	return result;
 }
@@ -126,8 +126,8 @@ static jobject getLyst(LystElt elt)
 static LystCallback lyst_getDeleteFunction(Lyst list)
 {
 	JNIEnv * jniEnv = getThreadLocalEnv();
-	jclass listClass = (*jniEnv)->FindClass(jniEnv, myLystClass);
-	jmethodID getDeleteFunction = (*jniEnv)->GetStaticMethodID(jniEnv, listClass, "getDeleteFunction","(Lcgr_jni/lyst/MyLyst;)J");
+	jclass listClass = (*jniEnv)->FindClass(jniEnv, LystClass);
+	jmethodID getDeleteFunction = (*jniEnv)->GetStaticMethodID(jniEnv, listClass, "getDeleteFunction","(Lcgr_jni/lyst/Lyst;)J");
 	jlong result = (*jniEnv)->CallStaticLongMethod(jniEnv, listClass, getDeleteFunction, list);
 	return (LystCallback) (intptr_t) result;
 }
@@ -135,8 +135,8 @@ static LystCallback lyst_getDeleteFunction(Lyst list)
 static void * lyst_getDeleteUserdata(Lyst list)
 {
 	JNIEnv * jniEnv = getThreadLocalEnv();
-	jclass listClass = (*jniEnv)->FindClass(jniEnv, myLystClass);
-	jmethodID getDeleteUserdata = (*jniEnv)->GetStaticMethodID(jniEnv, listClass, "getDeleteUserdata","(Lcgr_jni/lyst/MyLyst;)J");
+	jclass listClass = (*jniEnv)->FindClass(jniEnv, LystClass);
+	jmethodID getDeleteUserdata = (*jniEnv)->GetStaticMethodID(jniEnv, listClass, "getDeleteUserdata","(Lcgr_jni/lyst/Lyst;)J");
 	jlong result = (*jniEnv)->CallStaticLongMethod(jniEnv, listClass, getDeleteUserdata, list);
 	return (void *) (intptr_t) result;
 }
@@ -148,8 +148,8 @@ Lyst_delete(const char *file, int line, LystElt elt)
 	void *userdata = lyst_getDeleteUserdata(getLyst(elt));
 	fn(elt, userdata);
 	JNIEnv * jniEnv = getThreadLocalEnv();
-	jclass listClass = (*jniEnv)->FindClass(jniEnv, myLystClass);
-	jmethodID delete = (*jniEnv)->GetStaticMethodID(jniEnv, listClass, "lyst_delete","(Lcgr_jni/lyst/MyLystElt;)V");
+	jclass listClass = (*jniEnv)->FindClass(jniEnv, LystClass);
+	jmethodID delete = (*jniEnv)->GetStaticMethodID(jniEnv, listClass, "lyst_delete","(Lcgr_jni/lyst/LystElt;)V");
 	(*jniEnv)->CallStaticVoidMethod(jniEnv, listClass, delete, elt);
 }
 

@@ -55,7 +55,7 @@ public class Utils {
 		return getInstance().getAllNodesFromEnv();
 	}
 
-	public static DTNHost getNodeFromNumber(long nodeNbr)
+	public static DTNHost getHostFromNumber(long nodeNbr)
 	{
 		for(DTNHost host : getAllNodes()){
 			if(host.getAddress() == nodeNbr){

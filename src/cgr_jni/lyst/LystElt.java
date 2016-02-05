@@ -5,13 +5,13 @@ package cgr_jni.lyst;
  * @author michele
  *
  */
-public class MyLystElt {
+public class LystElt {
 	
-	private MyLyst list;
+	private Lyst list;
 	/**
 	 * Queste sono inutili
 	 */
-	private MyLystElt prev, next;
+	private LystElt prev, next;
 	/**
 	 * data e' un long perche' prende dal C direttamente il puntatore all'oggetto da mettere nella lista
 	 * In pratica un elemento della lista e' un puntatore a un'area di memoria gestita dal C.
@@ -19,7 +19,7 @@ public class MyLystElt {
 	 */
 	private long data;
 	
-	public MyLystElt(long data)
+	public LystElt(long data)
 	{
 		this.data = data;
 		this.list = null;
@@ -27,27 +27,27 @@ public class MyLystElt {
 		this.next = null;
 	}
 
-	public MyLyst getList() {
+	public Lyst getList() {
 		return list;
 	}
 
-	public void setList(MyLyst list) {
+	public void setList(Lyst list) {
 		this.list = list;
 	}
 
-	public MyLystElt getPrev() {
+	public LystElt getPrev() {
 		return prev;
 	}
 
-	public void setPrev(MyLystElt prev) {
+	public void setPrev(LystElt prev) {
 		this.prev = prev;
 	}
 
-	public MyLystElt getNext() {
+	public LystElt getNext() {
 		return next;
 	}
 
-	public void setNext(MyLystElt next) {
+	public void setNext(LystElt next) {
 		this.next = next;
 	}
 

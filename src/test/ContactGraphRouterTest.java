@@ -4,10 +4,8 @@ import java.io.File;
 import java.util.Collection;
 
 import cgr_jni.Utils;
-import core.Connection;
 import core.DTNHost;
 import core.Message;
-import core.NetworkInterface;
 import core.SimScenario;
 import routing.ContactGraphRouter;
 import routing.MessageRouter;
@@ -741,6 +739,85 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 			
 	}
 	
+	/**
+	 * TEST 6
+	 * Contact plan provided same as {@link ContactGraphRouterTest#testRouting1()}.
+	 * But no contacts actually happen.
+	 * Messages should be moved into the limbo after the route expires
+	 */
+	public void testRouting6(){
+		
+		String cp_path = (new File(CONTACT_PLAN_FILE)).getAbsolutePath();
+		r1.readContactPlan(cp_path);
+		r2.readContactPlan(cp_path);
+		r3.readContactPlan(cp_path);
+		r4.readContactPlan(cp_path);
+		r5.readContactPlan(cp_path);
+		r6.readContactPlan(cp_path);
+		
+		//test visuale
+		r3.processLine("l range");
+		r3.processLine("l contact");
+		
+		// message ttl has extended to 4000 sec
+		Message m1 = new Message(h1,h2, msgId1, 10);
+		h1.createNewMessage(m1);
+		m1.setTtl(4000);
+		Message m2 = new Message(h2,h3, msgId2, 10);
+		h2.createNewMessage(m2);
+		m2.setTtl(4000);
+		Message m3 = new Message(h3,h4, msgId3, 10);
+		h3.createNewMessage(m3);
+		m3.setTtl(4000);
+		Message m4 = new Message(h4,h5, msgId4, 10); 
+		h4.createNewMessage(m4);
+		m4.setTtl(4000);
+		Message m5 = new Message(h5,h6, msgId5, 10);
+		h5.createNewMessage(m5);
+		m5.setTtl(4000);
+		Message m6 = new Message(h6,h1, "pippo", 10);
+		h6.createNewMessage(m6);
+		m6.setTtl(4000);
+		checkCreates(6);
+		
+		updateAllNodes();
+		
+		// check if messages have been enqueued into the right outducts
+ 		assertEquals(r1.getOutducts().get(h2).getQueue().size(), 1);
+		assertEquals(r2.getOutducts().get(h3).getQueue().size(), 1);
+		assertEquals(r3.getOutducts().get(h4).getQueue().size(), 1);
+		assertEquals(r4.getOutducts().get(h5).getQueue().size(), 1);
+		assertEquals(r5.getOutducts().get(h6).getQueue().size(), 1);
+		assertEquals(r6.getOutducts().get(h1).getQueue().size(), 1);
+		
+		// nothing happen, fast forward to the end of the presumed contact
+		clock.advance(3601);
+
+		updateAllNodes();
+		
+		// check if messages have been moved to limbo
+		assertEquals(1, r1.getLimboSize());
+		assertEquals(1, r2.getLimboSize());
+		assertEquals(1, r3.getLimboSize());
+		assertEquals(1, r4.getLimboSize());
+		assertEquals(1, r5.getLimboSize());
+		assertEquals(1, r6.getLimboSize());
+		
+		// fast forward to the end of messages lifetime
+		clock.advance(400);
+		updateAllNodes();
+		
+		// check if messages have been discarded		
+		assertEquals(0, r1.getNrofMessages());			
+		assertEquals(0, r2.getNrofMessages());		
+		assertEquals(0, r3.getNrofMessages());		
+		assertEquals(0, r4.getNrofMessages());		
+		assertEquals(0, r5.getNrofMessages());					
+		assertEquals(0, r6.getNrofMessages());		
+		
+		assertEquals(false, r2.isDeliveredMessage(m1));
+		
+		}
 	public static ContactGraphRouterTest getInstance()
 	{
 		return instance;
@@ -752,7 +829,7 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 
 	public DTNHost getNodeFromNbr(long nodeNbr)
 	{
-		return Utils.getNodeFromNumber(nodeNbr);
+		return Utils.getHostFromNumber(nodeNbr);
 	}
 
 }

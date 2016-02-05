@@ -8,12 +8,7 @@ import core.Message;
 public class IONInterface {	
 
 	private static DTNHost getNodeFromNbr(long nodeNbr){
-		for(DTNHost host : Utils.getAllNodes()){
-			if(host.getAddress() == nodeNbr){
-				return host;
-			}
-		}
-		return null;
+		return Utils.getHostFromNumber(nodeNbr);
 	}
 	
 	//// STATIC METHODS ACCESSED FROM JNI /////
@@ -40,7 +35,7 @@ public class IONInterface {
 	}
 	static void updateMessageForfeitTime(Message message, long forfeitTime)
 	{
-		message.updateProperty(ContactGraphRouter.ROUTE_FORWARD_TIMELIMIT, forfeitTime);
+		message.updateProperty(ContactGraphRouter.ROUTE_FORWARD_TIMELIMIT_PROP, forfeitTime);
 	}
 	
 	static boolean isOutductBlocked(Outduct jOutduct)
@@ -90,5 +85,12 @@ public class IONInterface {
 		ContactGraphRouter localRouter = (ContactGraphRouter) local.getRouter();
 		localRouter.putMessageIntoLimbo(message);
 		return 0;	
+	}
+	
+	static void cloneMessage(long localNodeNbr, Message message)
+	{
+		DTNHost local = getNodeFromNbr(localNodeNbr);
+		ContactGraphRouter localRouter = (ContactGraphRouter) local.getRouter();
+		localRouter.createNewMessage(message.replicate());
 	}
 }

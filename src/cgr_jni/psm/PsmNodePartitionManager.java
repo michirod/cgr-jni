@@ -11,6 +11,10 @@ public class PsmNodePartitionManager {
 		this.nodeNum = nodeNum;
 	}
 	
+	public long getNodeNum() {
+		return nodeNum;
+	}
+	
 	public PsmPartition newPartition(int partNum)
 	{
 		PsmPartition partition = new PsmPartition(partNum);

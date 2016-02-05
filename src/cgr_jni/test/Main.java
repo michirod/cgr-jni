@@ -2,16 +2,10 @@ package cgr_jni.test;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 
-import core.DTNHost;
-import core.Message;
-import test.MessageTest;
-import test.ProphetRouterTest;
 
 /**
  * Classe per fare un semplice test.
@@ -26,7 +20,6 @@ static final boolean ACTIVATE_PROMPT = false;
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		JNITest test = new JNITest();
 		/*
 		int result = test.doSomething(1, "pippo");
 		System.out.println(result);

@@ -1,13 +1,10 @@
 package routing;
 import java.util.List;
-import java.util.Map;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.TreeMap;
-import java.util.Vector;
 
 import cgr_jni.Libcgr;
 import cgr_jni.Utils;
@@ -21,7 +18,9 @@ import util.Tuple;
 
 public class ContactGraphRouter extends ActiveRouter {
 	
-	public class Outduct {
+	public class Outduct implements Comparable<Outduct> {
+		public static final int LIMBO_ID = -1;
+		public static final int NONE_ID = -2;
 		private DTNHost host;
 		private LinkedList<Message> queue;
 		private long totalEnqueuedBytes;
@@ -62,14 +61,14 @@ public class ContactGraphRouter extends ActiveRouter {
 			boolean thisIsLimbo = host == null;
 			if (thisIsLimbo)
 			{
-				message.updateProperty(OUTDUCT_REF, -1);
+				message.updateProperty(OUTDUCT_REF_PROP, LIMBO_ID);
 				return;
 			}
 			else if (isMessageIntoLimbo(message))
 			{
 				removeMessageFromLimbo(message);
 			}
-			message.updateProperty(OUTDUCT_REF, host.getAddress());
+			message.updateProperty(OUTDUCT_REF_PROP, host.getAddress());
 			totalEnqueuedBytes += message.getSize();
 		}
 
@@ -82,7 +81,7 @@ public class ContactGraphRouter extends ActiveRouter {
 				if (m1.equals(m))
 				{	
 					iter.remove();
-					m.updateProperty(OUTDUCT_REF, -2);
+					m.updateProperty(OUTDUCT_REF_PROP, NONE_ID);
 					totalEnqueuedBytes -= m.getSize();
 					return;
 				}
@@ -91,6 +90,11 @@ public class ContactGraphRouter extends ActiveRouter {
 		
 		public int getEnqueuedMessageNum(){
 			return queue.size();
+		}
+		
+		@Override
+		public int compareTo(Outduct o) {
+			return host.compareTo(o.host);
 		}
 		
 		@Override
@@ -116,27 +120,47 @@ public class ContactGraphRouter extends ActiveRouter {
 	
 	public static final String CGR_NS = "ContactGraphRouter";
 	public static final String CONTACT_PLAN_PATH_S = "ContactPlanPath";
-	public static final String ROUTE_FORWARD_TIMELIMIT = "ForwardTimelimit";
-	public static final String OUTDUCT_REF = "OutducReference";
-	private Outduct limbo = new Outduct(null);
-	protected int deliveredCount = 0;
+	public static final String ROUTE_FORWARD_TIMELIMIT_PROP = "ForwardTimelimit";
+	public static final String OUTDUCT_REF_PROP = "OutducReference";
 	
+	/** counter incremented every time a message is delivered to the local node,
+	 *  i.e. the message has reached its final destination. */
+	protected int deliveredCount = 0;
+	/** Used as reference for round-robin outducts sorting */
+	private DTNHost firstOutductIndex;
 	protected String contactPlanPath;
 	
-	//la chiave è il toNode
 	private TreeMap<DTNHost, Outduct> outducts = new TreeMap<DTNHost, Outduct>();
+	private Outduct limbo = new Outduct(null);
 
+	/**
+	 * Copy constructor.
+	 * @param r The router prototype where setting values are copied from
+	 */
 	protected ContactGraphRouter(ActiveRouter r) {
 		super(r);
 		contactPlanPath = ((ContactGraphRouter) r).contactPlanPath;
 	}
 	
+	/**
+	 * Constructor. Creates a new message router based on the settings in
+	 * the given Settings object.
+	 * @param s The settings object
+	 */
 	public ContactGraphRouter(Settings s) {
 		super(s);
 		Settings cgrSettings = new Settings(CGR_NS);
 		contactPlanPath = cgrSettings.getSetting(CONTACT_PLAN_PATH_S, "");
+		firstOutductIndex = null;
 	}
 	
+	/**
+	 * Initalizes the router.
+	 * it also initializes the CGR library and read the contact plan 
+	 * from the file that has been provided with the 
+	 * {@link ContactGraphRouter#CONTACT_PLAN_PATH_S} property.
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void init(DTNHost host, List<MessageListener> mListeners) {
 		super.init(host, mListeners);
@@ -147,16 +171,30 @@ public class ContactGraphRouter extends ActiveRouter {
 			readContactPlan(contactPlanPath);		
 	}
 	
+	/**
+	 * Finalizes the router.
+	 * User needs to invoke this method at the end of the simulation to 
+	 * deallocate memory used by CGR lib
+	 */
 	public void finalize()
 	{
 		finalizeCGR();
 	}
 
+	/**
+	 * Gets all the outducts currently used by this node
+	 * @return the outducts
+	 */
 	public TreeMap<DTNHost, Outduct> getOutducts() {
 		updateOutducts(Utils.getAllNodes());
 		return this.outducts;
 	}	
 	
+	/**
+	 * Gets the number of Messages enqueued into a specific outduct
+	 * @param h the host that the outduct is directed to
+	 * @return the total number of message enqueued into the outduct
+	 */
 	public int getOutductSize(DTNHost h)
 	{
 		Outduct o = outducts.get(h);
@@ -165,33 +203,68 @@ public class ContactGraphRouter extends ActiveRouter {
 		return o.getEnqueuedMessageNum();
 	}
 	
+	/**
+	 * Gets the number of Messages currently into the limbo.
+	 * If a message is into the limbo it means that the CGR hasn't found a 
+	 * feasible route for it.
+	 * @return the total number of message into the limbo
+	 */
 	public int getLimboSize()
 	{
 		return limbo.getEnqueuedMessageNum();
 	}
 
+	/**
+	 * Gets the total number of Messages that has been delivered to this node.
+	 * A message is delivered when it reaches his final destination
+	 * @return the number of delivered messages
+	 */
 	public int getDeliveredCount() {
 		return deliveredCount;
 	}
 	
+	/**
+	 * Puts a message into the limbo. 
+	 * If the message is currently into an outduct, the message will be removed
+	 * from it. The outduct reference property {@link ContactGraphRouter#OUTDUCT_REF_PROP}
+	 * is updated. 
+	 * @param message to put into the limbo
+	 */
 	public void putMessageIntoLimbo(Message message)
 	{
-		int outductNum = (int) message.getProperty(OUTDUCT_REF);
+		int outductNum = (int) message.getProperty(OUTDUCT_REF_PROP);
 		if (outductNum >= 0)
-			getOutducts().get(Utils.getNodeFromNumber(outductNum)).removeMessageFromOutduct(message);
+			getOutducts().get(Utils.getHostFromNumber(outductNum)).removeMessageFromOutduct(message);
 		limbo.insertMessageIntoOutduct(message);
-		message.updateProperty(OUTDUCT_REF, -1);
+		message.updateProperty(OUTDUCT_REF_PROP, Outduct.LIMBO_ID);
 	}
+	/**
+	 * Remove a message from the limbo. The message won't be in any outduct and the
+	 * outduct reference property {@link ContactGraphRouter#OUTDUCT_REF_PROP}
+	 * is set to {@link Outduct#NONE_ID}.
+	 * @param message the message to remove from limbo.
+	 */
 	public void removeMessageFromLimbo(Message message)
 	{
 		limbo.removeMessageFromOutduct(message);
-		message.updateProperty(OUTDUCT_REF, -2);
+		message.updateProperty(OUTDUCT_REF_PROP, Outduct.NONE_ID);
 	}
+	/**
+	 * Checks if a message is into the limbo.
+	 * @param message the message to check.
+	 * @return true if the message is currently into the limbo. False otherwise.
+	 */
 	public boolean isMessageIntoLimbo(Message message)
 	{
 		return limbo.containsMessage(message);
 	}
 	
+	/**
+	 * Tries to find a feasible route for every message currently into the limbo using 
+	 * {@link ContactGraphRouter#cgrForward(Message, DTNHost)}. If a route is found for
+	 * a message, it is automatically removed from the limbo and moved to the selected 
+	 * outduct.
+	 */
 	protected void tryRouteForMessageIntoLimbo()
 	{
 		/* I can't operate directly on the queue itself or a 
@@ -203,10 +276,13 @@ public class ContactGraphRouter extends ActiveRouter {
 		{
 			Message m = (Message) temp[i];
 			cgrForward(m, m.getTo());
-			//cgrForward(temp[i], temp[i].getTo());
 		}
 	}
 
+	/**
+	 * Looks through all the outducts for messages whose route is expired 
+	 * and needs to be recalculated. These messages are moved into the limbo.
+	 */
 	protected void checkExpiredRoutes()
 	{
 		List<Message> expired = new ArrayList<>(getNrofMessages());
@@ -214,7 +290,7 @@ public class ContactGraphRouter extends ActiveRouter {
 		{
 			for (Message m : o.getQueue())
 			{
-				long fwdTimelimit = (long) m.getProperty(ROUTE_FORWARD_TIMELIMIT);
+				long fwdTimelimit = (long) m.getProperty(ROUTE_FORWARD_TIMELIMIT_PROP);
 				if (fwdTimelimit == 0) // This Message hasn't been routed yet
 					return;
 				if (SimClock.getIntTime() > fwdTimelimit)
@@ -239,20 +315,18 @@ public class ContactGraphRouter extends ActiveRouter {
 		if (isTransferring() || !canStartTransfer()) {
 			return; // transferring, don't try other connections yet
 		}
-
-		List<Connection> connections = super.getConnections();
-		for(Connection c : connections){
-			Outduct o = getOutducts().get(c.getOtherNode(getHost()));
-			for(Message m : o.getQueue()){
-				if(super.startTransfer(m, c) == RCV_OK)
-				{
-					System.out.println("Begin transmission " + m + " " + c);
-				}
-				else 
-					break;
-			}
-
-		}			
+		List<Tuple<Message,Connection>> outboundMessages = getMessagesForConnected();
+		Tuple<Message, Connection> sent = tryMessagesForConnected(outboundMessages);
+		if (sent != null)
+		{
+			// transmission started
+			System.out.println("Begin transmission " 
+			+ sent.getKey() + " " + sent.getValue());
+			// I look for next messafe starting form next outduct
+			firstOutductIndex = outducts.higherKey(sent.getValue().getOtherNode(getHost()));
+			if (firstOutductIndex == null)
+				firstOutductIndex = outducts.firstKey();
+		}
 	}
 
 	@Override
@@ -263,18 +337,20 @@ public class ContactGraphRouter extends ActiveRouter {
 			if (m.getTo().compareTo(getHost()) == 0)
 			{
 				//message should not be forwarded
-				deliveredCount++;
+				if (!isDeliveredMessage(m))
+					deliveredCount++;
 				return;
 			}
 		}
 		putMessageIntoLimbo(m);
 		super.addToMessages(m, newMessage);
+		cgrForward(m, m.getTo());
 	}
 
 	@Override 
 	public boolean createNewMessage(Message m) {
-		m.addProperty(ROUTE_FORWARD_TIMELIMIT, (long)0);
-		m.addProperty(OUTDUCT_REF, -2);
+		m.addProperty(ROUTE_FORWARD_TIMELIMIT_PROP, (long)0);
+		m.addProperty(OUTDUCT_REF_PROP, Outduct.NONE_ID);
 		return super.createNewMessage(m);
 	}
 	
@@ -286,13 +362,13 @@ public class ContactGraphRouter extends ActiveRouter {
 		removed = getMessage(id);
 		if (removed != null)
 		{
-			outductNum = (int) removed.getProperty(OUTDUCT_REF);
-			if (outductNum == -1) // this message is into limbo
+			outductNum = (int) removed.getProperty(OUTDUCT_REF_PROP);
+			if (outductNum == Outduct.LIMBO_ID) // this message is into limbo
 				o = limbo;
-			else if (outductNum == -2) // this message isn't in any outduct
+			else if (outductNum == Outduct.NONE_ID) // this message isn't in any outduct
 				o = null;
 			else
-				o = getOutducts().get(Utils.getNodeFromNumber(outductNum));
+				o = getOutducts().get(Utils.getHostFromNumber(outductNum));
 			if (o != null)
 				o.removeMessageFromOutduct(removed);
 			else return null;
@@ -329,11 +405,8 @@ public class ContactGraphRouter extends ActiveRouter {
 	
 	@Override
 	public MessageRouter replicate() {
-		// TODO Auto-generated method stub
 		return new ContactGraphRouter(this);
 	}
-	
-	
 
 	public void updateOutducts(Collection<DTNHost> hosts)
 	{
@@ -347,6 +420,18 @@ public class ContactGraphRouter extends ActiveRouter {
 		}
 	}
 	
+	protected Connection getConnectionTo(DTNHost h)
+	{
+		for (Connection c : getConnections())
+		{
+			if (h == c.getOtherNode(this.getHost()))
+			{
+				return c;
+			}
+		}
+		return null;
+	}
+	
 	@Override 
 	protected List<Tuple<Message,Connection>> getMessagesForConnected() 
 	{
@@ -355,56 +440,42 @@ public class ContactGraphRouter extends ActiveRouter {
 			return new ArrayList<Tuple<Message, Connection>>(0); 
 		}
 
-		List<Tuple<Message, Connection>> forTuples = new ArrayList<Tuple<Message, Connection>>();
-		for (Connection con : getConnections())
+		List<Tuple<Message, Connection>> forTuples = 
+				new ArrayList<Tuple<Message, Connection>>();
+		if (firstOutductIndex == null)
+			firstOutductIndex = outducts.firstKey();
+		Outduct o = outducts.get(firstOutductIndex);
+		Connection c;
+		for (int j = 0; j < outducts.size(); j++)
 		{
-			DTNHost to = con.getOtherNode(getHost());
-			Outduct outduct = getOutducts().get(to);
-			if (outduct == null)
-				continue;
-			for (Message m : outduct.getQueue())
+			if ((c = getConnectionTo(o.getHost())) != null 
+					&& o.getEnqueuedMessageNum() > 0)
 			{
-				forTuples.add(new Tuple<Message, Connection>(m, con));
+				forTuples.add(new Tuple<Message, Connection>(o.getQueue().getFirst(), c));
 			}
+			DTNHost next = outducts.higherKey(o.getHost());
+			if (next == null)
+				next = outducts.firstKey();
+			o = outducts.get(next);
 		}
-		
 		return forTuples;
 	}
 	
-	@SuppressWarnings("unchecked")
-	@Override 
-	protected List<Tuple<Message, Connection>> sortByQueueMode(List list) 
+	protected Tuple<Message, Connection> tryAllMessages()
 	{
-		List<Tuple<Message, Connection>> result = new ArrayList<Tuple<Message, Connection>>();
-		Map<Connection, Integer> connections = new HashMap<>();
-		int connectionsNum;
-		for (Tuple<Message, Connection> t : (List<Tuple<Message, Connection>>) list)
-		{
-			if (connections.containsKey(t.getValue()))
-				connections.put(t.getValue(), connections.get(t.getValue()) + 1);
-			else
-				connections.put(t.getValue(), 1);
-		}
-		connectionsNum = connections.size();
-		return list;
-	}
-	
-	@Override
-	protected Connection exchangeDeliverableMessages()
-	{
-		List<Connection> connections = getConnections();
-
-		if (connections.size() == 0) {
-			return null;
-		}
-		
-		@SuppressWarnings(value = "unchecked")
-		Tuple<Message, Connection> t =
-			tryMessagesForConnected(sortByQueueMode(getMessagesForConnected()));
-
-		if (t != null) {
-			return t.getValue(); // started transfer
-		}
+		List<Connection> connections = super.getConnections();
+		for(Connection c : connections){
+			Outduct o = getOutducts().get(c.getOtherNode(getHost()));
+			for(Message m : o.getQueue()){
+				if(super.startTransfer(m, c) == RCV_OK)
+				{
+					System.out.println("Begin transmission " + m + " " + c);
+					return new Tuple<Message, Connection>(m, c);
+				}
+				else 
+					break;
+			}
+		}			
 		return null;
 	}
 	

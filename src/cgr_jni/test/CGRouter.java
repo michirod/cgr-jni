@@ -1,11 +1,7 @@
 package cgr_jni.test;
 
 import cgr_jni.Libcgr;
-import core.DTNHost;
 import core.Message;
-import routing.ContactGraphRouter;
-import routing.ContactGraphRouter.Outduct;
-import test.TestUtils;
 
 public class CGRouter {
 	
