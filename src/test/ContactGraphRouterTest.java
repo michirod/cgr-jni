@@ -827,6 +827,10 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 		
 		}
 	
+	/**
+	 * TEST 7
+	 * Multiple possible routes for some bundles, cgr should choose the best one
+	 */
 	public void testRouting7(){
 		String cp_path = (new File(CONTACT_PLAN_TEST7)).getAbsolutePath();
 		r1.readContactPlan(cp_path);
@@ -1007,10 +1011,7 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 				assertEquals(r2.getOutducts().get(h1).getQueue().size(), 0);
 				assertEquals(r3.getOutducts().get(h5).getQueue().size(), 0);
 				assertEquals(r4.getOutducts().get(h6).getQueue().size(), 0);
-				
-				
-				
-		
+						
 	}
 	
 	public static ContactGraphRouterTest getInstance()
