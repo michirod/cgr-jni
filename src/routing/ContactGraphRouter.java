@@ -126,6 +126,7 @@ public class ContactGraphRouter extends ActiveRouter {
 	/** counter incremented every time a message is delivered to the local node,
 	 *  i.e. the message has reached its final destination. */
 	protected int deliveredCount = 0;
+	private boolean statusChanged = false;
 	/** Used as reference for round-robin outducts sorting */
 	private DTNHost firstOutductIndex;
 	protected String contactPlanPath;
@@ -171,16 +172,12 @@ public class ContactGraphRouter extends ActiveRouter {
 			readContactPlan(contactPlanPath);		
 	}
 	
-	/**
-	 * Finalizes the router.
-	 * User needs to invoke this method at the end of the simulation to 
-	 * deallocate memory used by CGR lib
-	 */
+	@Override
 	public void finalize()
 	{
 		finalizeCGR();
 	}
-
+	
 	/**
 	 * Gets all the outducts currently used by this node
 	 * @return the outducts
@@ -221,6 +218,19 @@ public class ContactGraphRouter extends ActiveRouter {
 	 */
 	public int getDeliveredCount() {
 		return deliveredCount;
+	}
+	
+	/**
+	 * When status is changed the router needs to recalculate routes for messages into 
+	 * limbo. Status changes when 
+	 */
+	protected void statusChanged()
+	{
+		statusChanged = true;
+	}
+	protected boolean isStatusChanged()
+	{
+		return statusChanged;
 	}
 	
 	/**
@@ -302,6 +312,7 @@ public class ContactGraphRouter extends ActiveRouter {
 			{
 				o.removeMessageFromOutduct(m);
 				putMessageIntoLimbo(m);
+				cgrForward(m, m.getTo());
 			}
 			expired.clear();
 		}
@@ -310,7 +321,8 @@ public class ContactGraphRouter extends ActiveRouter {
 	@Override
 	public void update(){
 		checkExpiredRoutes();
-		tryRouteForMessageIntoLimbo();
+		if (isStatusChanged())
+			tryRouteForMessageIntoLimbo();
 		super.update();
 		if (isTransferring() || !canStartTransfer()) {
 			return; // transferring, don't try other connections yet
@@ -334,11 +346,17 @@ public class ContactGraphRouter extends ActiveRouter {
 	{
 		if (newMessage)
 		{
-			if (m.getTo().compareTo(getHost()) == 0)
+			try {
+				if (m.getTo().compareTo(getHost()) == 0)
+				{
+					//message should not be forwarded
+					if (!isDeliveredMessage(m))
+						deliveredCount++;
+					return;
+				}
+			} catch (NullPointerException e)
 			{
-				//message should not be forwarded
-				if (!isDeliveredMessage(m))
-					deliveredCount++;
+				e.printStackTrace();
 				return;
 			}
 		}
@@ -498,10 +516,21 @@ public class ContactGraphRouter extends ActiveRouter {
 	
 	protected void initCGR()
 	{
+		if (getHost().getAddress() == 0)
+		{
+			System.out.println("ERROR: ContactGraphRouter cannot be inizialized if "
+					+ "local node number is 0");
+			System.exit(1);
+		}
 		Libcgr.initializeNode(getHost().getAddress());
 	}
-	
-	protected void finalizeCGR()
+
+	/**
+	 * Finalizes the router.
+	 * User needs to invoke this method at the end of the simulation to 
+	 * deallocate memory used by CGR lib
+	 */
+	public void finalizeCGR()
 	{
 		Libcgr.finalizeNode(getHost().getAddress());
 	}
@@ -518,6 +547,7 @@ public class ContactGraphRouter extends ActiveRouter {
 	
 	public int cgrForward(Message m, DTNHost terminusNode)
 	{
+		//return -1;
 		return Libcgr.cgrForward(this.getHost().getAddress(), m, terminusNode.getAddress());
 	}
 

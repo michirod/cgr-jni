@@ -319,6 +319,7 @@ int cgrForwardONE(jobject bundleONE, jlong terminusNodeNbr)
 	wipe_outduct_list();
 	if (result >= 0)
 		result = interfaceInfo->forwardResult;
+	sdr_free(getIonsdr(), bundleObj);
 	free(interfaceInfo);
 	free(bundle);
 	return result;

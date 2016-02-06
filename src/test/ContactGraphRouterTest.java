@@ -1,7 +1,9 @@
 package test;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
+import java.util.Random;
 
 import cgr_jni.Utils;
 import core.DTNHost;
@@ -1014,6 +1016,45 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 						
 	}
 	
+	/**
+	 * TEST 8
+	 * MEMORY TEST
+	 * No contact plan provided, nodes generate many message.
+	 */
+	public void testRouting8()
+	{
+		Message m;
+		int i, r, count = 0;
+		DTNHost h;
+		Random rand = new Random();
+		disconnect(h1);
+		int duration = 10000000;
+		int perc = 0;
+		for (i = 0; i < duration; i++)
+		{
+			if (i % 10 == 0) //1 message create every simulated second
+			{
+				r = Math.abs(rand.nextInt());
+				h = Utils.getHostFromNumber((count % 5) + 1);
+				m = new Message(h, getNodeFromNbr((r % 5) + 1), "MSG_" + count, 10);
+				h.createNewMessage(m);
+				count++;
+			}
+			updateAllNodes();
+			clock.advance(0.1);
+			if (i % (duration/100) == 0)
+			{	
+				System.out.println();
+				System.out.print("" + ++perc + "%");
+			}
+			if (i % (duration/1000) == 0)
+				System.out.print(".");
+		}
+		
+		// useless assert. I just want to see how the memory is doing
+		assertEquals("VACAGHER", "VACAGHER");
+	}
+
 	public static ContactGraphRouterTest getInstance()
 	{
 		return instance;
