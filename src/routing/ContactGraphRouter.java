@@ -126,7 +126,7 @@ public class ContactGraphRouter extends ActiveRouter {
 	/** counter incremented every time a message is delivered to the local node,
 	 *  i.e. the message has reached its final destination. */
 	protected int deliveredCount = 0;
-	private boolean statusChanged = false;
+	private boolean contactPlanChanged = false;
 	/** Used as reference for round-robin outducts sorting */
 	private DTNHost firstOutductIndex;
 	protected String contactPlanPath;
@@ -224,13 +224,13 @@ public class ContactGraphRouter extends ActiveRouter {
 	 * When status is changed the router needs to recalculate routes for messages into 
 	 * limbo. Status changes when 
 	 */
-	protected void statusChanged()
+	protected void contactPlanChanged()
 	{
-		statusChanged = true;
+		contactPlanChanged = true;
 	}
-	protected boolean isStatusChanged()
+	protected boolean isContactPlanChanged()
 	{
-		return statusChanged;
+		return contactPlanChanged;
 	}
 	
 	/**
@@ -310,6 +310,11 @@ public class ContactGraphRouter extends ActiveRouter {
 			}
 			for (Message m : expired)
 			{
+				/*
+				 * If a route has expired for a message, I put it into the limbo and 
+				 * invoke CGR, which possibly remove the message from limbo and
+				 * enqueue it into an outduct if a route has been found.
+				 */
 				o.removeMessageFromOutduct(m);
 				putMessageIntoLimbo(m);
 				cgrForward(m, m.getTo());
@@ -321,7 +326,7 @@ public class ContactGraphRouter extends ActiveRouter {
 	@Override
 	public void update(){
 		checkExpiredRoutes();
-		if (isStatusChanged())
+		if (isContactPlanChanged())
 			tryRouteForMessageIntoLimbo();
 		super.update();
 		if (isTransferring() || !canStartTransfer()) {
@@ -538,11 +543,13 @@ public class ContactGraphRouter extends ActiveRouter {
 	public void readContactPlan(String filePath)
 	{
 		Libcgr.readContactPlan(this.getHost().getAddress(), filePath);
+		contactPlanChanged();
 	}
 	
 	public void processLine(String line)
 	{
 		Libcgr.processLine(this.getHost().getAddress(), line);
+		contactPlanChanged();
 	}
 	
 	public int cgrForward(Message m, DTNHost terminusNode)
