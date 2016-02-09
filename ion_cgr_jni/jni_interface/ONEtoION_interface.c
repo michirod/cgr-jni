@@ -258,9 +258,16 @@ static long getOutductTotalEnqueuedBytes(jobject jOutduct)
 	return (long) result;
 }
 
-static jobject cloneMessage(jobject jMessage)
+static int cloneMessage(uvast localNodeNbr, jobject jMessage)
 {
-	return NULL;
+	JNIEnv * jniEnv = getThreadLocalEnv();
+	jclass interfaceClass = (*jniEnv)->FindClass(jniEnv,
+			ONEtoION_interfaceClass);
+	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv, interfaceClass,
+			"cloneMessage","(JLcore/Message;)V");
+	jint result = (*jniEnv)->CallStaticIntMethod(jniEnv, interfaceClass,
+			method, localNodeNbr, jMessage);
+	return 0;
 }
 
 /**
@@ -454,9 +461,11 @@ int bpLimboONE(Bundle *bundle, Object bundleObj)
 	return 0;
 }
 
-int bpCloneONE(Bundle *oldBundle, Bundle *newBundle, Object *newBundleObj)
+int bpCloneONE(Bundle *oldBundle, Bundle *newBundle)
 {
-	return 0;
+	int result;
+	result = cloneMessage(getNodeNum(), interfaceInfo->currentMessage);
+	return result;
 }
 
 int testMessage(jobject message)

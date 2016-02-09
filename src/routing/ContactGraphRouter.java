@@ -507,11 +507,15 @@ public class ContactGraphRouter extends ActiveRouter {
 	{
 		return super.isDeliveredMessage(m);
 	}
+	
+	protected String getRouterName(){
+		return CGR_NS;
+	}
 
 	@Override
 	public String toString() {
 		StringBuilder b = new StringBuilder();
-		b.append(CGR_NS);
+		b.append(getRouterName());
 		b.append(" node " + getHost().getAddress());
 		b.append('\n');
 		b.append(limbo.toString());

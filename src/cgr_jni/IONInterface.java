@@ -95,7 +95,8 @@ public class IONInterface {
 	{
 		DTNHost local = getNodeFromNbr(localNodeNbr);
 		ContactGraphRouter localRouter = (ContactGraphRouter) local.getRouter();
-		localRouter.createNewMessage(message.replicate());
+		Message newMessage = message.replicate();
+		localRouter.putMessageIntoLimbo(newMessage);
 	}
 	
 	/*

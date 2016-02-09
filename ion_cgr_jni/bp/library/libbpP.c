@@ -16,8 +16,8 @@
 void	computePriorClaims(ClProtocol *protocol, Outduct *duct, Bundle *bundle,
 		Scalar *priorClaims, Scalar *totalBacklog)
 {
-	loadScalar(priorClaims, 0);
 	copyScalar(totalBacklog, &(duct->stdBacklog));
+	copyScalar(priorClaims, totalBacklog);
 }
 
 int	guessBundleSize(Bundle *bundle)
@@ -238,6 +238,6 @@ int	bpReforwardBundle(Object bundleAddr)
 int	bpClone(Bundle *oldBundle, Bundle *newBundle, Object *newBundleObj,
 		unsigned int offset, unsigned int length)
 {
-	//TODO stub
+	bpCloneONE(oldBundle, newBundle);
 	return 0;
 }
