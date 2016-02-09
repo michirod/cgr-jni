@@ -17,8 +17,8 @@ typedef struct {
 	void * args;
 } Passing;
 
-int jni_thread_create(pthread_t *newthread, pthread_attr_t *attr, void *(*__start_routine) (void *), void * arg);
-void * __jni_thread_run(void * arg);
+int jni_thread_create(pthread_t *newthread, pthread_attr_t *attr,
+		void *(*__start_routine) (void *), void * arg);
 JNIEnv * getThreadLocalEnv();
 void setThreadLocalEnv(JNIEnv * localEnv);
 

@@ -13,9 +13,6 @@
 #include "shared.h"
 #include "init_global.h"
 
-#define WM_PSM_PARTITION 0
-#define SDR_PSM_PARTITION 1
-
 char * getIonvdbName();
 
 PsmPartition getIonPsmPartition(long nodeNum, int partNum)

@@ -24,7 +24,7 @@ public class OpportunisticContactGraphRouter extends ContactGraphRouter {
 	
 	protected void discoveredContactStart(Connection con)
 	{
-		exchangeDiscoveredContacts(con);
+		exchangeCurrentDiscoveredContacts(con);
 		excangeContactHistory(con);
 		predictContacts();
 		contactPlanChanged();
@@ -45,7 +45,7 @@ public class OpportunisticContactGraphRouter extends ContactGraphRouter {
 		
 	}
 
-	private void exchangeDiscoveredContacts(Connection con) {
+	private void exchangeCurrentDiscoveredContacts(Connection con) {
 		// TODO Auto-generated method stub
 		
 	}

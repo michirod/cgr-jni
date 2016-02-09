@@ -1028,7 +1028,7 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 		DTNHost h;
 		Random rand = new Random();
 		disconnect(h1);
-		int duration = 10000000;
+		int duration = 10000;
 		int perc = 0;
 		for (i = 0; i < duration; i++)
 		{
