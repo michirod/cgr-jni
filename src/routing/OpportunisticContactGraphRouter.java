@@ -89,5 +89,8 @@ public class OpportunisticContactGraphRouter extends ContactGraphRouter {
 	public Message messageTransferred(String id, DTNHost from) {
 		Message transferred = super.messageTransferred(id, from);
 		transferred.updateProperty(XMIT_COPIES_PROP, new int[0]);
+		transferred.updateProperty(XMIT_COPIES_COUNT_PROP, 0);
+		transferred.updateProperty(DLV_CONFIDENCE_PROP, 0.0);
+		return transferred;
 	}
 }
