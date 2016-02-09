@@ -59,6 +59,15 @@ LystElt Lyst_insert_last(const char * s, int n, Lyst list, void * data)
 	jobject result = (*jniEnv)->CallStaticObjectMethod(jniEnv, listClass, insert_last, list, pointer);
 	return (LystElt) result;
 }
+LystElt Lyst_insert_before(const char * s, int n, LystElt element, void * data)
+{
+	JNIEnv * jniEnv = getThreadLocalEnv();
+	jclass listClass = (*jniEnv)->FindClass(jniEnv, LystClass);
+	jmethodID insert_before = (*jniEnv)->GetStaticMethodID(jniEnv, listClass, "lyst_insert_before","(Lcgr_jni/lyst/LystElt;J)Lcgr_jni/lyst/LystElt;");
+	jlong pointer = (jlong) (intptr_t) data;
+	jobject result = (*jniEnv)->CallStaticObjectMethod(jniEnv, listClass, insert_before, element, pointer);
+	return (LystElt) result;
+}
 
 LystElt lyst_first(Lyst list)
 {

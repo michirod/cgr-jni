@@ -1,0 +1,91 @@
+/*
+ * cgr_jni_Libocgr.c
+ *
+ *  Created on: 08 feb 2016
+ *      Author: michele
+ */
+
+
+
+#include <jni.h>
+#include <stdio.h>
+
+#include "cgr_jni_Libocgr.h"
+#include "platform.h"
+#include "shared.h"
+#include "init_global.h"
+#include "chsim.h"
+
+
+JNIEXPORT jint JNICALL Java_cgr_1jni_Libocgr_predictContacts
+(JNIEnv *env, jclass thisObj, jint nodeNum)
+{
+	if (javaVM == NULL)
+		(*env)->GetJavaVM(env, &javaVM);
+	init_global();
+	setThreadLocalEnv(env);
+	uvast unodeNum = (uvast) nodeNum;
+	setNodeNum(unodeNum);
+	predictContacts();
+	return 0;
+}
+
+JNIEXPORT jint JNICALL Java_cgr_1jni_Libocgr_exchangeCurrentDiscoveredContatcs
+(JNIEnv *env, jclass thisObj, jint nodeNum1, jint nodeNum2)
+{
+	jint result;
+	if (javaVM == NULL)
+		(*env)->GetJavaVM(env, &javaVM);
+	init_global();
+	setThreadLocalEnv(env);
+	uvast unodeNum1 = (uvast) nodeNum1;
+	uvast unodeNum2 = (uvast) nodeNum2;
+	setNodeNum(unodeNum1);
+	exchangeCurrentDiscoveredContacts(unodeNum1, unodeNum2);
+	return 0;
+}
+
+JNIEXPORT jint JNICALL Java_cgr_1jni_Libocgr_exchangeContactHistory
+(JNIEnv *env, jclass thisObj, jint nodeNum1, jint nodeNum2)
+{
+	jint result;
+	if (javaVM == NULL)
+		(*env)->GetJavaVM(env, &javaVM);
+	init_global();
+	setThreadLocalEnv(env);
+	uvast unodeNum1 = (uvast) nodeNum1;
+	uvast unodeNum2 = (uvast) nodeNum2;
+	setNodeNum(unodeNum1);
+	exchangeContactHistory(unodeNum1, unodeNum2);
+	return 0;
+}
+
+JNIEXPORT jint JNICALL Java_cgr_1jni_Libocgr_contactDiscoveryAquired
+  (JNIEnv *env, jclass thisObj, jint nodeNum, jint neighborNum, jint rate)
+{
+	jint result;
+	if (javaVM == NULL)
+		(*env)->GetJavaVM(env, &javaVM);
+	init_global();
+	setThreadLocalEnv(env);
+	uvast unodeNum = (uvast) nodeNum;
+	uvast uneighborNum = (uvast) neighborNum;
+	setNodeNum(unodeNum);
+	newContactDiscovered(uneighborNum, (unsigned int) rate);
+	return 0;
+}
+
+JNIEXPORT jint JNICALL Java_cgr_1jni_Libocgr_contactDiscoveryLost
+(JNIEnv *env, jclass thisObj, jint nodeNum, jint neighborNum)
+{
+	jint result;
+	if (javaVM == NULL)
+		(*env)->GetJavaVM(env, &javaVM);
+	init_global();
+	setThreadLocalEnv(env);
+	uvast unodeNum = (uvast) nodeNum;
+	uvast uneighborNum = (uvast) neighborNum;
+	setNodeNum(unodeNum);
+	contactLost(uneighborNum);
+	return 0;
+}

@@ -1,10 +1,19 @@
 package routing;
 
+import java.util.ArrayList;
+
 import core.Connection;
+import core.DTNHost;
+import core.Message;
 import core.Settings;
 
 public class OpportunisticContactGraphRouter extends ContactGraphRouter {
 
+	public static final String XMIT_COPIES_PROP = "XmitCopies";
+	public static final String XMIT_COPIES_COUNT_PROP = "XmitCopiesCount";
+	public static final String DLV_CONFIDENCE_PROP = "DlvConfidence";
+	
+	
 	/**
 	 * Copy constructor.
 	 * @param r The router prototype where setting values are copied from
@@ -66,5 +75,19 @@ public class OpportunisticContactGraphRouter extends ContactGraphRouter {
 		{
 			
 		}
+	}
+	
+	@Override 
+	public boolean createNewMessage(Message m) {
+		m.addProperty(XMIT_COPIES_PROP, new int[0]);
+		m.addProperty(XMIT_COPIES_COUNT_PROP, 0);
+		m.addProperty(DLV_CONFIDENCE_PROP, 0.0);
+		return super.createNewMessage(m);
+	}
+	
+	@Override
+	public Message messageTransferred(String id, DTNHost from) {
+		Message transferred = super.messageTransferred(id, from);
+		transferred.updateProperty(XMIT_COPIES_PROP, new int[0]);
 	}
 }

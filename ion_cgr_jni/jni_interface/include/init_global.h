@@ -13,7 +13,7 @@
 
 #define ONEClockClass "core/SimClock"
 
-void init_global();
+int init_global();
 void finalize_global();
 void init_node();
 void destroy_node();

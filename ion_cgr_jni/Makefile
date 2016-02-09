@@ -24,7 +24,7 @@ all : libcgr_jni.so
 endif
 
 libcgr_jni.so : bp.o ici.o jni_interface.o
-	gcc $(LIB) -Wl,--no-undefined -Wall -fPIC -shared -o $@ bp/*.o ici/*.o jni_interface/*.o -pthread
+	gcc $(LIB) -Wl,--no-undefined -Wall -fPIC -shared -o $@ bp/*.o ici/*.o jni_interface/*.o -lm -pthread
 	
 # $@ matches the target, $< matches the first dependancy
 libtest.so : JNITest.o libnormal.so

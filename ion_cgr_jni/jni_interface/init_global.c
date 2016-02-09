@@ -26,7 +26,7 @@ pthread_key_t jniEnv_key;
 
 
 
-void init_global()
+int init_global()
 {
 	if (initialized == 0)
 	{
@@ -34,7 +34,9 @@ void init_global()
 		pthread_key_create(&jniEnv_key, NULL);
 		ONEreferenceTime = time(NULL);
 		initialized = 1;
+		return 1;
 	}
+	return 0;
 }
 
 void finalize_global()

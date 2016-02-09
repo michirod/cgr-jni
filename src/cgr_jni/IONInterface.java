@@ -1,7 +1,11 @@
 package cgr_jni;
 
 import routing.ContactGraphRouter;
+import routing.OpportunisticContactGraphRouter;
 import routing.ContactGraphRouter.Outduct;
+
+import java.util.ArrayList;
+
 import core.DTNHost;
 import core.Message;
 
@@ -92,5 +96,58 @@ public class IONInterface {
 		DTNHost local = getNodeFromNbr(localNodeNbr);
 		ContactGraphRouter localRouter = (ContactGraphRouter) local.getRouter();
 		localRouter.createNewMessage(message.replicate());
+	}
+	
+	/*
+	 * METHODS USED BY OPPORTUNISTIC CGR
+	 */
+	
+	static int getMessageXmitCopiesCount(Message message)
+	{
+		Integer result;
+		if ((result = (Integer) message.getProperty(
+				OpportunisticContactGraphRouter.XMIT_COPIES_COUNT_PROP)) != null)
+			return result.intValue();
+		return -1;
+	}
+	
+	static int[] getMessageXmitCopies(Message message)
+	{
+		int count = getMessageXmitCopiesCount(message);
+		int[] result;
+		if ((result = (int[]) message.getProperty(
+				OpportunisticContactGraphRouter.XMIT_COPIES_PROP)) != null)
+		{
+			if (count >= 0)
+			{
+				return result;
+			}
+		}
+		return null;
+	}
+
+	static double getMessageDlvConfidence(Message message)
+	{
+		Double result;
+		if ((result = (Double) message.getProperty(
+				OpportunisticContactGraphRouter.DLV_CONFIDENCE_PROP)) != null)
+			return result.doubleValue();
+		return -1;
+	}
+	
+	static void setMessageXmitCopies(Message message, int[] copies)
+	{
+		message.updateProperty(
+				OpportunisticContactGraphRouter.XMIT_COPIES_COUNT_PROP, 
+				copies.length);
+		message.updateProperty(
+				OpportunisticContactGraphRouter.XMIT_COPIES_PROP,
+				copies.clone());
+	}
+	
+	static void setMessageDlvConfidence(Message message, double conf)
+	{
+		message.updateProperty(
+				OpportunisticContactGraphRouter.DLV_CONFIDENCE_PROP, conf);
 	}
 }

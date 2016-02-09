@@ -170,6 +170,11 @@ int	bpEnqueue(FwdDirective *directive, Bundle *bundle, Object bundleObj,
 	return 0;
 }
 
+int	enqueueToLimbo(Bundle *bundle, Object bundleObj)
+{
+	return bpLimboONE(bundle, bundleObj);
+}
+
 Object	insertBpTimelineEvent(BpEvent *newEvent)
 {
 	Sdr		bpSdr = getIonsdr();
