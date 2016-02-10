@@ -329,21 +329,35 @@ public class ContactGraphRouter extends ActiveRouter {
 		if (isContactPlanChanged())
 			tryRouteForMessageIntoLimbo();
 		super.update();
-		if (isTransferring() || !canStartTransfer()) {
-			return; // transferring, don't try other connections yet
+		if (!canStartTransfer()) {
+			return; // allows concurrent transmission
 		}
 		List<Tuple<Message,Connection>> outboundMessages = getMessagesForConnected();
 		Tuple<Message, Connection> sent = tryMessagesForConnected(outboundMessages);
 		if (sent != null)
 		{
 			// transmission started
-			System.out.println("Begin transmission " 
-			+ sent.getKey() + " " + sent.getValue());
+			System.out.println("" + SimClock.getTime() + 
+					": Begin transmission " 
+					+ sent.getKey() + " " + sent.getValue());
 			// I look for next messafe starting form next outduct
 			firstOutductIndex = outducts.higherKey(sent.getValue().getOtherNode(getHost()));
 			if (firstOutductIndex == null)
 				firstOutductIndex = outducts.firstKey();
 		}
+	}
+	
+	/**
+	 * Checks if router "wants" to start receiving message 
+	 * (i.e. router doesn't have the message and has room for it).
+	 * Allows concurrent transmission.
+	 */
+	@Override
+	protected int checkReceiving(Message m, DTNHost from) {
+		int result = super.checkReceiving(m, from);
+		if (result == TRY_LATER_BUSY)
+			result = RCV_OK;
+		return result;
 	}
 
 	@Override
@@ -412,7 +426,8 @@ public class ContactGraphRouter extends ActiveRouter {
 		super.transferDone(con);
 		Message transferred = con.getMessage();
 		removeFromOutducts(transferred.getId());
-		System.out.println("End transmission " + transferred + " " + con);
+		System.out.println("" + SimClock.getTime() + 
+				": End transmission " + transferred + " " + con);
 	}
 	
 	@Override
