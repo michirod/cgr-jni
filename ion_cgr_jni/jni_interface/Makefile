@@ -14,6 +14,10 @@ OPT = -g -Wall -fPIC $(INCLUDES) -DOPPORTUNISTIC_ROUTING
 # Define a virtual path for .class in the bin directory
 vpath %.class $(CLASS_PATH)
 
+ifeq ($(strip $(DEBUG)),1)
+OPT += -DCGR_DEBUG=1 
+endif
+
 all : jni_int.o
 
 libjni_int.so : jni_int.o

@@ -1,13 +1,16 @@
 package test;
 
+import java.awt.List;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.Random;
 
 import cgr_jni.Utils;
 import core.DTNHost;
 import core.Message;
+import core.NetworkInterface;
 import core.SimScenario;
 import routing.ContactGraphRouter;
 import routing.MessageRouter;
@@ -18,11 +21,12 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 	private static final String CONTACT_PLAN_FILE2 = "resources/cp_prova2.txt";
 	private static final String CONTACT_PLAN_TEST4 = "resources/cp_testRouting4.txt";
 	private static final String CONTACT_PLAN_TEST7 = "resources/cp_testRouting7.txt";
+	private static final String CONTACT_PLAN_ASMS = "resources/contact_plan_ASMS14.txt";
 
 	private static final int NROF_HOSTS = 6;
 	private ContactGraphRouter r1,r2,r3,r4,r5,r6;
 	private static ContactGraphRouterTest instance = null;
-	protected static final int TRANSMIT_SPEED = 10000;
+	protected static final int TRANSMIT_SPEED = 16000;
 
 	@Override
 	public void setUp() throws Exception {
@@ -33,6 +37,10 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 				core.SimScenario.NROF_HOSTS_S, "" + NROF_HOSTS);
 		ts.putSetting(Message.TTL_SECONDS_S, "true");
 		ts.putSetting(MessageRouter.MSG_TTL_S, "3600");
+		ts.putSetting(TestUtils.IFACE_NS + "." + 
+				NetworkInterface.TRANSMIT_RANGE_S, "1");
+		ts.putSetting(TestUtils.IFACE_NS + "." + 
+				NetworkInterface.TRANSMIT_SPEED_S, ""+TRANSMIT_SPEED);
 		ContactGraphRouter routerProto = new ContactGraphRouter(ts);
 		setRouterProto(routerProto);
 		super.setUp();	
@@ -1054,7 +1062,126 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 		// useless assert. I just want to see how the memory is doing
 		assertEquals("VACAGHER", "VACAGHER");
 	}
+
+	/**
+	 * TEST 9
+	 * ASMS
+	 * TESTS CGR - ETO
+	 */
 	
+	public void testRoutingASMS(){
+		String cp_path = (new File(CONTACT_PLAN_ASMS)).getAbsolutePath();
+		r1.readContactPlan(cp_path);
+		r2.readContactPlan(cp_path);
+		r3.readContactPlan(cp_path);
+		r4.readContactPlan(cp_path);
+		
+		Message m1 = new Message(h1,h4, "Messaggio 1", 100000);
+		h1.createNewMessage(m1);
+		Message m2 = new Message(h1,h4, "Messaggio 2", 100000);
+		h1.createNewMessage(m2);
+		Message m3 = new Message(h1,h4,"Messaggio 3", 100000);
+		h1.createNewMessage(m3);
+		Message m4 = new Message(h1,h4,"Messaggio 4", 100000);
+		h1.createNewMessage(m4);
+		Message m5 = new Message(h1,h4, "Messaggio 5", 100000);
+		h1.createNewMessage(m5);
+		Message m6 = new Message(h1,h4, "Messaggio 6",100000);
+		h1.createNewMessage(m6);
+		Message m7 = new Message(h1,h4, "Messaggio 7", 100000);
+		h1.createNewMessage(m7);
+		Message m8 = new Message(h1,h4, "Messaggio 8", 100000);
+		h1.createNewMessage(m8);
+		Message m9 = new Message(h1,h4, "Messaggio 9", 100000);
+		h1.createNewMessage(m9);
+		Message m10 = new Message(h1,h4, "Messaggio 10", 100000);
+		h1.createNewMessage(m10);
+		Message m11 = new Message(h1,h4, "Messaggio 11", 100000);
+		h1.createNewMessage(m11);
+		Message m12 = new Message(h1,h4, "Messaggio 12", 100000);
+		h1.createNewMessage(m12);
+		Message m13 = new Message(h1,h4, "Messaggio 13", 100000);
+		h1.createNewMessage(m13);
+		Message m14 = new Message(h1,h4, "Messaggio 14", 100000);
+		h1.createNewMessage(m14);
+		Message m15 = new Message(h1,h4, "Messaggio 15", 100000);
+		h1.createNewMessage(m15);
+		Message m16 = new Message(h1,h4, "Messaggio 16", 100000);
+		h1.createNewMessage(m16);
+		
+
+		checkCreates(16);
+		
+		updateAllNodes();	
+		h2.forceConnection(h4, null, true);
+		h3.forceConnection(h4, null, true);
+		assertEquals(r1.getOutducts().get(h2).getQueue().size(), 8);
+		assertEquals(r1.getOutducts().get(h3).getQueue().size(), 8);
+				
+		clock.advance(29);
+		
+		h1.forceConnection(h2, null, true);
+		
+		clock.advance(1);
+		
+		h1.forceConnection(h3, null, true);
+				
+		for (int i = 0; i <109; i++)
+		{
+			clock.advance(1);
+			updateAllNodes();
+		}	
+		
+		clock.advance(1);
+			
+		clock.advance(1);
+		
+		disconnect(h1);
+		disconnect(h2);
+		disconnect(h3);
+		disconnect(h4);	
+		
+		
+		
+		assertEquals(true, r4.isDeliveredMessage(m1));
+		
+		assertEquals(true, r4.isDeliveredMessage(m2));
+	
+		assertEquals(true, r4.isDeliveredMessage(m3));
+		
+		assertEquals(true, r4.isDeliveredMessage(m4));
+		
+		assertEquals(true, r4.isDeliveredMessage(m5));
+		
+		assertEquals(true, r4.isDeliveredMessage(m6));
+	
+		assertEquals(true, r4.isDeliveredMessage(m7));
+		
+		assertEquals(true, r4.isDeliveredMessage(m8));
+		
+		assertEquals(true, r4.isDeliveredMessage(m9));
+	
+		assertEquals(true, r4.isDeliveredMessage(m10));
+		
+		assertEquals(true, r4.isDeliveredMessage(m11));
+		
+		assertEquals(true, r4.isDeliveredMessage(m12));
+	
+		assertEquals(true, r4.isDeliveredMessage(m13));
+	
+		assertEquals(true, r4.isDeliveredMessage(m14));
+		
+		assertEquals(true, r4.isDeliveredMessage(m15));
+	
+		assertEquals(true, r4.isDeliveredMessage(m16));
+		
+		
+				
+	
+	}
+		
+		
+		
 	public void testReq_0033_prob_cgr()
 	{
 		String cp_path = (new 
@@ -1116,7 +1243,8 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 			updateAllNodes();
 		}
 	}
-
+				
+	
 	public static ContactGraphRouterTest getInstance()
 	{
 		return instance;
