@@ -10,6 +10,7 @@ import java.util.Random;
 import cgr_jni.Utils;
 import core.DTNHost;
 import core.Message;
+import core.NetworkInterface;
 import core.SimScenario;
 import routing.ContactGraphRouter;
 import routing.MessageRouter;
@@ -36,6 +37,10 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 				core.SimScenario.NROF_HOSTS_S, "" + NROF_HOSTS);
 		ts.putSetting(Message.TTL_SECONDS_S, "true");
 		ts.putSetting(MessageRouter.MSG_TTL_S, "3600");
+		ts.putSetting(TestUtils.IFACE_NS + "." + 
+				NetworkInterface.TRANSMIT_RANGE_S, "1");
+		ts.putSetting(TestUtils.IFACE_NS + "." + 
+				NetworkInterface.TRANSMIT_SPEED_S, ""+TRANSMIT_SPEED);
 		ContactGraphRouter routerProto = new ContactGraphRouter(ts);
 		setRouterProto(routerProto);
 		super.setUp();	
