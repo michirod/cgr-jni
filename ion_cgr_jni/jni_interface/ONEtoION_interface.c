@@ -29,6 +29,29 @@ typedef struct InterfaceInfo_t InterfaceInfo;
 InterfaceInfo * interfaceInfo;
 
 
+#ifndef CGR_DEBUG
+#define CGR_DEBUG	0
+#endif
+
+#if CGR_DEBUG == 1
+static void	printCgrTraceLine(void *data, unsigned int lineNbr,
+			CgrTraceType traceType, ...)
+{
+	va_list args;
+	const char *text;
+
+	va_start(args, traceType);
+
+	text = cgr_tracepoint_text(traceType);
+	printf("NODE %ld: ", getNodeNum());
+	vprintf(text, args);
+	putchar('\n');
+
+	va_end(args);
+}
+#endif
+
+
 static InterfaceInfo * setInterfaceInfo(InterfaceInfo * interfaceInfo)
 {
 	if ((pthread_getspecific(interfaceInfo_key)) == NULL)
@@ -306,6 +329,13 @@ int cgrForwardONE(jobject bundleONE, jlong terminusNodeNbr)
 	Object bundleObj;
 	Object plans = (Object) 42; // this value will never be read but it is needed to pass the null check in cgr_forward()
 	int result;
+	CgrTrace * trace = NULL;
+#if CGR_DEBUG == 1
+	CgrTrace traceBuf;
+	traceBuf.fn = printCgrTraceLine;
+	traceBuf.data = NULL;
+	trace = &traceBuf;
+#endif
 	interfaceInfo = malloc(sizeof(InterfaceInfo));
 	interfaceInfo->forwardResult = 0;
 	interfaceInfo->currentMessage = bundleONE;
@@ -315,7 +345,8 @@ int cgrForwardONE(jobject bundleONE, jlong terminusNodeNbr)
 	ion_bundle(bundle, bundleONE);
 	bundleObj = sdr_malloc(getIonsdr(), sizeof(Bundle));
 	sdr_write(getIonsdr(), bundleObj, (char*)bundle, sizeof(Bundle));
-	result = cgr_forward(bundle, bundleObj, (uvast) terminusNodeNbr, plans, getONEDirective, NULL);
+	result = cgr_forward(bundle, bundleObj, (uvast) terminusNodeNbr,
+			plans, getONEDirective, trace);
 	wipe_outduct_list();
 	if (result >= 0)
 		result = interfaceInfo->forwardResult;
