@@ -3,6 +3,7 @@ package test;
 import java.awt.List;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Random;
@@ -10,6 +11,9 @@ import java.util.Random;
 import cgr_jni.Utils;
 import core.DTNHost;
 import core.Message;
+import core.MessageListener;
+import core.NetworkInterface;
+import core.SimClock;
 import core.SimScenario;
 import routing.ContactGraphRouter;
 import routing.MessageRouter;
@@ -39,7 +43,29 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 		ts.putSetting(MessageRouter.MSG_TTL_S, "3600");
 		ContactGraphRouter routerProto = new ContactGraphRouter(ts);
 		setRouterProto(routerProto);
-		super.setUp();	
+		this.mc = new MessageChecker();
+		mc.reset();
+		this.clock = SimClock.getInstance();
+		clock.setTime(0);
+
+		ArrayList<MessageListener> ml = new ArrayList<MessageListener>();
+		ml.add(mc);
+
+		ts.setNameSpace(TestUtils.IFACE_NS);
+		ts.putSetting(NetworkInterface.TRANSMIT_RANGE_S, "1.0");
+		ts.putSetting(NetworkInterface.TRANSMIT_SPEED_S, ""+TRANSMIT_SPEED);
+		
+		this.utils = new TestUtils(null,ml,ts);
+		this.utils.setMessageRouterProto(routerProto);
+		core.NetworkInterface.reset();
+		core.DTNHost.reset();
+		//this.h0 = utils.createHost(c0, "h0");
+		this.h1 = utils.createHost(c0, "h1");
+		this.h2 = utils.createHost(c0, "h2");
+		this.h3 = utils.createHost(c0, "h3");
+		this.h4 = utils.createHost(c0, "h4");
+		this.h5 = utils.createHost(c0, "h5");
+		this.h6 = utils.createHost(c0, "h6");	
 		Utils.init(utils.getAllHosts());
 		for (DTNHost h : utils.getAllHosts())
 		{
