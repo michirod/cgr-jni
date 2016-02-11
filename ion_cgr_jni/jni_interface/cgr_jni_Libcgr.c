@@ -17,8 +17,6 @@
 #include "ONEtoION_interface.h"
 
 
-JavaVM *javaVM = NULL;
-
 JNIEXPORT jint JNICALL Java_cgr_1jni_Libcgr_initializeNode
 	(JNIEnv *env, jclass thisObj, jint nodeNum)
 {

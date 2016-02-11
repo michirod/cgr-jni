@@ -145,7 +145,7 @@ static int getMessageXmitCopies(jobject message, int copies[])
 			ONEtoION_interfaceClass);
 	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv, interfaceClass,
 			"getMessageXmitCopies","(Lcore/Message;)[I");
-	jarray result = (*jniEnv)->CallStaticObjectMethod(jniEnv, interfaceClass,
+	jobject result = (*jniEnv)->CallStaticObjectMethod(jniEnv, interfaceClass,
 			method, message);
 	jsize len = (*jniEnv)->GetArrayLength(jniEnv, result);
 	jint * elt = (*jniEnv)->GetIntArrayElements(jniEnv, result, 0);

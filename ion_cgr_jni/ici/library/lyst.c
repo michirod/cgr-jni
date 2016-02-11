@@ -172,7 +172,8 @@ Lyst_delete(const char *file, int line, LystElt elt)
 {
 	LystCallback fn = lyst_getDeleteFunction(getLyst(elt));
 	void *userdata = lyst_getDeleteUserdata(getLyst(elt));
-	fn(elt, userdata);
+	if (fn !=  NULL)
+		fn(elt, userdata);
 	JNIEnv * jniEnv = getThreadLocalEnv();
 	jclass listClass = (*jniEnv)->FindClass(jniEnv, LystClass);
 	jmethodID delete = (*jniEnv)->GetStaticMethodID(jniEnv, listClass, "lyst_delete","(Lcgr_jni/lyst/LystElt;)V");

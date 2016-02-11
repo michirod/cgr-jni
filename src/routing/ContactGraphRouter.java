@@ -567,6 +567,8 @@ public class ContactGraphRouter extends ActiveRouter {
 	
 	public void processLine(String line)
 	{
+		System.out.println("Node " + getHost().getAddress() 
+				+ ": process line '" + line +"'");
 		Libcgr.processLine(this.getHost().getAddress(), line);
 		contactPlanChanged();
 	}

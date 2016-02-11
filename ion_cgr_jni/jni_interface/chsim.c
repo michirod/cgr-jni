@@ -12,6 +12,11 @@
 
 #include <init_global.h>
 
+static void	freeLystContents(LystElt elt, void *userdata)
+{
+	free(lyst_data(elt));
+}
+
 static int findDiscoveredContacts(uvast localNodeNbr, Lyst list)
 {
 	uvast currentNodeNum = getNodeNum();
@@ -20,23 +25,21 @@ static int findDiscoveredContacts(uvast localNodeNbr, Lyst list)
 	Object iondbObj = getIonDbObject();
 	IonDB iondb;
 	IonContact * contact;
-	Object elt;
+	Object elt = NULL;
 	int count = 0;
 	sdr_read(sdr, (char*) &iondb, iondbObj, sizeof(IonDB));
 	elt = sdr_list_first(sdr, iondb.contacts);
-	contact = malloc(sizeof(IonContact));
 	while (elt != NULL)
 	{
+		contact = malloc(sizeof(IonContact));
 		sdr_read(sdr, (char*) contact, elt, sizeof(IonContact));
 		if (contact->discovered == 1)
 		{
 			count++;
 			lyst_insert_last(list, contact);
-			contact = malloc(sizeof(IonContact));
 		}
 		elt = sdr_list_next(sdr, elt);
 	}
-	free(contact);
 	setNodeNum(currentNodeNum);
 	return count;
 }
@@ -71,7 +74,6 @@ static void copyDiscoveredContacts(Lyst from, int toNode)
 				last, contact->xmitRate, contact->confidence);
 		rfx_insert_contact(contact->fromTime, contact->toTime, last,
 				first, contact->xmitRate, contact->confidence);
-		free(contact);
 		elt = lyst_next(elt);
 	}
 	lyst_clear(from);
@@ -135,8 +137,8 @@ static void getContactLog(uvast localNodeNbr, int idx, Lyst log)
 	elt = sdr_list_first(sdr, iondb.contactLog[idx]);
 	while (elt != NULL)
 	{
-		sdr_read(sdr, (char*) contact, elt, sizeof(PastContact));
 		contact = malloc(sizeof(PastContact));
+		sdr_read(sdr, (char*) contact, elt, sizeof(PastContact));
 		lyst_insert_last(log, contact);
 		elt = sdr_list_next(sdr, elt);
 	}
@@ -155,7 +157,6 @@ static void copyContactHistory(Lyst from, uvast toNode, int idx)
 		rfx_log_discovered_contact(contact->fromTime, contact->toTime,
 				contact->fromNode, contact->toNode, contact->xmitRate,
 				idx);
-		free(contact);
 		elt = lyst_next(elt);
 	}
 	lyst_clear(from);
@@ -169,6 +170,11 @@ void exchangeContactHistory(uvast node1, uvast node2)
 	node1Log[1] = lyst_create();
 	node2Log[0] = lyst_create();
 	node2Log[1] = lyst_create();
+
+	lyst_delete_set(node1Log[0], freeLystContents, NULL);
+	lyst_delete_set(node1Log[1], freeLystContents, NULL);
+	lyst_delete_set(node2Log[0], freeLystContents, NULL);
+	lyst_delete_set(node2Log[1], freeLystContents, NULL);
 
 	getContactLog(node1, SENDER_NODE, node1Log[0]);
 	getContactLog(node1, RECEIVER_NODE, node1Log[1]);

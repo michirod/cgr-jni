@@ -54,6 +54,8 @@ public class OpportunisticContactGraphRouter extends ContactGraphRouter {
 	 * This function invoke the predictContacts algorithm on the local node
 	 */
 	private void predictContacts() {
+		System.out.println("NODE " + getHost().getAddress() 
+				+ " CONTACT PREDICTION INITIATED");
 		Libocgr.predictContacts(getHost().getAddress());
 	}
 
@@ -66,6 +68,9 @@ public class OpportunisticContactGraphRouter extends ContactGraphRouter {
 	private void excangeContactHistory(Connection con) {
 		if (con.isInitiator(getHost()))
 		{
+			System.out.println("EXCHANGING CONTACT HISTORY between "
+					+ getHost().getAddress() + " and " + con.getOtherNode(
+							getHost()).getAddress());
 			Libocgr.exchangeContactHistory(getHost().getAddress(), 
 					con.getOtherNode(getHost()).getAddress());
 		}
@@ -81,6 +86,9 @@ public class OpportunisticContactGraphRouter extends ContactGraphRouter {
 	private void exchangeCurrentDiscoveredContacts(Connection con) {
 		if (con.isInitiator(getHost()))
 		{
+			System.out.println("EXCHANGING CURRENT DISCOVERED CONTACTS between "
+					+ getHost().getAddress() + " and " + con.getOtherNode(
+							getHost()).getAddress());
 			Libocgr.exchangeCurrentDiscoveredContatcs(getHost().getAddress(), 
 					con.getOtherNode(getHost()).getAddress());
 		}
@@ -101,6 +109,8 @@ public class OpportunisticContactGraphRouter extends ContactGraphRouter {
 	 * @param con the Connection lost
 	 */
 	private void contactLost(Connection con) {
+		System.out.println("NODE " + getHost().getAddress() 
+				+ " REMOVE DISCOVERED CONTACT");
 		Libocgr.contactDiscoveryLost(getHost().getAddress(), 
 				con.getOtherNode(getHost()).getAddress());
 	}

@@ -1,7 +1,7 @@
 
 
 # Define a variable for classpath
-CLASS_PATH = ../../bin/cgr
+CLASS_PATH = ../bin/cgr_jni/test
 
 #Define java includes
 J_INCLUDES = -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/linux
@@ -26,16 +26,11 @@ endif
 libcgr_jni.so : bp.o ici.o jni_interface.o
 	gcc $(LIB) -Wl,--no-undefined -Wall -fPIC -shared -o $@ bp/*.o ici/*.o jni_interface/*.o -lm -pthread
 	
-# $@ matches the target, $< matches the first dependancy
-libtest.so : JNITest.o libnormal.so
-	gcc $(LIB) -Wl,--no-undefined -Wall -fPIC -shared -lnormal -lcgr -o $@ $^ 
+libcgr_jni_test.so : test.o	
+	gcc $(LIB) -Wl,--no-undefined -Wall -fPIC -shared -o $@ bp/*.o ici/*.o jni_interface/*.o test/*.o -lm -pthread
 	
-# $@ matches the target, $< matches the first dependancy
-JNITest.o : jni_test_JNITest.c jni_test_JNITest.h
-	gcc -c $(OPT) $(J_INCLUDES) -o $@ $< 
-	
-libnormal.so : libcgr.so
-	gcc $(OPT) $(J_INCLUDES) $(LIB) -Wl,--no-undefined -shared -o $@ *.c -lcgr -lpthread
+libtest.so : ici.o jni_interface_test.o test.o
+	gcc $(LIB) -Wl,--no-undefined -Wall -fPIC -shared -o $@ ici/*.o jni_interface/init_global.o jni_interface/jni_thread.o test/*.o -lm -pthread
 	
 bp.o : 
 	make -C bp DEBUG=$(DEBUG)
@@ -45,15 +40,18 @@ ici.o :
 	
 jni_interface.o :
 	make -C jni_interface ONE_CLASSPATH=$(ONE_CLASSPATH) DEBUG=$(DEBUG)
+
+jni_interface_test.o : ici.o
+	make -C jni_interface jni_int_test.o
 	
-# $* matches the target filename without the extension
-JNITest.h : JNITest.class
-	javah -classpath ../bin jni.test.$*
+test.o : jni_interface_test.o
+	make -C test
 	
 clean:
 	make -C bp clean
 	make -C ici clean
 	make -C jni_interface clean
+	make -C test clean
 	rm -rf *.so *.o
 	
 help:

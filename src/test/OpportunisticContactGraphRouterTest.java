@@ -5,6 +5,8 @@ import java.io.File;
 import cgr_jni.Utils;
 import core.DTNHost;
 import core.Message;
+import core.NetworkInterface;
+import core.SimClock;
 import core.SimScenario;
 import routing.MessageRouter;
 import routing.OpportunisticContactGraphRouter;
@@ -22,6 +24,10 @@ public class OpportunisticContactGraphRouterTest extends AbstractRouterTest {
 				core.SimScenario.NROF_HOSTS_S, "" + NROF_HOSTS);
 		ts.putSetting(Message.TTL_SECONDS_S, "true");
 		ts.putSetting(MessageRouter.MSG_TTL_S, "3600");
+		ts.putSetting(TestUtils.IFACE_NS + "." + 
+				NetworkInterface.TRANSMIT_RANGE_S, "1");
+		ts.putSetting(TestUtils.IFACE_NS + "." + 
+				NetworkInterface.TRANSMIT_SPEED_S, ""+TRANSMIT_SPEED);
 		OpportunisticContactGraphRouter routerProto = 
 				new OpportunisticContactGraphRouter(ts);
 		setRouterProto(routerProto);
@@ -136,9 +142,13 @@ public class OpportunisticContactGraphRouterTest extends AbstractRouterTest {
 		updateAllNodes();
 		clock.advance(11);
 		h1.forceConnection(h2, null, true);
+		testWait(1, 1);
 		h2.forceConnection(h3, null, true);
+		testWait(1, 1);
 		h3.forceConnection(h4, null, true);
+		testWait(1, 1);
 		h4.forceConnection(h5, null, true);
+		testWait(1, 1);
 		h5.forceConnection(h1, null, true);
 
 		updateAllNodes();
@@ -209,6 +219,65 @@ public class OpportunisticContactGraphRouterTest extends AbstractRouterTest {
 		assertEquals(1, r1.getLimboSize());
 		assertEquals(true, r4.isDeliveredMessage(m2));
 		assertEquals(true, r5.isDeliveredMessage(m3));
+	}
+	
+	public void testRoutingSimple()
+	{
+		testWait(30, 1);
+		r1.processLine("l range");
+		r1.processLine("l contact");
+		r2.processLine("l range");
+		r2.processLine("l contact");
+		System.out.println();
+		System.out.println("" + SimClock.getTime() + ": Node 1 and Node2 connected");
+		h1.forceConnection(h2, null, true);
+		testWait(10, 1);
+		r1.processLine("l range");
+		r1.processLine("l contact");
+		r2.processLine("l range");
+		r2.processLine("l contact");
+		System.out.println();
+		System.out.println("" + SimClock.getTime() + ": Node 1 and Node2 disconnected");
+		disconnect(h1);
+		r1.processLine("l range");
+		r1.processLine("l contact");
+		r2.processLine("l range");
+		r2.processLine("l contact");
+		testWait(30, 1);
+		System.out.println();
+		System.out.println("" + SimClock.getTime() + ": Node 1 and Node2 connected");
+		h1.forceConnection(h2, null, true);
+		testWait(10, 1);
+		r1.processLine("l range");
+		r1.processLine("l contact");
+		r2.processLine("l range");
+		r2.processLine("l contact");
+		System.out.println();
+		System.out.println("" + SimClock.getTime() + ": Node 1 and Node2 disconnected");
+		disconnect(h1);
+		r1.processLine("l range");
+		r1.processLine("l contact");
+		r2.processLine("l range");
+		r2.processLine("l contact");
+		testWait(30, 1);
+		System.out.println();
+		System.out.println("" + SimClock.getTime() + ": Node 1 and Node2 connected");
+		h1.forceConnection(h2, null, true);
+		testWait(10, 1);
+		r1.processLine("l range");
+		r1.processLine("l contact");
+		r2.processLine("l range");
+		r2.processLine("l contact");
+		System.out.println();
+		System.out.println("" + SimClock.getTime() + ": Node 1 and Node2 disconnected");
+		disconnect(h1);
+		r1.processLine("l range");
+		r1.processLine("l contact");
+		r2.processLine("l range");
+		r2.processLine("l contact");
+		testWait(30, 1);
+		
+		assertEquals(1, 1);
 	}
 	
 	protected void testWait(double sec, double gran)

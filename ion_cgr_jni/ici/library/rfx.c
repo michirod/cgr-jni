@@ -1636,7 +1636,7 @@ static int	processSequence(LystElt start, LystElt end, time_t currentTime)
 		}
 
 		prevElt = elt;
-		if (elt == end)
+		if (lyst_data(elt) == lyst_data(end))
 		{
 			break;
 		}
@@ -1667,7 +1667,7 @@ static int	processSequence(LystElt start, LystElt end, time_t currentTime)
 		}
 
 		prevElt = elt;
-		if (elt == end)
+		if (lyst_data(elt) == lyst_data(end))
 		{
 			break;
 		}

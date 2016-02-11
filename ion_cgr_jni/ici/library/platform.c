@@ -18,6 +18,7 @@ void	_putErrmsg(const char *fileName, int lineNbr, const char *text,
 {
 	//TODO stub
 	fprintf(stderr, "Error in %s:%d, %s: %s\n", fileName, lineNbr, text, arg);
+	fflush(stderr);
 	//writeErrmsgMemos();
 }
 void			_putSysErrmsg(const char * fileName, int lineNbr, const char * text,
@@ -90,6 +91,14 @@ char * istrcpy(char * to, const char * from, size_t size)
 {
 	return strncpy(to, from, size);
 }
+static void	logToStdout(char *text)
+{
+	if (text)
+	{
+		fprintf(stdout, "%s\n", text);
+		fflush(stdout);
+	}
+}
 void	writeMemoNote(char *text, char *note)
 {
 	char	*noteText = note ? note : "";
@@ -100,6 +109,7 @@ void	writeMemoNote(char *text, char *note)
 		isprintf(textBuffer, sizeof textBuffer, "%.900s: %.64s",
 				text, noteText);
 		//(_logOneMessage(NULL))(textBuffer);
+		logToStdout(textBuffer);
 	}
 }
 

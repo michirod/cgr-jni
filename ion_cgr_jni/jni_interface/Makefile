@@ -32,5 +32,11 @@ Libcgr.h : Libcgr.class
 Libocgr.h : Libocgr.class
 	javah -classpath $(CLASS_PATH) cgr_jni.$*
 	
+jni_int_test.o :
+	gcc -c $(OPT) $(J_INCLUDES) init_global.c jni_thread.c
+	gcc $(OPT) $(J_INCLUDES) $(LIB) -Wl,--no-undefined -shared -o $@ init_global.o jni_thread.o -lici_jni -pthread
+
+
+	
 clean :
 	rm -f *.o *.so

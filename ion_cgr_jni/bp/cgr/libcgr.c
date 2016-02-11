@@ -196,7 +196,7 @@ static void	clearRoutingObjects(PsmPartition ionwm)
 
 static CgrVdb	*_cgrvdb(char **name)
 {
-	static CgrVdb	*vdb = NULL;
+	CgrVdb	*vdb = NULL;
 	PsmPartition	ionwm;
 	PsmAddress	vdbAddress;
 	PsmAddress	elt;
@@ -250,7 +250,24 @@ static CgrVdb	*_cgrvdb(char **name)
 		clearRoutingObjects(ionwm);
 		sdr_exit_xn(sdr);
 	}
+	else
+	{
+		name = malloc(sizeof(char*));
+		*name = "cgrvdb";
+		ionwm = getIonwm();
+		if (psm_locate(ionwm, *name, &vdbAddress, &elt) < 0)
+		{
+			putErrmsg("Failed searching for vdb.", *name);
+			return NULL;
+		}
+		free(name);
 
+		if (elt)
+		{
+			vdb = (CgrVdb *) psp(ionwm, vdbAddress);
+			return vdb;
+		}
+	}
 	return vdb;
 }
 

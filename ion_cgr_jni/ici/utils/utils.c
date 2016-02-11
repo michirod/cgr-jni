@@ -98,6 +98,8 @@ IonDB * createIonDb(Sdr ionsdr, IonDB * iondbPtr)
 	iondbPtr->ranges = sdr_list_create(ionsdr);
 	iondbPtr->maxClockError = 0;
 	iondbPtr->clockIsSynchronized = 1;
+	iondbPtr->contactLog[SENDER_NODE] = sdr_list_create(ionsdr);
+	iondbPtr->contactLog[RECEIVER_NODE] = sdr_list_create(ionsdr);
     //memcpy(&iondbBuf.parmcopy, parms, sizeof(IonParms));
 	return iondbPtr;
 }
