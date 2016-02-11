@@ -38,13 +38,13 @@ libnormal.so : libcgr.so
 	gcc $(OPT) $(J_INCLUDES) $(LIB) -Wl,--no-undefined -shared -o $@ *.c -lcgr -lpthread
 	
 bp.o : 
-	make -C bp 
+	make -C bp DEBUG=$(DEBUG)
 	
 ici.o : 
-	make -C ici
+	make -C ici DEBUG=$(DEBUG)
 	
 jni_interface.o :
-	make -C jni_interface ONE_CLASSPATH=$(ONE_CLASSPATH)
+	make -C jni_interface ONE_CLASSPATH=$(ONE_CLASSPATH) DEBUG=$(DEBUG)
 	
 # $* matches the target filename without the extension
 JNITest.h : JNITest.class
@@ -58,7 +58,7 @@ clean:
 	
 help:
 	@echo "Usage:"
-	@echo "make ONE_CLASSPATH=<ONE_classpath>"
+	@echo "make ONE_CLASSPATH=<ONE_classpath> [ DEBUG=1 ]"
 
 java_home_notset:
 	@echo "ERROR:"
