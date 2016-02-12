@@ -122,6 +122,9 @@ public class ContactGraphRouter extends ActiveRouter {
 	public static final String CONTACT_PLAN_PATH_S = "ContactPlanPath";
 	public static final String ROUTE_FORWARD_TIMELIMIT_PROP = "ForwardTimelimit";
 	public static final String OUTDUCT_REF_PROP = "OutducReference";
+	public static final String XMIT_COPIES_PROP = "XmitCopies";
+	public static final String XMIT_COPIES_COUNT_PROP = "XmitCopiesCount";
+	public static final String DLV_CONFIDENCE_PROP = "DlvConfidence";
 	
 	/** counter incremented every time a message is delivered to the local node,
 	 *  i.e. the message has reached its final destination. */
@@ -388,6 +391,9 @@ public class ContactGraphRouter extends ActiveRouter {
 	public boolean createNewMessage(Message m) {
 		m.addProperty(ROUTE_FORWARD_TIMELIMIT_PROP, (long)0);
 		m.addProperty(OUTDUCT_REF_PROP, Outduct.NONE_ID);
+		m.addProperty(XMIT_COPIES_PROP, new int[0]);
+		m.addProperty(XMIT_COPIES_COUNT_PROP, 0);
+		m.addProperty(DLV_CONFIDENCE_PROP, 0.0);
 		return super.createNewMessage(m);
 	}
 	
@@ -434,6 +440,9 @@ public class ContactGraphRouter extends ActiveRouter {
 	public Message messageTransferred(String id, DTNHost from)
 	{
 		Message transferred = super.messageTransferred(id, from);
+		transferred.updateProperty(XMIT_COPIES_PROP, new int[0]);
+		transferred.updateProperty(XMIT_COPIES_COUNT_PROP, 0);
+		transferred.updateProperty(DLV_CONFIDENCE_PROP, 0.0);
 		if (transferred.getTo().equals(getHost()))
 		{
 			deliveredCount++;
