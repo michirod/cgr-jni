@@ -36,3 +36,18 @@ void		sm_SemEnd(sm_SemId semId)
 {
 	//TODO stub
 }
+void		sm_TaskKill(int taskId, int sigNbr)
+{
+	//TODO stub
+}
+int		sm_TaskExists(int taskId)
+{
+	//TODO stub
+	return 0;
+}
+
+int		pseudoshell(char *commandLine)
+{
+	//TODO stub
+	return 0;
+}

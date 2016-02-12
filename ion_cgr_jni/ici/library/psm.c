@@ -11,7 +11,6 @@
 #include "shared.h"
 #include "jni_thread.h"
 
-
 PsmAddress	Psm_zalloc(const char * s, int n, PsmPartition partition, unsigned long length)
 {
 	JNIEnv * jniEnv = getThreadLocalEnv();

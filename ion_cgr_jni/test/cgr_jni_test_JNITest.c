@@ -5,7 +5,7 @@
  *      Author: michele
  */
 
-#include "jni_test_JNITest.h"
+#include "cgr_jni_test_JNITest.h"
 
 #include <jni.h>
 #include <stdio.h>
@@ -20,7 +20,7 @@
  */
 
 
-JNIEXPORT jint JNICALL Java_jni_test_JNITest_doSomething(JNIEnv *env, jobject thisObj, jlong nodeNum, jstring string)
+JNIEXPORT jint JNICALL Java_cgr_1jni_test_JNITest_doSomething(JNIEnv *env, jobject thisObj, jlong nodeNum, jstring string)
 {
 	init_global();
 	if (javaVM == NULL)
@@ -30,7 +30,7 @@ JNIEXPORT jint JNICALL Java_jni_test_JNITest_doSomething(JNIEnv *env, jobject th
 	return doSomething(nodeNum, (char *)nativeString);
 }
 
-JNIEXPORT jint JNICALL Java_jni_test_JNITest_doSomethingWithLists(JNIEnv *env, jobject thisObj, jlong nodeNum, jobjectArray array)
+JNIEXPORT jint JNICALL Java_cgr_1jni_test_JNITest_doSomethingWithLists(JNIEnv *env, jobject thisObj, jlong nodeNum, jobjectArray array)
 {
 	init_global();
 	if (javaVM == NULL)
@@ -48,7 +48,7 @@ JNIEXPORT jint JNICALL Java_jni_test_JNITest_doSomethingWithLists(JNIEnv *env, j
 	return doSomethingWithLists(nodeNum, len, strings);
 }
 
-JNIEXPORT jint JNICALL Java_jni_test_JNITest_doSomethingWithPsm (JNIEnv *env, jobject thisObj, jlong nodeNum, jobjectArray array)
+JNIEXPORT jint JNICALL Java_cgr_1jni_test_JNITest_doSomethingWithPsm(JNIEnv *env, jobject thisObj, jlong nodeNum, jobjectArray array)
 {
 	init_global();
 	if (javaVM == NULL)

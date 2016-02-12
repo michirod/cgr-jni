@@ -10,13 +10,13 @@ public class JNITest {
 	 * (vedi Makefile)
 	 */
 	static {
-		 System.loadLibrary("cgr_jni");
+		 System.loadLibrary("test");
 //		 System.loadLibrary("normal");
 //		 System.loadLibrary("test");
 //		 System.loadLibrary("cgr_jni");
 	}
 
-	public native int doSomething(long node, String string);
-	public native int doSomethingWithLists(long node, String[] strings);
-	public native int doSomethingWithPsm(long node, String[] strings);
+	public static native int doSomething(long node, String string);
+	public static native int doSomethingWithLists(long node, String[] strings);
+	public static native int doSomethingWithPsm(long node, String[] strings);
 }

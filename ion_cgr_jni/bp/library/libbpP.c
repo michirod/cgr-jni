@@ -161,6 +161,7 @@ int	bpEnqueue(FwdDirective *directive, Bundle *bundle, Object bundleObj,
 		increaseScalar(&duct.urgentBacklog, backlogIncrement);
 	}
 	*/
+	bundle->ductXmitElt = directive->outductElt;
 
 	sdr_write(bpSdr, ductAddr, (char *) &duct, sizeof(Outduct));
 	sdr_write(bpSdr, bundleObj, (char *) bundle, sizeof(Bundle));
@@ -168,6 +169,11 @@ int	bpEnqueue(FwdDirective *directive, Bundle *bundle, Object bundleObj,
 	bpEnqueONE(directive, bundle, bundleObj);
 
 	return 0;
+}
+
+int	enqueueToLimbo(Bundle *bundle, Object bundleObj)
+{
+	return bpLimboONE(bundle, bundleObj);
 }
 
 Object	insertBpTimelineEvent(BpEvent *newEvent)
@@ -233,6 +239,6 @@ int	bpReforwardBundle(Object bundleAddr)
 int	bpClone(Bundle *oldBundle, Bundle *newBundle, Object *newBundleObj,
 		unsigned int offset, unsigned int length)
 {
-	//TODO stub
+	bpCloneONE(oldBundle, newBundle);
 	return 0;
 }

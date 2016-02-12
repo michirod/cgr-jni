@@ -46,6 +46,13 @@ int doSomethingWithLists(long nodeNum, int len, char ** els)
 	char * secondData = lyst_data(second);
 	char * lastData = lyst_data(last);
 
+	Lyst lyst2 = lyst_create();
+	lyst_insert_last(lyst2, firstData);
+	if(lyst_first(lyst2) != lyst_last(lyst2))
+		printf("ERROR!!! first and last element of the list are not equal\n");
+	if(lyst_data(lyst_first(lyst2)) == lyst_data(lyst_last(lyst2)))
+			printf("YEAH!!! first and last element of the list are equal\n");
+
 	printf("First: %s, Second: %s, Last: %s\n", firstData, secondData, lastData);
 	fflush(stdout);
 	return len;

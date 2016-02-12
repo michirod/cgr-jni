@@ -121,6 +121,103 @@ static void updateMessageForfeitTime(jobject message, time_t forfeitTime)
 	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv, interfaceClass, "updateMessageForfeitTime","(Lcore/Message;J)V");
 	(*jniEnv)->CallStaticVoidMethod(jniEnv, interfaceClass, method, message, oneTime);
 }
+
+#define OPPORTUNISTIC_ROUTING
+#ifdef OPPORTUNISTIC_ROUTING
+
+
+static int getMessageXmitCopiesCount(jobject message)
+{
+	JNIEnv * jniEnv = getThreadLocalEnv();
+	jclass interfaceClass = (*jniEnv)->FindClass(jniEnv,
+			ONEtoION_interfaceClass);
+	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv, interfaceClass,
+			"getMessageXmitCopiesCount","(Lcore/Message;)I");
+	jint result = (*jniEnv)->CallStaticIntMethod(jniEnv, interfaceClass,
+			method, message);
+	return (int) result;
+}
+
+static int getMessageXmitCopies(jobject message, int copies[])
+{
+	JNIEnv * jniEnv = getThreadLocalEnv();
+	jclass interfaceClass = (*jniEnv)->FindClass(jniEnv,
+			ONEtoION_interfaceClass);
+	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv, interfaceClass,
+			"getMessageXmitCopies","(Lcore/Message;)[I");
+	jintArray result = (*jniEnv)->CallStaticObjectMethod(jniEnv, interfaceClass,
+			method, message);
+	jsize len = (*jniEnv)->GetArrayLength(jniEnv, result);
+	jint * elt = (*jniEnv)->GetIntArrayElements(jniEnv, result, 0);
+	int i;
+	for (i = 0; i < len; i++)
+	{
+		copies[i] = elt[i];
+	}
+	(*jniEnv)->ReleaseIntArrayElements(jniEnv, result, elt, 0);
+	return (int) len;
+}
+
+static float getMessageDlvConfidence(jobject message)
+{
+	JNIEnv * jniEnv = getThreadLocalEnv();
+	jclass interfaceClass = (*jniEnv)->FindClass(jniEnv,
+			ONEtoION_interfaceClass);
+	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv, interfaceClass,
+			"getMessageDlvConfidence","(Lcore/Message;)D");
+	jdouble result = (*jniEnv)->CallStaticIntMethod(jniEnv, interfaceClass,
+			method, message);
+	return (float) result;
+}
+
+static void setMessageXmitCopies(jobject message, int copies[], int len)
+{
+	JNIEnv * jniEnv = getThreadLocalEnv();
+	jclass interfaceClass = (*jniEnv)->FindClass(jniEnv,
+			ONEtoION_interfaceClass);
+	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv, interfaceClass,
+			"setMessageXmitCopies","(Lcore/Message;[I)V");
+	jintArray array = (*jniEnv)->NewIntArray(jniEnv, len);
+	/*
+	jint * cur = (*jniEnv)->GetIntArrayElements(jniEnv, array, NULL);
+	int i;
+	for (i = 0; i < len; i++)
+	{
+		cur[i] = copies[i];
+	}
+	(*jniEnv)->ReleaseIntArrayElements(jniEnv, array, cur, 0, copies);
+	*/
+	(*jniEnv)->SetIntArrayRegion(jniEnv, array, 0, len, copies);
+	(*jniEnv)->CallStaticVoidMethod(jniEnv, interfaceClass,
+			method, message, array);
+}
+
+static void setMessageDlvConfidence(jobject message, float dlvConf)
+{
+	JNIEnv * jniEnv = getThreadLocalEnv();
+	jclass interfaceClass = (*jniEnv)->FindClass(jniEnv,
+			ONEtoION_interfaceClass);
+	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv, interfaceClass,
+			"setMessageDlvConfidence","(Lcore/Message;D)V");
+	(*jniEnv)->CallStaticVoidMethod(jniEnv, interfaceClass,
+			method, message, (jdouble) dlvConf);
+}
+
+static void getXmitCopiesDlvConficence(jobject message, Bundle * bundle)
+{
+	bundle->dlvConfidence = getMessageDlvConfidence(message);
+	bundle->xmitCopiesCount = getMessageXmitCopiesCount(message);
+	getMessageXmitCopies(message, bundle->xmitCopies);
+}
+
+static void updateXmitCopiesDlvConfidence(jobject message, Bundle * bundle)
+{
+	setMessageDlvConfidence(message, bundle->dlvConfidence);
+	setMessageXmitCopies(message, bundle->xmitCopies,
+			bundle->xmitCopiesCount);
+}
+#endif
+
 /**
  * return true if the outduct is blocked (in ONE this should return always false)
  */
@@ -187,9 +284,16 @@ static long getOutductTotalEnqueuedBytes(jobject jOutduct)
 	return (long) result;
 }
 
-static jobject cloneMessage(jobject jMessage)
+static int cloneMessage(uvast localNodeNbr, jobject jMessage)
 {
-	return NULL;
+	JNIEnv * jniEnv = getThreadLocalEnv();
+	jclass interfaceClass = (*jniEnv)->FindClass(jniEnv,
+			ONEtoION_interfaceClass);
+	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv, interfaceClass,
+			"cloneMessage","(JLcore/Message;)V");
+	jint result = (*jniEnv)->CallStaticIntMethod(jniEnv, interfaceClass,
+			method, localNodeNbr, jMessage);
+	return 0;
 }
 
 /**
@@ -235,6 +339,9 @@ void ion_bundle(Bundle * bundle, jobject message)
 	bundle->dictionaryLength = 0;
 	bundle->extensionsLength[PRE_PAYLOAD] = 0;
 	bundle->extensionsLength[POST_PAYLOAD] = 0;
+#ifdef OPPORTUNISTIC_ROUTING
+	getXmitCopiesDlvConficence(message, bundle);
+#endif
 }
 
 /**
@@ -374,12 +481,27 @@ int bpEnqueONE(FwdDirective *directive, Bundle *bundle, Object bundleObj)
 	proximateNodeNbr = atol(outduct.name);
 	insertBundleIntoOutduct(localNodeNbr, interfaceInfo->currentMessage, proximateNodeNbr);
 	interfaceInfo->forwardResult = proximateNodeNbr;
+#ifdef OPPORTUNISTIC_ROUTING
+	updateXmitCopiesDlvConfidence(interfaceInfo->currentMessage, bundle);
+#endif
 	return 0;
 }
 
-int bpCloneONE(Bundle *oldBundle, Bundle *newBundle, Object *newBundleObj)
+int bpLimboONE(Bundle *bundle, Object bundleObj)
 {
+#ifdef OPPORTUNISTIC_ROUTING
+	updateXmitCopiesDlvConfidence(interfaceInfo->currentMessage, bundle);
+#endif
 	return 0;
+}
+
+int bpCloneONE(Bundle *oldBundle, Bundle *newBundle)
+{
+	int result;
+	memcpy(newBundle, oldBundle, sizeof(Bundle));
+	newBundle->ductXmitElt = NULL;
+	result = cloneMessage(getNodeNum(), interfaceInfo->currentMessage);
+	return result;
 }
 
 int testMessage(jobject message)
@@ -394,3 +516,4 @@ int testMessage(jobject message)
 	free(bundle);
 	return 0;
 }
+

@@ -18,6 +18,17 @@ int initialized = 0;
 pthread_key_t nodeNum_key;
 pthread_key_t jniEnv_key;
 
+static void * __jni_thread_run(void * arg)
+{
+	JNIEnv * localEnv;
+	(*javaVM)->AttachCurrentThread(javaVM, &localEnv, NULL);
+	setThreadLocalEnv(localEnv);
+	Passing * passing = (Passing *)arg;
+	void * res = passing->function(passing->args);
+	free(passing);
+	(*javaVM)->DetachCurrentThread(javaVM);
+	return res;
+}
 
 int jni_thread_create(pthread_t *newthread, pthread_attr_t *attr, void *(*__start_routine) (void *), void * arg)
 {
@@ -32,17 +43,6 @@ int jni_thread_join(pthread_t __th, void **__thread_return)
 	return pthread_join(__th, __thread_return);
 }
 
-void * __jni_thread_run(void * arg)
-{
-	JNIEnv * localEnv;
-	(*javaVM)->AttachCurrentThread(javaVM, &localEnv, NULL);
-	setThreadLocalEnv(localEnv);
-	Passing * passing = (Passing *)arg;
-	void * res = passing->function(passing->args);
-	free(passing);
-	(*javaVM)->DetachCurrentThread(javaVM);
-	return res;
-}
 
 JNIEnv * getThreadLocalEnv()
 {

@@ -122,6 +122,9 @@ public class ContactGraphRouter extends ActiveRouter {
 	public static final String CONTACT_PLAN_PATH_S = "ContactPlanPath";
 	public static final String ROUTE_FORWARD_TIMELIMIT_PROP = "ForwardTimelimit";
 	public static final String OUTDUCT_REF_PROP = "OutducReference";
+	public static final String XMIT_COPIES_PROP = "XmitCopies";
+	public static final String XMIT_COPIES_COUNT_PROP = "XmitCopiesCount";
+	public static final String DLV_CONFIDENCE_PROP = "DlvConfidence";
 	
 	/** counter incremented every time a message is delivered to the local node,
 	 *  i.e. the message has reached its final destination. */
@@ -200,6 +203,16 @@ public class ContactGraphRouter extends ActiveRouter {
 		return o.getEnqueuedMessageNum();
 	}
 	
+	public boolean isMessageIntoOutduct(DTNHost h, Message m)
+	{
+		Outduct o = outducts.get(h);
+		if (o != null)
+		{
+			return o.containsMessage(m);
+		}
+		return false;
+	}
+	
 	/**
 	 * Gets the number of Messages currently into the limbo.
 	 * If a message is into the limbo it means that the CGR hasn't found a 
@@ -239,11 +252,13 @@ public class ContactGraphRouter extends ActiveRouter {
 	 * from it. The outduct reference property {@link ContactGraphRouter#OUTDUCT_REF_PROP}
 	 * is updated. 
 	 * @param message to put into the limbo
+	 * @param removeFromOutduct if set to true, tries to remove them message from the
+	 * outduct it was enqueued into.
 	 */
-	public void putMessageIntoLimbo(Message message)
+	public void putMessageIntoLimbo(Message message, boolean removeFromOutduct)
 	{
 		int outductNum = (int) message.getProperty(OUTDUCT_REF_PROP);
-		if (outductNum >= 0)
+		if (removeFromOutduct && outductNum >= 0)
 			getOutducts().get(Utils.getHostFromNumber(outductNum)).removeMessageFromOutduct(message);
 		limbo.insertMessageIntoOutduct(message);
 		message.updateProperty(OUTDUCT_REF_PROP, Outduct.LIMBO_ID);
@@ -316,7 +331,7 @@ public class ContactGraphRouter extends ActiveRouter {
 				 * enqueue it into an outduct if a route has been found.
 				 */
 				o.removeMessageFromOutduct(m);
-				putMessageIntoLimbo(m);
+				putMessageIntoLimbo(m, false);
 				cgrForward(m, m.getTo());
 			}
 			expired.clear();
@@ -327,7 +342,10 @@ public class ContactGraphRouter extends ActiveRouter {
 	public void update(){
 		checkExpiredRoutes();
 		if (isContactPlanChanged())
+		{
 			tryRouteForMessageIntoLimbo();
+			contactPlanChanged = false;
+		}
 		super.update();
 		if (!canStartTransfer()) {
 			return; // allows concurrent transmission
@@ -379,7 +397,7 @@ public class ContactGraphRouter extends ActiveRouter {
 				return;
 			}
 		}
-		putMessageIntoLimbo(m);
+		putMessageIntoLimbo(m, false);
 		super.addToMessages(m, newMessage);
 		cgrForward(m, m.getTo());
 	}
@@ -388,6 +406,9 @@ public class ContactGraphRouter extends ActiveRouter {
 	public boolean createNewMessage(Message m) {
 		m.addProperty(ROUTE_FORWARD_TIMELIMIT_PROP, (long)0);
 		m.addProperty(OUTDUCT_REF_PROP, Outduct.NONE_ID);
+		m.addProperty(XMIT_COPIES_PROP, new int[0]);
+		m.addProperty(XMIT_COPIES_COUNT_PROP, 0);
+		m.addProperty(DLV_CONFIDENCE_PROP, 0.0);
 		return super.createNewMessage(m);
 	}
 	
@@ -434,6 +455,9 @@ public class ContactGraphRouter extends ActiveRouter {
 	public Message messageTransferred(String id, DTNHost from)
 	{
 		Message transferred = super.messageTransferred(id, from);
+		transferred.updateProperty(XMIT_COPIES_PROP, new int[0]);
+		transferred.updateProperty(XMIT_COPIES_COUNT_PROP, 0);
+		transferred.updateProperty(DLV_CONFIDENCE_PROP, 0.0);
 		if (transferred.getTo().equals(getHost()))
 		{
 			deliveredCount++;
@@ -522,11 +546,15 @@ public class ContactGraphRouter extends ActiveRouter {
 	{
 		return super.isDeliveredMessage(m);
 	}
+	
+	protected String getRouterName(){
+		return CGR_NS;
+	}
 
 	@Override
 	public String toString() {
 		StringBuilder b = new StringBuilder();
-		b.append(CGR_NS);
+		b.append(getRouterName());
 		b.append(" node " + getHost().getAddress());
 		b.append('\n');
 		b.append(limbo.toString());
@@ -563,6 +591,8 @@ public class ContactGraphRouter extends ActiveRouter {
 	
 	public void processLine(String line)
 	{
+		System.out.println("Node " + getHost().getAddress() 
+				+ ": process line '" + line +"'");
 		Libcgr.processLine(this.getHost().getAddress(), line);
 		contactPlanChanged();
 	}

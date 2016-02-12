@@ -1088,7 +1088,7 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 		// useless assert. I just want to see how the memory is doing
 		assertEquals("VACAGHER", "VACAGHER");
 	}
-	
+
 	/**
 	 * TEST 9
 	 * ASMS
@@ -1395,9 +1395,15 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 		testWait(8, 0.1);
 		disconnect(h3);
 		disconnect(h5);
+<<<<<<< HEAD
 		assertEquals(true, r4.isDeliveredMessage(m2));
 		assertEquals(true, r5.isDeliveredMessage(m3));
 		assertEquals(1, r1.getLimboSize());
+=======
+		assertEquals(1, r1.getLimboSize());
+		assertEquals(true, r4.isDeliveredMessage(m2));
+		assertEquals(true, r5.isDeliveredMessage(m3));
+>>>>>>> refs/heads/opportunistic
 	}
 	
 	protected void testWait(double sec, double gran)

@@ -10,8 +10,8 @@
 #ifndef _ION_H_
 #define _ION_H_
 
-#include "memmgr.h"
 #include "platform.h"
+#include "memmgr.h"
 #include "sdr.h"
 #include "smlist.h"
 #include "smrbt.h"
@@ -23,8 +23,8 @@ extern "C" {
 
 /* Allow the compile option -D to override this in the future */
 #ifndef IONVERSIONNUMBER
-/* As of 2015-05-01 the sourceforge version number is this: */
-#define IONVERSIONNUMBER "ION OPEN SOURCE 3.3.1"
+/* As of 2016-01-29 the sourceforge version number is this: */
+#define IONVERSIONNUMBER "ION OPEN SOURCE 3.4.0"
 #endif
 
 /* Allow the compile option -D to override this in the future */
@@ -36,6 +36,9 @@ extern "C" {
 
 #define	MAX_SPEED_MPH	(150000)
 #define	MAX_SPEED_MPS	(MAX_SPEED_MPH / 3600)
+
+#define	SENDER_NODE	(0)
+#define	RECEIVER_NODE	(1)
 
 #ifndef ION_SDR_MARGIN
 #define	ION_SDR_MARGIN	(20)		/*	Percent.		*/
@@ -85,8 +88,18 @@ typedef struct
 	uvast		fromNode;	/*	LTP engineID, a.k.a.	*/
 	uvast		toNode;		/*	... BP CBHE nodeNbr.	*/
 	unsigned int	xmitRate;	/*	In bytes per second.	*/
-	float		prob;		/*	Contact probability.	*/
+	float		confidence;	/*	Confidence in contact.	*/
+	int		discovered;	/*	Boolean.		*/
 } IonContact;
+
+typedef struct
+{
+	time_t		fromTime;	/*	As from time(2).	*/
+	time_t		toTime;		/*	As from time(2).	*/
+	uvast		fromNode;	/*	LTP engineID, a.k.a.	*/
+	uvast		toNode;		/*	... BP CBHE nodeNbr.	*/
+	unsigned int	xmitRate;	/*	In bytes per second.	*/
+} PastContact;
 
 typedef struct
 {
@@ -103,6 +116,7 @@ typedef struct
 {
 	Object		contacts;	/*	SDR list: IonContact	*/
 	Object		ranges;		/*	SDR list: IonRange	*/
+	Object		contactLog[2];	/*	SDR list: PastContact	*/
 	uvast		ownNodeNbr;
 	long		productionRate;	/*	Bundles sent by apps.	*/
 	long		consumptionRate;/*	Bundles rec'd by apps.	*/
@@ -181,6 +195,12 @@ typedef struct
 
 typedef struct
 {
+	int		nominalRate;	/*	In bytes per second.	*/
+	vast		capacity;	/*	Bytes, current second.	*/
+} Throttle;
+
+typedef struct
+{
 	uvast		nodeNbr;	/*	As from IonContact.	*/
 	unsigned int	xmitRate;	/*	Xmit *to* neighbor.	*/
 	unsigned int	fireRate;	/*	Xmit *from* neighbor.	*/
@@ -188,8 +208,9 @@ typedef struct
 	unsigned int	prevXmitRate;	/*	Xmit *to* neighbor.	*/
 	unsigned int	prevRecvRate;	/*	Recv from neighbor.	*/
 	PsmAddress	node;		/*	Points to IonNode.	*/
-	unsigned int	owltInbound;	/*	In seconds.		*/
 	unsigned int	owltOutbound;	/*	In seconds.		*/
+	unsigned int	owltInbound;	/*	In seconds.		*/
+	Throttle	xmitThrottle;	/*	For rate control.	*/
 } IonNeighbor;
 
 typedef struct
@@ -209,7 +230,8 @@ typedef struct
 	time_t		fromTime;	/*	As from time(2).	*/
 	time_t		toTime;		/*	As from time(2).	*/
 	unsigned int	xmitRate;	/*	In bytes per second.	*/
-	float		prob;		/*	Contact probability.	*/
+	float		confidence;	/*	Confidence in contact.	*/
+	int		discovered;	/*	Boolean.		*/
 	time_t		startXmit;	/*	Computed when inserted.	*/
 	time_t		stopXmit;	/*	Computed when inserted.	*/
 	time_t		startFire;	/*	Computed when inserted.	*/

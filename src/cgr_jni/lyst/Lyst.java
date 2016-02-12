@@ -64,7 +64,15 @@ public class Lyst {
 	{
 		return list.insertLast(data);
 	}
-	
+	public static LystElt lyst_insert_before(LystElt elt, long data)
+	{
+		Lyst list = elt.getList();
+		int index = list.list.indexOf(elt);
+		LystElt el = new LystElt(data);
+		el.setList(list);
+		elt.getList().list.add(index, el);
+		return el;
+	}
 	public static void lyst_delete(LystElt el)
 	{
 		el.getList().list.remove(el);

@@ -13,9 +13,6 @@
 #include "shared.h"
 #include "init_global.h"
 
-#define WM_PSM_PARTITION 0
-#define SDR_PSM_PARTITION 1
-
 char * getIonvdbName();
 
 PsmPartition getIonPsmPartition(long nodeNum, int partNum)
@@ -101,6 +98,8 @@ IonDB * createIonDb(Sdr ionsdr, IonDB * iondbPtr)
 	iondbPtr->ranges = sdr_list_create(ionsdr);
 	iondbPtr->maxClockError = 0;
 	iondbPtr->clockIsSynchronized = 1;
+	iondbPtr->contactLog[SENDER_NODE] = sdr_list_create(ionsdr);
+	iondbPtr->contactLog[RECEIVER_NODE] = sdr_list_create(ionsdr);
     //memcpy(&iondbBuf.parmcopy, parms, sizeof(IonParms));
 	return iondbPtr;
 }

@@ -20,14 +20,14 @@ static final boolean ACTIVATE_PROMPT = false;
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		/*
-		int result = test.doSomething(1, "pippo");
+		
+		int result = JNITest.doSomething(1, "pippo");
 		System.out.println(result);
-		result = test.doSomethingWithLists(2, new String[]{"Ciaone", "comelava'?", "sei un somaro", "puzzi"});
+		result = JNITest.doSomethingWithLists(2, new String[]{"Ciaone", "comelava'?", "sei un somaro", "puzzi"});
 		System.out.println(result);
-		result = test.doSomethingWithPsm(3, new String[]{"Ciaone", "comelava'?", "sei un somaro", "puzzi", "vacca s'le boun"});
+		result = JNITest.doSomethingWithPsm(3, new String[]{"Ciaone", "comelava'?", "sei un somaro", "puzzi", "vacca s'le boun"});
 		System.out.println(result);
-		 */
+		
 		BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
 		String line, nodeNum = "", command = "";
 		int num;

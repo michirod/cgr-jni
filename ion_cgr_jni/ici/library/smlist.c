@@ -100,7 +100,7 @@ PsmAddress	Sm_list_create(const char *fileName, int lineNbr,
 	lock = sm_SemCreate(SM_NO_KEY, SM_SEM_FIFO);
 	if (lock < 0)
 	{
-		//putErrmsg("Can't create semaphore for list.", NULL);
+		putErrmsg("Can't create semaphore for list.", NULL);
 		return 0;
 	}
 
@@ -108,7 +108,7 @@ PsmAddress	Sm_list_create(const char *fileName, int lineNbr,
 	if (list == 0)
 	{
 		sm_SemDelete(lock);
-		//putErrmsg("Can't allocate space for list header.", NULL);
+		putErrmsg("Can't allocate space for list header.", NULL);
 		return 0;
 	}
 
@@ -122,9 +122,9 @@ void	sm_list_unwedge(PsmPartition partition, PsmAddress list, int interval)
 {
 	SmList	*listBuffer;
 
-	//CHKVOID(partition);
+	CHKVOID(partition);
 	listBuffer = (SmList *) psp(partition, list);
-	//CHKVOID(listBuffer);
+	CHKVOID(listBuffer);
 	sm_SemUnwedge(listBuffer->lock, interval);
 }
 
@@ -140,14 +140,14 @@ static int	wipeList(const char *fileName, int lineNbr,
 	listBuffer = (SmList *) psp(partition, list);
 	if (lockSmlist(listBuffer) < 0)
 	{
-		//putErrmsg(_cannotLockMsg(), NULL);
+		putErrmsg(_cannotLockMsg(), NULL);
 		return -1;
 	}
 
 	for (elt = listBuffer->first; elt != 0; elt = next)
 	{
 		eltBuffer = (SmListElt *) psp(partition, elt);
-		//CHKERR(eltBuffer);
+		CHKERR(eltBuffer);
 		next = eltBuffer->next;
 		if (deleteFn)
 		{
@@ -177,8 +177,8 @@ static int	wipeList(const char *fileName, int lineNbr,
 int	Sm_list_clear(const char *fileName, int lineNbr, PsmPartition partition,
 		PsmAddress list, SmListDeleteFn deleteFn, void *arg)
 {
-	//CHKERR(partition);
-	//CHKERR(list);
+	CHKERR(partition);
+	CHKERR(list);
 	return wipeList(fileName, lineNbr, partition, list, deleteFn, arg, 0);
 }
 
@@ -186,8 +186,8 @@ int	Sm_list_destroy(const char *fileName, int lineNbr,
 		PsmPartition partition, PsmAddress list,
 		SmListDeleteFn deleteFn, void *arg)
 {
-	//CHKERR(partition);
-	//CHKERR(list);
+	CHKERR(partition);
+	CHKERR(list);
 	return wipeList(fileName, lineNbr, partition, list, deleteFn, arg, 1);
 }
 
@@ -196,10 +196,10 @@ PsmAddress	sm_list_user_data(PsmPartition partition, PsmAddress list)
 	SmList		*listBuffer;
 	PsmAddress	userData;
 
-	//CHKZERO(partition);
-	//CHKZERO(list);
+	CHKZERO(partition);
+	CHKZERO(list);
 	listBuffer = (SmList *) psp(partition, list);
-	//CHKZERO(listBuffer);
+	CHKZERO(listBuffer);
 	if (lockSmlist(listBuffer) == ERROR)
 	{
 		return 0;
@@ -215,13 +215,13 @@ int	sm_list_user_data_set(PsmPartition partition, PsmAddress list,
 {
 	SmList	*listBuffer;
 
-	//CHKERR(partition);
-	//CHKERR(list);
+	CHKERR(partition);
+	CHKERR(list);
 	listBuffer = (SmList *) psp(partition, list);
-	//CHKERR(listBuffer);
+	CHKERR(listBuffer);
 	if (lockSmlist(listBuffer) == ERROR)
 	{
-		//putErrmsg(_cannotLockMsg(), NULL);
+		putErrmsg(_cannotLockMsg(), NULL);
 		return -1;
 	}
 
@@ -235,13 +235,13 @@ int	sm_list_length(PsmPartition partition, PsmAddress list)
 	SmList	*listBuffer;
 	int	length;
 
-	//CHKERR(partition);
-	//CHKERR(list);
+	CHKERR(partition);
+	CHKERR(list);
 	listBuffer = (SmList *) psp(partition, list);
-	//CHKERR(listBuffer);
+	CHKERR(listBuffer);
 	if (lockSmlist(listBuffer) == ERROR)
 	{
-		//putErrmsg(_cannotLockMsg(), NULL);
+		putErrmsg(_cannotLockMsg(), NULL);
 		return -1;
 	}
 
@@ -261,7 +261,7 @@ static PsmAddress	finishInsertingFirst(const char *fileName, int lineNbr,
 	if (elt == 0)
 	{
 		unlockSmlist(listBuffer);
-		//putErrmsg(_noSpaceForEltMsg(), NULL);
+		putErrmsg(_noSpaceForEltMsg(), NULL);
 		return 0;
 	}
 
@@ -274,7 +274,7 @@ static PsmAddress	finishInsertingFirst(const char *fileName, int lineNbr,
 	if (listBuffer->first != 0)
 	{
 		eltBuffer = (SmListElt *) psp(partition, listBuffer->first);
-		//CHKZERO(eltBuffer);
+		CHKZERO(eltBuffer);
 		eltBuffer->prev = elt;
 	}
 	else
@@ -296,14 +296,14 @@ PsmAddress	Sm_list_insert_first(const char *fileName, int lineNbr,
 
 	if (list == 0)
 	{
-		//putErrmsg(_noListMsg(), NULL);
+		putErrmsg(_noListMsg(), NULL);
 		return 0;
 	}
 
 	listBuffer = (SmList *) psp(partition, list);
 	if (lockSmlist(listBuffer) == ERROR)
 	{
-		//putErrmsg(_cannotLockMsg(), NULL);
+		putErrmsg(_cannotLockMsg(), NULL);
 		return 0;
 	}
 
@@ -319,13 +319,13 @@ PsmAddress	Sm_list_insert_last(const char *fileName, int lineNbr,
 	PsmAddress	elt;
 	SmListElt	*eltBuffer;
 
-	//CHKZERO(partition);
-	//CHKZERO(list);
+	CHKZERO(partition);
+	CHKZERO(list);
 	listBuffer = (SmList *) psp(partition, list);
-	//CHKZERO(listBuffer);
+	CHKZERO(listBuffer);
 	if (lockSmlist(listBuffer) == ERROR)
 	{
-		//putErrmsg(_cannotLockMsg(), NULL);
+		putErrmsg(_cannotLockMsg(), NULL);
 		return 0;
 	}
 
@@ -333,7 +333,7 @@ PsmAddress	Sm_list_insert_last(const char *fileName, int lineNbr,
 	if (elt == 0)
 	{
 		unlockSmlist(listBuffer);
-		//putErrmsg(_noSpaceForEltMsg(), NULL);
+		putErrmsg(_noSpaceForEltMsg(), NULL);
 		return 0;
 	}
 
@@ -345,7 +345,7 @@ PsmAddress	Sm_list_insert_last(const char *fileName, int lineNbr,
 	if (listBuffer->last != 0)
 	{
 		eltBuffer = (SmListElt *) psp(partition, listBuffer->last);
-		//CHKZERO(eltBuffer);
+		CHKZERO(eltBuffer);
 		eltBuffer->next = elt;
 	}
 	else
@@ -369,20 +369,20 @@ PsmAddress	Sm_list_insert_before(const char *fileName, int lineNbr,
 	PsmAddress	elt;
 	SmListElt	*eltBuffer;
 
-	//CHKZERO(partition);
-	//CHKZERO(oldElt);
+	CHKZERO(partition);
+	CHKZERO(oldElt);
 	oldEltBuffer = (SmListElt *) psp(partition, oldElt);
-	//CHKZERO(oldEltBuffer);
+	CHKZERO(oldEltBuffer);
 	if ((list = oldEltBuffer->list) == 0)
 	{
-		//putErrmsg(_noListMsg(), NULL);
+		putErrmsg(_noListMsg(), NULL);
 		return 0;
 	}
 
 	listBuffer = (SmList *) psp(partition, list);
 	if (lockSmlist(listBuffer) == ERROR)
 	{
-		//putErrmsg(_cannotLockMsg(), NULL);
+		putErrmsg(_cannotLockMsg(), NULL);
 		return 0;
 	}
 
@@ -390,7 +390,7 @@ PsmAddress	Sm_list_insert_before(const char *fileName, int lineNbr,
 	if (elt == 0)
 	{
 		unlockSmlist(listBuffer);
-		//putErrmsg(_noSpaceForEltMsg(), NULL);
+		putErrmsg(_noSpaceForEltMsg(), NULL);
 		return 0;
 	}
 
@@ -403,7 +403,7 @@ PsmAddress	Sm_list_insert_before(const char *fileName, int lineNbr,
 	if (oldEltBuffer->prev != 0)
 	{
 		eltBuffer = (SmListElt *) psp(partition, oldEltBuffer->prev);
-		//CHKZERO(eltBuffer);
+		CHKZERO(eltBuffer);
 		eltBuffer->next = elt;
 	}
 	else
@@ -429,7 +429,7 @@ static PsmAddress	finishInsertingAfter(const char *fileName, int lineNbr,
 	if (elt == 0)
 	{
 		unlockSmlist(listBuffer);
-		//putErrmsg(_noSpaceForEltMsg(), NULL);
+		putErrmsg(_noSpaceForEltMsg(), NULL);
 		return 0;
 	}
 
@@ -442,7 +442,7 @@ static PsmAddress	finishInsertingAfter(const char *fileName, int lineNbr,
 	if (oldEltBuffer->next != 0)
 	{
 		eltBuffer = (SmListElt *) psp(partition, oldEltBuffer->next);
-		//CHKZERO(eltBuffer);
+		CHKZERO(eltBuffer);
 		eltBuffer->prev = elt;
 	}
 	else
@@ -464,20 +464,20 @@ PsmAddress	Sm_list_insert_after(const char *fileName, int lineNbr,
 	PsmAddress	list;
 	SmList		*listBuffer;
 
-	//CHKZERO(partition);
-	//CHKZERO(oldElt);
+	CHKZERO(partition);
+	CHKZERO(oldElt);
 	oldEltBuffer = (SmListElt *) psp(partition, oldElt);
-	//CHKZERO(oldEltBuffer);
+	CHKZERO(oldEltBuffer);
 	if ((list = oldEltBuffer->list) == 0)
 	{
-		//putErrmsg(_noListMsg(), NULL);
+		putErrmsg(_noListMsg(), NULL);
 		return 0;
 	}
 
 	listBuffer = (SmList *) psp(partition, list);
 	if (lockSmlist(listBuffer) == ERROR)
 	{
-		//putErrmsg(_cannotLockMsg(), NULL);
+		putErrmsg(_cannotLockMsg(), NULL);
 		return 0;
 	}
 
@@ -505,10 +505,10 @@ PsmAddress	Sm_list_insert(const char *fileName, int lineNbr,
 	/*	Using user-specified comparison function.  List is
 		assumed to be in sorted order.				*/
 
-	//CHKZERO(partition);
-	//CHKZERO(list);
+	CHKZERO(partition);
+	CHKZERO(list);
 	listBuffer = (SmList *) psp(partition, list);
-	//CHKZERO(listBuffer);
+	CHKZERO(listBuffer);
 	if (lockSmlist(listBuffer) == ERROR)
 	{
 		//putErrmsg(_cannotLockMsg(), NULL);
@@ -524,7 +524,7 @@ PsmAddress	Sm_list_insert(const char *fileName, int lineNbr,
 	for (elt = listBuffer->last; elt != 0; elt = eltBuffer->prev)
 	{
 		eltBuffer = (SmListElt *) psp(partition, elt);
-		//CHKZERO(eltBuffer);
+		CHKZERO(eltBuffer);
 		if (compare(partition, eltBuffer->data, argData) <= 0)
 		{
 			break;
@@ -553,27 +553,27 @@ int	Sm_list_delete(const char *fileName, int lineNbr,
 	PsmAddress	next;
 	PsmAddress	prev;
 
-	//CHKERR(partition);
-	//CHKERR(elt);
+	CHKERR(partition);
+	CHKERR(elt);
 	eltBuffer = (SmListElt *) psp(partition, elt);
-	//CHKERR(eltBuffer);
+	CHKERR(eltBuffer);
 	if ((list = eltBuffer->list) == 0)
 	{
-		//putErrmsg(_noListMsg(), NULL);
+		putErrmsg(_noListMsg(), NULL);
 		return -1;
 	}
 
 	listBuffer = (SmList *) psp(partition, list);
 	if (lockSmlist(listBuffer) == ERROR)
 	{
-		//putErrmsg(_cannotLockMsg(), NULL);
+		putErrmsg(_cannotLockMsg(), NULL);
 		return -1;
 	}
 
 	if (listBuffer->length < 1)
 	{
 		unlockSmlist(listBuffer);
-		//putErrmsg("list element can't be deleted, list is empty", NULL);
+		putErrmsg("list element can't be deleted, list is empty", NULL);
 		return -1;
 	}
 
@@ -590,7 +590,7 @@ int	Sm_list_delete(const char *fileName, int lineNbr,
 	if (prev)
 	{
 		eltBuffer = (SmListElt *) psp(partition, prev);
-		//CHKERR(eltBuffer);
+		CHKERR(eltBuffer);
 		eltBuffer->next = next;
 	}
 	else
@@ -601,7 +601,7 @@ int	Sm_list_delete(const char *fileName, int lineNbr,
 	if (next)
 	{
 		eltBuffer = (SmListElt *) psp(partition, next);
-		//CHKERR(eltBuffer);
+		CHKERR(eltBuffer);
 		eltBuffer->prev = prev;
 	}
 	else
@@ -619,13 +619,13 @@ PsmAddress	sm_list_first(PsmPartition partition, PsmAddress list)
 	SmList		*listBuffer;
 	PsmAddress	first;
 
-	//CHKZERO(partition);
-	//CHKZERO(list);
+	CHKZERO(partition);
+	CHKZERO(list);
 	listBuffer = (SmList *) psp(partition, list);
-	//CHKZERO(listBuffer);
+	CHKZERO(listBuffer);
 	if (lockSmlist(listBuffer) == ERROR)
 	{
-		//putErrmsg("Can't get first element.", NULL);
+		putErrmsg("Can't get first element.", NULL);
 		return 0;
 	}
 
@@ -639,13 +639,13 @@ PsmAddress	sm_list_last(PsmPartition partition, PsmAddress list)
 	SmList		*listBuffer;
 	PsmAddress	last;
 
-	//CHKZERO(partition);
-	//CHKZERO(list);
+	CHKZERO(partition);
+	CHKZERO(list);
 	listBuffer = (SmList *) psp(partition, list);
-	//CHKZERO(listBuffer);
+	CHKZERO(listBuffer);
 	if (lockSmlist(listBuffer) == ERROR)
 	{
-		//putErrmsg("Can't get last element.", NULL);
+		putErrmsg("Can't get last element.", NULL);
 		return 0;
 	}
 
@@ -658,10 +658,10 @@ PsmAddress	sm_list_next(PsmPartition partition, PsmAddress elt)
 {
 	SmListElt	*eltBuffer;
 
-	//CHKERR(partition);
-	//CHKERR(elt);
+	CHKERR(partition);
+	CHKERR(elt);
 	eltBuffer = (SmListElt *) psp(partition, elt);
-	//CHKERR(eltBuffer);
+	CHKERR(eltBuffer);
 	return eltBuffer->next;
 }
 
@@ -669,10 +669,10 @@ PsmAddress	sm_list_prev(PsmPartition partition, PsmAddress elt)
 {
 	SmListElt	*eltBuffer;
 
-	//CHKERR(partition);
-	//CHKERR(elt);
+	CHKERR(partition);
+	CHKERR(elt);
 	eltBuffer = (SmListElt *) psp(partition, elt);
-	//CHKERR(eltBuffer);
+	CHKERR(eltBuffer);
 	return eltBuffer->prev;
 }
 
@@ -685,14 +685,14 @@ PsmAddress	sm_list_search(PsmPartition partition, PsmAddress fromElt,
 	PsmAddress	elt;
 	int		result;
 
-	//CHKZERO(partition);
-	//CHKZERO(fromElt);
+	CHKZERO(partition);
+	CHKZERO(fromElt);
 	eltBuffer = (SmListElt *) psp(partition, fromElt);
-	//CHKZERO(eltBuffer);
+	CHKZERO(eltBuffer);
 	list = eltBuffer->list;
-	//CHKZERO(list);
+	CHKZERO(list);
 	listBuffer = (SmList *) psp(partition, list);
-	//CHKZERO(listBuffer);
+	CHKZERO(listBuffer);
 	if (lockSmlist(listBuffer) == ERROR)
 	{
 		return 0;
@@ -764,10 +764,10 @@ PsmAddress	sm_list_list(PsmPartition partition, PsmAddress elt)
 {
 	SmListElt	*eltBuffer;
 
-	//CHKZERO(partition);
-	//CHKZERO(elt);
+	CHKZERO(partition);
+	CHKZERO(elt);
 	eltBuffer = (SmListElt *) psp(partition, elt);
-	//CHKZERO(eltBuffer);
+	CHKZERO(eltBuffer);
 	return eltBuffer->list;
 }
 
@@ -775,10 +775,10 @@ PsmAddress	sm_list_data(PsmPartition partition, PsmAddress elt)
 {
 	SmListElt	*eltBuffer;
 
-	//CHKZERO(partition);
-	//CHKZERO(elt);
+	CHKZERO(partition);
+	CHKZERO(elt);
 	eltBuffer = (SmListElt *) psp(partition, elt);
-	//CHKZERO(eltBuffer);
+	CHKZERO(eltBuffer);
 	return eltBuffer->data;
 }
 
@@ -788,10 +788,10 @@ PsmAddress	sm_list_data_set(PsmPartition partition, PsmAddress elt,
 	SmListElt	*eltBuffer;
 	PsmAddress	old;
 
-	//CHKZERO(partition);
-	//CHKZERO(elt);
+	CHKZERO(partition);
+	CHKZERO(elt);
 	eltBuffer = (SmListElt *) psp(partition, elt);
-	//CHKZERO(eltBuffer);
+	CHKZERO(eltBuffer);
 	old = eltBuffer->data;
 	eltBuffer->data = new;
 	return old;
