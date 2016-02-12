@@ -857,38 +857,60 @@ int	rfx_insert_contact(time_t fromTime, time_t toTime,
 			&arg, &nextElt);
 	if (cxelt)	/*	Contact is in database already.		*/
 	{
-		*cxaddr = sm_rbt_data(ionwm, cxelt);
-		cxref = (IonCXref *) psp(ionwm, *cxaddr);
-		if (cxref->xmitRate == xmitRate)
+		if (confidence < 1.0)	/*	Predict never overrides.*/
 		{
 			sdr_exit_xn(sdr);
 			return 0;
 		}
 
-		isprintf(contactIdString, sizeof contactIdString,
-				"at %lu, %lu->%lu", fromTime, fromNode, toNode);
-		writeMemoNote("[?] Contact data rate not revised",
-				contactIdString);
-		sdr_exit_xn(sdr);
-		return 0;
-	}
-	else	/*	Check for overlap, which is not allowed.	*/
-	{
-		switch (checkForOverlaps(&arg, nextElt))
+		*cxaddr = sm_rbt_data(ionwm, cxelt);
+		cxref = (IonCXref *) psp(ionwm, *cxaddr);
+		if (cxref->confidence < 1.0)
 		{
-		case -1:
-			putErrmsg("Failed overlap check.", NULL);
-			sdr_cancel_xn(sdr);
-			return -1;
+			/*	Overriding a predict.			*/
 
-		case 1:			/*	Overlap found.		*/
-			writeMemoNote("[?] Overlapping contact for node",
-					utoa(fromNode));
-			return sdr_end_xn(sdr);
+			if (rfx_remove_contact(cxref->fromTime, cxref->fromNode,
+						cxref->toNode) < 0)
+			{
+				sdr_cancel_xn(sdr);
+				return -1;
+			}
 
-		default:		/*	No overlaps.		*/
-			break;
+			/*	Other overlaps may still exist.		*/
 		}
+		else	/*	Duplicate contact.			*/
+		{
+			if (cxref->xmitRate == xmitRate)
+			{
+				sdr_exit_xn(sdr);
+				return 0;
+			}
+
+			isprintf(contactIdString, sizeof contactIdString,
+				"at %lu, %lu->%lu", fromTime, fromNode, toNode);
+			writeMemoNote("[?] Contact data rate not revised",
+				contactIdString);
+			sdr_exit_xn(sdr);
+			return 0;
+		}
+	}
+
+	/*	Check for overlaps, which are not allowed.		*/
+
+	switch (checkForOverlaps(&arg, nextElt))
+	{
+	case -1:
+		putErrmsg("Failed overlap check.", NULL);
+		sdr_cancel_xn(sdr);
+		return -1;
+
+	case 1:			/*	Overlap found.		*/
+		writeMemoNote("[?] Overlapping contact for node",
+				utoa(fromNode));
+		return sdr_end_xn(sdr);
+
+	default:		/*	No overlaps.		*/
+		break;
 	}
 
 	/*	Contact isn't already in database; okay to add.		*/

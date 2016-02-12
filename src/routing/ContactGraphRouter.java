@@ -203,6 +203,16 @@ public class ContactGraphRouter extends ActiveRouter {
 		return o.getEnqueuedMessageNum();
 	}
 	
+	public boolean isMessageIntoOutduct(DTNHost h, Message m)
+	{
+		Outduct o = outducts.get(h);
+		if (o != null)
+		{
+			return o.containsMessage(m);
+		}
+		return false;
+	}
+	
 	/**
 	 * Gets the number of Messages currently into the limbo.
 	 * If a message is into the limbo it means that the CGR hasn't found a 
