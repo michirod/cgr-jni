@@ -12,7 +12,10 @@
 
 #define isprintf snprintf
 
-
+void			microsnooze(unsigned int m)
+{
+	// TODO stub
+}
 void	_putErrmsg(const char *fileName, int lineNbr, const char *text,
 		const char *arg)
 {

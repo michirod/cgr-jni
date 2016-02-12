@@ -2640,11 +2640,11 @@ void	rfx_stop()
 			sm_list_delete(ionwm, elt, NULL, NULL);
 		}
 	}
-/**
+
 	zco_unregister_callback();
-*/
+
 	/*	Stop the rfx clock if necessary.			*/
-/**
+
 	if (vdb->clockPid != ERROR)
 	{
 		sm_TaskKill(vdb->clockPid, SIGTERM);
@@ -2655,7 +2655,7 @@ void	rfx_stop()
 
 		vdb->clockPid = ERROR;
 	}
-*/
+
 	/*	Wipe out all red-black trees involved in routing,
 	 *	for reconstruction on restart.				*/
 
