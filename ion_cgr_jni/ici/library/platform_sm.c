@@ -45,3 +45,9 @@ int		sm_TaskExists(int taskId)
 	//TODO stub
 	return 0;
 }
+
+int		pseudoshell(char *commandLine)
+{
+	//TODO stub
+	return 0;
+}

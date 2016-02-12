@@ -951,8 +951,6 @@ static void	insertLogEntry(Sdr sdr, Object log, Object entryObj,
 	Object		elt;
 	PastContact	entry;
 
-
-
 	/*	The order of entries in the log is not important
 	 *	in itself.  It just makes it easier to exclude
 	 *	duplicate log entries, which if permitted would
@@ -998,6 +996,7 @@ static void	insertLogEntry(Sdr sdr, Object log, Object entryObj,
 
 		/*	Identical; duplicate, so don't add to log.	*/
 
+puts("Duplicate log entry is rejected.");
 		sdr_free(sdr, entryObj);
 		return;
 	}
@@ -1021,9 +1020,14 @@ void	rfx_log_discovered_contact(time_t fromTime, time_t toTime,
 	Object		log;
 	PastContact	entry;
 	Object		entryObj;
-char buf[255];
-char buf2[255];
+char	buf1[64];
+char	buf2[64];
 
+writeTimestampLocal(fromTime, buf1);
+writeTimestampLocal(toTime, buf2);
+printf("Inserting new entry into discovered contact log, from "
+UVAST_FIELDSPEC " to " UVAST_FIELDSPEC ", start %s, stop %s.\n",
+fromNode, toNode, buf1, buf2);
 	sdr_read(sdr, (char *) &db, dbobj, sizeof(IonDB));
 	log = db.contactLog[idx];
 	entry.fromTime = fromTime;
@@ -1034,11 +1038,6 @@ char buf2[255];
 	entryObj = sdr_malloc(sdr, sizeof(PastContact));
 	if (entryObj)
 	{
-writeTimestampLocal(entry.fromTime, buf);
-writeTimestampLocal(entry.toTime, buf2);
-printf("Inserting into history log, contact from "
-UVAST_FIELDSPEC " to " UVAST_FIELDSPEC " start %s end %s.\n",
-entry.fromNode, entry.toNode, buf, buf2);
 		sdr_write(sdr, entryObj, (char *) &entry, sizeof(PastContact));
 		insertLogEntry(sdr, log, entryObj, &entry);
 	}
@@ -1066,6 +1065,8 @@ static void	deleteContact(PsmAddress cxaddr)
 
 	if (cxref->discovered)
 	{
+printf("Deleting discovered contact at " UVAST_FIELDSPEC ", from "
+UVAST_FIELDSPEC " to " UVAST_FIELDSPEC ".\n", ownNodeNbr, cxref->fromNode, cxref->toNode);
 		if (cxref->fromNode == ownNodeNbr)
 		{
 			rfx_log_discovered_contact(cxref->fromTime, currentTime,
@@ -1281,6 +1282,7 @@ int	rfx_remove_discovered_contacts(uvast peerNode)
 	PsmAddress	nextCxelt;
 	PsmAddress	cxaddr;
 
+puts("In rfx_remove_discovered_contacts....");
 	CHKERR(sdr_begin_xn(sdr));
 	sdr_read(sdr, (char *) &iondb, getIonDbObject(), sizeof(IonDB));
 	for (elt = sdr_list_first(sdr, iondb.contacts); elt; elt = nextElt)
@@ -1290,6 +1292,7 @@ int	rfx_remove_discovered_contacts(uvast peerNode)
 		sdr_read(sdr, (char *) &contact, obj, sizeof(IonContact));
 		if (contact.discovered == 0)
 		{
+puts("(contact not discovered)");
 			continue;	/*	Not discovered.		*/
 		}
 
@@ -1297,6 +1300,7 @@ int	rfx_remove_discovered_contacts(uvast peerNode)
 
 		if (contact.fromNode != peerNode && contact.toNode != peerNode)
 		{
+puts("(peer node not involved)");
 			continue;	/*	Peer node not involved.	*/
 		}
 
@@ -1314,6 +1318,7 @@ int	rfx_remove_discovered_contacts(uvast peerNode)
 			cxaddr = sm_rbt_data(ionwm, cxelt);
 			deleteContact(cxaddr);
 		}
+else puts("(contact not found in index)");
 	}
 
 	if (sdr_end_xn(sdr) < 0)
@@ -1463,10 +1468,14 @@ static int	insertIntoPredictionBase(Lyst pb, PastContact *logEntry)
 	vast		duration;
 	LystElt		elt;
 	PbContact	*contact;
+char	buf1[64];
+char	buf2[64];
 
+writeTimestampLocal(logEntry->fromTime, buf1);
+writeTimestampLocal(logEntry->toTime, buf2);
 printf("Inserting log entry into prediction base, contact from "
-UVAST_FIELDSPEC " to " UVAST_FIELDSPEC ".\n", logEntry->fromNode,
-logEntry->toNode);
+UVAST_FIELDSPEC " to " UVAST_FIELDSPEC ", start %s, stop %s.\n",
+logEntry->fromNode, logEntry->toNode, buf1, buf2);
 	duration = logEntry->toTime - logEntry->fromTime;
 	if (duration <= 0 || logEntry->xmitRate == 0)
 	{
@@ -1680,9 +1689,15 @@ printf("Gap duration " UVAST_FIELDSPEC ".\n", gapDuration);
 		contact = (PbContact *) lyst_data(elt);
 	}
 
+	if (gapsCount == 0)
+	{
+puts("No gaps in contact log, can't predict contacts.");
+		return 0;
+	}
+
 	meanCapacity = totalCapacity / contactsCount;
 	meanContactDuration = totalContactDuration / contactsCount;
-	meanGapDuration = gapsCount > 0 ? totalGapDuration / gapsCount : 0;
+	meanGapDuration = totalGapDuration / gapsCount;
 printf("Mean contact capacity " UVAST_FIELDSPEC ", mean contact duration "
 UVAST_FIELDSPEC ", mean gap duration " UVAST_FIELDSPEC ".\n",
 meanCapacity, meanContactDuration, meanGapDuration);
@@ -1715,7 +1730,7 @@ meanCapacity, meanContactDuration, meanGapDuration);
 	}
 
 	contactStdDev = sqrt(contactDeviationsTotal / contactsCount);
-	gapStdDev = gapsCount > 0 ? sqrt(gapDeviationsTotal / gapsCount) : 0;
+	gapStdDev = sqrt(gapDeviationsTotal / gapsCount);
 printf("Contact duration sigma " UVAST_FIELDSPEC ", gap duration sigma "
 UVAST_FIELDSPEC ".\n", contactStdDev, gapStdDev);
 
@@ -2605,12 +2620,12 @@ int	rfx_start()
 	}
 
 	/*	Start the rfx clock if necessary.			*/
-/**
+
 	if (vdb->clockPid == ERROR || sm_TaskExists(vdb->clockPid) == 0)
 	{
 		vdb->clockPid = pseudoshell("rfxclock");
 	}
-*/
+
 	sdr_exit_xn(sdr);	/*	Unlock memory.			*/
 	return 0;
 }

@@ -216,9 +216,9 @@ public class OpportunisticContactGraphRouterTest extends AbstractRouterTest {
 		testWait(8, 0.1);
 		disconnect(h3);
 		disconnect(h5);
-		assertEquals(1, r1.getLimboSize());
 		assertEquals(true, r4.isDeliveredMessage(m2));
 		assertEquals(true, r5.isDeliveredMessage(m3));
+		assertEquals(1, r1.getLimboSize());
 	}
 	
 	public void testRoutingSimple()
