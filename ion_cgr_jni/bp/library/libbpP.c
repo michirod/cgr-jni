@@ -161,6 +161,7 @@ int	bpEnqueue(FwdDirective *directive, Bundle *bundle, Object bundleObj,
 		increaseScalar(&duct.urgentBacklog, backlogIncrement);
 	}
 	*/
+	bundle->ductXmitElt = directive->outductElt;
 
 	sdr_write(bpSdr, ductAddr, (char *) &duct, sizeof(Outduct));
 	sdr_write(bpSdr, bundleObj, (char *) bundle, sizeof(Bundle));

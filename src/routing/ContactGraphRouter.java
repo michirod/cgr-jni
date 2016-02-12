@@ -252,11 +252,13 @@ public class ContactGraphRouter extends ActiveRouter {
 	 * from it. The outduct reference property {@link ContactGraphRouter#OUTDUCT_REF_PROP}
 	 * is updated. 
 	 * @param message to put into the limbo
+	 * @param removeFromOutduct if set to true, tries to remove them message from the
+	 * outduct it was enqueued into.
 	 */
-	public void putMessageIntoLimbo(Message message)
+	public void putMessageIntoLimbo(Message message, boolean removeFromOutduct)
 	{
 		int outductNum = (int) message.getProperty(OUTDUCT_REF_PROP);
-		if (outductNum >= 0)
+		if (removeFromOutduct && outductNum >= 0)
 			getOutducts().get(Utils.getHostFromNumber(outductNum)).removeMessageFromOutduct(message);
 		limbo.insertMessageIntoOutduct(message);
 		message.updateProperty(OUTDUCT_REF_PROP, Outduct.LIMBO_ID);
@@ -329,7 +331,7 @@ public class ContactGraphRouter extends ActiveRouter {
 				 * enqueue it into an outduct if a route has been found.
 				 */
 				o.removeMessageFromOutduct(m);
-				putMessageIntoLimbo(m);
+				putMessageIntoLimbo(m, false);
 				cgrForward(m, m.getTo());
 			}
 			expired.clear();
@@ -340,7 +342,10 @@ public class ContactGraphRouter extends ActiveRouter {
 	public void update(){
 		checkExpiredRoutes();
 		if (isContactPlanChanged())
+		{
 			tryRouteForMessageIntoLimbo();
+			contactPlanChanged = false;
+		}
 		super.update();
 		if (!canStartTransfer()) {
 			return; // allows concurrent transmission
@@ -392,7 +397,7 @@ public class ContactGraphRouter extends ActiveRouter {
 				return;
 			}
 		}
-		putMessageIntoLimbo(m);
+		putMessageIntoLimbo(m, false);
 		super.addToMessages(m, newMessage);
 		cgrForward(m, m.getTo());
 	}

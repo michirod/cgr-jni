@@ -87,7 +87,7 @@ public class IONInterface {
 	{
 		DTNHost local = getNodeFromNbr(localNodeNbr);
 		ContactGraphRouter localRouter = (ContactGraphRouter) local.getRouter();
-		localRouter.putMessageIntoLimbo(message);
+		localRouter.putMessageIntoLimbo(message, false);
 		return 0;	
 	}
 	
@@ -96,7 +96,12 @@ public class IONInterface {
 		DTNHost local = getNodeFromNbr(localNodeNbr);
 		ContactGraphRouter localRouter = (ContactGraphRouter) local.getRouter();
 		Message newMessage = message.replicate();
-		localRouter.putMessageIntoLimbo(newMessage);
+		/* xmitCopies array must be deep copied */
+		int[] xmitCopies = (int[]) message.getProperty(
+				ContactGraphRouter.XMIT_COPIES_PROP);
+		newMessage.updateProperty(ContactGraphRouter.XMIT_COPIES_PROP,
+				xmitCopies.clone());
+		localRouter.putMessageIntoLimbo(newMessage, false);
 	}
 	
 	/*

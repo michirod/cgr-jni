@@ -807,6 +807,55 @@ static int	checkForOverlaps(IonCXref *arg, PsmAddress nextElt)
 	}
 }
 
+static int	removePredictedContacts(uvast fromNode, uvast toNode)
+{
+	Sdr		sdr = getIonsdr();
+	IonDB		iondb;
+	Object		obj;
+	Object		elt;
+	Object		nextElt;
+	IonContact	contact;
+
+	CHKERR(sdr_begin_xn(sdr));
+	sdr_read(sdr, (char *) &iondb, getIonDbObject(), sizeof(IonDB));
+	for (elt = sdr_list_first(sdr, iondb.contacts); elt; elt = nextElt)
+	{
+		nextElt = sdr_list_next(sdr, elt);
+		obj = sdr_list_data(sdr, elt);
+		sdr_read(sdr, (char *) &contact, obj, sizeof(IonContact));
+		if (contact.confidence == 1.0)
+		{
+			continue;	/*	Managed or discovered.	*/
+		}
+
+		/*	This is a predicted contact.			*/
+
+		if (fromNode)		/*	Selective removal.	*/
+		{
+			if (contact.fromNode != fromNode
+			|| contact.toNode != toNode)
+			{
+				continue;	/*	N/A		*/
+			}
+		}
+
+		if (rfx_remove_contact(contact.fromTime, contact.fromNode,
+				contact.toNode) < 0)
+		{
+			putErrmsg("Failure in rfx_remove_contact.", NULL);
+			break;
+		}
+	}
+
+	if (sdr_end_xn(sdr) < 0)
+	{
+		putErrmsg("Can't remove predicted contacts.", NULL);
+		return -1;
+	}
+
+	return 0;
+}
+
 int	rfx_insert_contact(time_t fromTime, time_t toTime,
 			uvast fromNode, uvast toNode, unsigned int xmitRate,
 			float confidence, PsmAddress *cxaddr)
@@ -831,6 +880,7 @@ int	rfx_insert_contact(time_t fromTime, time_t toTime,
 	{
 		discovered = 1;
 		toTime = MAX_POSIX_TIME;
+oK(removePredictedContacts(fromNode, toNode));
 	}
 
 	CHKERR(toTime > fromTime);
@@ -1431,54 +1481,7 @@ typedef struct
 	unsigned int	xmitRate;
 } PbContact;
 
-static int	removePredictedContacts(uvast fromNode, uvast toNode)
-{
-	Sdr		sdr = getIonsdr();
-	IonDB		iondb;
-	Object		obj;
-	Object		elt;
-	Object		nextElt;
-	IonContact	contact;
 
-	CHKERR(sdr_begin_xn(sdr));
-	sdr_read(sdr, (char *) &iondb, getIonDbObject(), sizeof(IonDB));
-	for (elt = sdr_list_first(sdr, iondb.contacts); elt; elt = nextElt)
-	{
-		nextElt = sdr_list_next(sdr, elt);
-		obj = sdr_list_data(sdr, elt);
-		sdr_read(sdr, (char *) &contact, obj, sizeof(IonContact));
-		if (contact.confidence == 1.0)
-		{
-			continue;	/*	Managed or discovered.	*/
-		}
-
-		/*	This is a predicted contact.			*/
-
-		if (fromNode)		/*	Selective removal.	*/
-		{
-			if (contact.fromNode != fromNode
-			|| contact.toNode != toNode)
-			{
-				continue;	/*	N/A		*/
-			}
-		}
-
-		if (rfx_remove_contact(contact.fromTime, contact.fromNode,
-				contact.toNode) < 0)
-		{
-			putErrmsg("Failure in rfx_remove_contact.", NULL);
-			break;
-		}
-	}
-
-	if (sdr_end_xn(sdr) < 0)
-	{
-		putErrmsg("Can't remove predicted contacts.", NULL);
-		return -1;
-	}
-
-	return 0;
-}
 
 static void	freePbContents(LystElt elt, void *userdata)
 {

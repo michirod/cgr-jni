@@ -20,6 +20,7 @@ int	getONEDirective(uvast nodeNbr, Object plans, Bundle *bundle,
 int cgrForwardONE(jobject bundleONE, jlong terminusNodeNbr);
 int bpEnqueONE(FwdDirective *directive, Bundle *bundle, Object bundleObj);
 int bpCloneONE(Bundle *oldBundle, Bundle *newBundle);
+int bpLimboONE(Bundle *bundle, Object bundleObj);
 int testMessage(jobject message);
 int testOutduct(jobject jOuduct);
 

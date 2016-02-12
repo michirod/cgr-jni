@@ -178,15 +178,18 @@ static void setMessageXmitCopies(jobject message, int copies[], int len)
 	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv, interfaceClass,
 			"setMessageXmitCopies","(Lcore/Message;[I)V");
 	jintArray array = (*jniEnv)->NewIntArray(jniEnv, len);
+	/*
 	jint * cur = (*jniEnv)->GetIntArrayElements(jniEnv, array, NULL);
 	int i;
 	for (i = 0; i < len; i++)
 	{
 		cur[i] = copies[i];
 	}
+	(*jniEnv)->ReleaseIntArrayElements(jniEnv, array, cur, 0, copies);
+	*/
+	(*jniEnv)->SetIntArrayRegion(jniEnv, array, 0, len, copies);
 	(*jniEnv)->CallStaticVoidMethod(jniEnv, interfaceClass,
 			method, message, array);
-	(*jniEnv)->ReleaseIntArrayElements(jniEnv, array, cur, 0);
 }
 
 static void setMessageDlvConfidence(jobject message, float dlvConf)
@@ -495,6 +498,8 @@ int bpLimboONE(Bundle *bundle, Object bundleObj)
 int bpCloneONE(Bundle *oldBundle, Bundle *newBundle)
 {
 	int result;
+	memcpy(newBundle, oldBundle, sizeof(Bundle));
+	newBundle->ductXmitElt = NULL;
 	result = cloneMessage(getNodeNum(), interfaceInfo->currentMessage);
 	return result;
 }

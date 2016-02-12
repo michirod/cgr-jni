@@ -45,6 +45,7 @@ public class OpportunisticContactGraphRouter extends ContactGraphRouter {
 	protected void discoveredContactEnd(Connection con)
 	{
 		contactLost(con);
+		contactPlanChanged();
 	}
 		
 	/**

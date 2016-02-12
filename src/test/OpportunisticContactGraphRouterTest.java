@@ -284,6 +284,8 @@ public class OpportunisticContactGraphRouterTest extends AbstractRouterTest {
 		h2.createNewMessage(m6);
 		assertEquals(true, r1.isMessageIntoOutduct(h2, m5));
 		assertEquals(true, r2.isMessageIntoOutduct(h1, m6));
+		assertEquals(true, r1.isMessageIntoLimbo(m5));
+		assertEquals(true, r2.isMessageIntoLimbo(m6));
 		testWait(30, 1);
 		System.out.println();
 		System.out.println("" + SimClock.getTime() + ": Node 1 and Node2 connected");
