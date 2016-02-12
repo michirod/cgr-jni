@@ -1347,6 +1347,68 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 	}
 		
 		
+		
+	public void testReq_0033_prob_cgr()
+	{
+		String cp_path = (new 
+				File("resources/cp_req-0033-prob-CGR.txt")).getAbsolutePath();
+		r1.readContactPlan(cp_path);
+		r2.readContactPlan(cp_path);
+		r3.readContactPlan(cp_path);
+		r4.readContactPlan(cp_path);
+		r5.readContactPlan(cp_path);
+		r6.readContactPlan(cp_path);
+		// visual test
+		r3.processLine("l range");
+		r3.processLine("l contact");
+
+		
+		Message m1 = new Message(h1, h6, "MSG_0", 10);
+		Message m2 = new Message(h1, h4, "MSG_1", 10);
+		Message m3 = new Message(h1, h5, "MSG_2", 10);
+		
+		updateAllNodes();
+		clock.advance(5);
+		h1.createNewMessage(m1);
+		
+		testWait(6, 0.1);
+		h1.forceConnection(h2, null, true);
+		testWait(3, 0.1);
+		h1.createNewMessage(m2);
+		testWait(6, 0.1);
+		disconnect(h1);
+		disconnect(h2);
+		testWait(5, 0.1);
+		h1.forceConnection(h3, null, true);
+		testWait(3, 0.1);
+		h1.createNewMessage(m3);
+		testWait(6, 0.1);
+		disconnect(h1);
+		disconnect(h3);
+		testWait(5, 0.1);
+		h2.forceConnection(h4,  null,  true);
+		testWait(8, 0.1);
+		disconnect(h2);
+		disconnect(h4);
+		testWait(5, 0.1);
+		h3.forceConnection(h5, null, true);
+		testWait(8, 0.1);
+		disconnect(h3);
+		disconnect(h5);
+		assertEquals(true, r4.isDeliveredMessage(m2));
+		assertEquals(true, r5.isDeliveredMessage(m3));
+		assertEquals(1, r1.getLimboSize());
+	}
+	
+	protected void testWait(double sec, double gran)
+	{
+		sec = sec / gran;
+		for (int i = 0; i < sec; i++)
+		{
+			clock.advance(gran);
+			updateAllNodes();
+		}
+	}
 				
 	
 	public static ContactGraphRouterTest getInstance()
