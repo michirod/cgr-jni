@@ -14,7 +14,7 @@ import routing.MessageRouter;
 import routing.PassiveRouter;
 
 public class TestUtilsForCGR extends TestUtils{
-	public static String IFACE1_NS = "interface1";
+	public static String IFACE1_NS = "interface2";
 	public static String IFACE2_NS = "interface2";
 
 	private List<ConnectionListener> conListeners;
@@ -25,8 +25,6 @@ public class TestUtilsForCGR extends TestUtils{
 
 	private ModuleCommunicationBus comBus;
 	private TestSettings settings;
-
-	public static String IFACE_NS = "interface";
 
 	/**
 	 * Creates a test utils object suitable for creating new hosts.
