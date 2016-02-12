@@ -16,8 +16,8 @@
 void	computePriorClaims(ClProtocol *protocol, Outduct *duct, Bundle *bundle,
 		Scalar *priorClaims, Scalar *totalBacklog)
 {
-	loadScalar(priorClaims, 0);
 	copyScalar(totalBacklog, &(duct->stdBacklog));
+	copyScalar(priorClaims, totalBacklog);
 }
 
 int	guessBundleSize(Bundle *bundle)
