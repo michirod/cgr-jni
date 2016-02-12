@@ -32,7 +32,7 @@ int init_global()
 {
 	if (initialized == 0)
 	{
-		setlocale(LC_ALL, "C");
+		setlocale(LC_ALL, "en_US.UTF-8");
 		pthread_key_create(&nodeNum_key, NULL);
 		pthread_key_create(&jniEnv_key, NULL);
 		ONEreferenceTime = time(NULL);

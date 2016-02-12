@@ -1369,19 +1369,38 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 		
 		updateAllNodes();
 		clock.advance(5);
+		/* 
+		 * Create message to node 6. Node 1 doesn't have any information about
+		 * node 6. Bundle should be put in limbo
+		 */
 		h1.createNewMessage(m1);
+		assertEquals(true, r1.isMessageIntoLimbo(m1));
 		
 		testWait(6, 0.1);
 		h1.forceConnection(h2, null, true);
 		testWait(3, 0.1);
+		/*
+		 * Create message to node 4. Delivery confidence is higher than the 
+		 * threshold, so bundle should be enqueued to node 2 but not duplicated
+		 */
 		h1.createNewMessage(m2);
+		assertEquals(false, r1.isMessageIntoLimbo(m2));
+		assertEquals(true, r1.isMessageIntoOutduct(h2, m2));
+		
 		testWait(6, 0.1);
 		disconnect(h1);
 		disconnect(h2);
 		testWait(5, 0.1);
 		h1.forceConnection(h3, null, true);
 		testWait(3, 0.1);
+		/*
+		 *  Create message to node 5. Delivery confidence is less than the 
+		 *  threshold, so bundle should be enqueued to node 3 AND duplicated
+		 *  into limbo
+		 */
 		h1.createNewMessage(m3);
+		assertEquals(true, r1.isMessageIntoLimbo(m3));
+		assertEquals(true, r1.isMessageIntoOutduct(h3, m3));
 		testWait(6, 0.1);
 		disconnect(h1);
 		disconnect(h3);
@@ -1395,15 +1414,14 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 		testWait(8, 0.1);
 		disconnect(h3);
 		disconnect(h5);
-<<<<<<< HEAD
+		
+		/*
+		 * Both messages should have been delivered, m3 should still be in node 1
+		 * limbo
+		 */
 		assertEquals(true, r4.isDeliveredMessage(m2));
 		assertEquals(true, r5.isDeliveredMessage(m3));
-		assertEquals(1, r1.getLimboSize());
-=======
-		assertEquals(1, r1.getLimboSize());
-		assertEquals(true, r4.isDeliveredMessage(m2));
-		assertEquals(true, r5.isDeliveredMessage(m3));
->>>>>>> refs/heads/opportunistic
+		assertEquals(true, r1.isMessageIntoLimbo(m3));
 	}
 	
 	protected void testWait(double sec, double gran)
