@@ -14,7 +14,7 @@ import routing.MessageRouter;
 import routing.PassiveRouter;
 
 public class TestUtilsForCGR extends TestUtils{
-	public static String IFACE1_NS = "interface2";
+	public static String IFACE1_NS = "interface1";
 	public static String IFACE2_NS = "interface2";
 
 	private List<ConnectionListener> conListeners;
@@ -118,11 +118,13 @@ public class TestUtilsForCGR extends TestUtils{
 		ni1.setClisteners(conListeners);
 		ni1.setGroupSettings(settings);
 		li.add(ni1);
+		settings.restoreNameSpace();
 		settings.setNameSpace(IFACE2_NS);
 		NetworkInterface ni2 = new TestInterface(settings);
 		ni2.setClisteners(conListeners);
 		ni2.setGroupSettings(settings);
 		li.add(ni2);
+		settings.restoreNameSpace();;
 		DTNHost host = new DTNHost(msgListeners, null, groupId,
 				li, comBus, mmProto, mr);
 		if (name != null) {
