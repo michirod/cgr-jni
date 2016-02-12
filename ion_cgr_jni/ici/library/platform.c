@@ -99,6 +99,14 @@ static void	logToStdout(char *text)
 		fflush(stdout);
 	}
 }
+
+void	writeMemo(char *text)
+{
+	if (text)
+	{
+		logToStdout(text);
+	}
+}
 void	writeMemoNote(char *text, char *note)
 {
 	char	*noteText = note ? note : "";

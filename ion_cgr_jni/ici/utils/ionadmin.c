@@ -1,33 +1,19 @@
 /*
- * ionadmin.c
- *
- *  Created on: 01 dic 2015
- *      Author: michele
- */
 
-#include <stdlib.h>
+	ionadmin.c:	contact list adminstration interface.
 
-#include "ion.h"
-#include "platform.h"
+									*/
+/*	Copyright (c) 2007, California Institute of Technology.		*/
+/*	All rights reserved.						*/
+/*	Author: Scott Burleigh, Jet Propulsion Laboratory		*/
+
+#include "zco.h"
 #include "rfx.h"
-
-#define SYNTAX_ERROR printf("%s\n", "Syntax error.")
-
-static void	printText(char *text)
-{
-	/**
-	if (_echo(NULL))
-	{
-		writeMemo(text);
-	}
-	**/
-	PUTS(text);
-}
 
 static time_t	_referenceTime(time_t *newValue)
 {
 	static time_t	reftime = 0;
-
+	
 	if (newValue)
 	{
 		reftime = *newValue;
@@ -36,31 +22,168 @@ static time_t	_referenceTime(time_t *newValue)
 	return reftime;
 }
 
-void executeAdd(int tokenCount, char **tokens)
+static int	_forecastNeeded(int parm)
+{
+	static int	needed = 0;
+	int		result;
+
+	result = needed;
+	if (parm)	/*	Signaling that forecast is needed.	*/
+	{
+		needed = 1;
+	}
+	else		/*	Signaling intent to forecast as nec.	*/
+	{
+		needed = 0;	/*	Forecasting resets flag value.	*/
+	}
+
+	return result;
+}
+
+static int	_echo(int *newValue)
+{
+	static int	state = 0;
+	
+	if (newValue)
+	{
+		if (*newValue == 1)
+		{
+			state = 1;
+		}
+		else
+		{
+			state = 0;
+		}
+	}
+
+	return state;
+}
+
+static void	printText(char *text)
+{
+	if (_echo(NULL))
+	{
+		writeMemo(text);
+	}
+
+	PUTS(text);
+}
+
+static void	handleQuit()
+{
+	printText("Please enter command 'q' to stop the program.");
+}
+
+static void	printSyntaxError(int lineNbr)
+{
+	char	buffer[80];
+
+	isprintf(buffer, sizeof buffer, "Syntax error at line %d of ionadmin.c",
+			lineNbr);
+	printText(buffer);
+}
+
+#define	SYNTAX_ERROR	printSyntaxError(__LINE__)
+
+static void	printUsage()
+{
+	PUTS("Valid commands are:");
+	PUTS("\tq\tQuit");
+	PUTS("\th\tHelp");
+	PUTS("\t?\tHelp");
+	PUTS("\tv\tPrint version of ION.");
+	PUTS("\t1\tInitialize");
+	PUTS("\t   1 <own node number> { \"\" | <configuration file name> }");
+	PUTS("\t@\tAt");
+	PUTS("\t   @ <reference time>");
+	PUTS("\t\tTime format is either +ss or yyyy/mm/dd-hh:mm:ss,");
+	PUTS("\t\tor to set reference time to the current time use '@ 0'.");
+	PUTS("\t\tThe @ command sets the reference time from which subsequent \
+relative times (+ss) are computed.");
+	PUTS("\ta\tAdd");
+	PUTS("\t   a contact <from time> <until time> <from node#> <to node#> \
+<xmit rate in bytes per second> [confidence in occurrence; default is 1.0]");
+	PUTS("\t   a range <from time> <until time> <from node#> <to node#> \
+<OWLT, i.e., range in light seconds>");
+	PUTS("\t\tTime format is either +ss or yyyy/mm/dd-hh:mm:ss.");
+	PUTS("\td\tDelete");
+	PUTS("\ti\tInfo");
+	PUTS("\t   {d|i} contact <from time> <from node#> <to node#>");
+	PUTS("\t   {d|i} range <from time> <from node#> <to node#>");
+	PUTS("\t\tTo delete all contacts or ranges for some pair of nodes,");
+	PUTS("\t\tuse '*' as <from time>.");
+	PUTS("\tl\tList");
+	PUTS("\t   l contact");
+	PUTS("\t   l range");
+	PUTS("\tm\tManage ION database: clock, space occupancy");
+	PUTS("\t   m utcdelta <local clock time minus UTC, in seconds>");
+	PUTS("\t   m clockerr <new known maximum clock error, in seconds>");
+	PUTS("\t   m clocksync [ { 0 | 1 } ]");
+	PUTS("\t   m production <new planned production rate, in bytes/sec>");
+	PUTS("\t   m consumption <new planned consumption rate, in bytes/sec>");
+	PUTS("\t   m inbound <new inbound ZCO heap occupancy limit, in MB; \
+-1 means \"unchanged\"> [<new inbound ZCO file occupancy limit, in MB>]");
+	PUTS("\t   m outbound <new outbound ZCO heap occupancy limit, in MB; \
+-1 means \"unchanged\"> [<new outbound ZCO file occupancy limit, in MB>]");
+	PUTS("\t   m horizon { 0 | <end time for congestion forecasts> }");
+	PUTS("\t   m alarm '<congestion alarm script>'");
+	PUTS("\t   m usage");
+	PUTS("\tr\tRun a script or another program, such as an admin progrm");
+	PUTS("\t   r '<command>'");
+	PUTS("\ts\tStart");
+	PUTS("\t   s");
+	PUTS("\tx\tStop");
+	PUTS("\t   x");
+	PUTS("\te\tEnable or disable echo of printed output to log file");
+	PUTS("\t   e { 0 | 1 }");
+	PUTS("\t#\tComment");
+	PUTS("\t   # <comment text>");
+}
+
+static void	initializeNode(int tokenCount, char **tokens)
+{
+	char		*ownNodeNbrString = tokens[1];
+	char		*configFileName = tokens[2];
+	IonParms	parms;
+
+	if (tokenCount < 2 || *ownNodeNbrString == '\0')
+	{
+		writeMemo("[?] No node number, can't initialize node.");
+		return;
+	}
+
+	if (ionInitialize(&parms, strtouvast(ownNodeNbrString)) < 0)
+	{
+		putErrmsg("ionadmin can't initialize ION.", NULL);
+	}
+}
+
+static void	executeAdd(int tokenCount, char **tokens)
 {
 	time_t		refTime;
 	time_t		fromTime;
 	time_t		toTime;
 	uvast		fromNodeNbr;
 	uvast		toNodeNbr;
+	PsmAddress	xaddr;
 	unsigned int	xmitRate;
-	float		prob;
+	float		confidence;
 	unsigned int	owlt;
 
 	if (tokenCount < 2)
 	{
-		//printText("Add what?");
+		printText("Add what?");
 		return;
 	}
 
 	switch (tokenCount)
 	{
 	case 8:
-		prob = atof(tokens[7]);
+		confidence = atof(tokens[7]);
 		break;
 
 	case 7:
-		prob = 1.0;
+		confidence = 1.0;
 		break;
 
 	default:
@@ -73,7 +196,8 @@ void executeAdd(int tokenCount, char **tokens)
 	toTime = readTimestampUTC(tokens[3], refTime);
 	if (toTime <= fromTime)
 	{
-		printText("Interval end time must be later than start time.");
+		printText("Interval end time must be later than start time \
+and earlier than 19 January 2038.");
 		return;
 	}
 
@@ -83,21 +207,22 @@ void executeAdd(int tokenCount, char **tokens)
 	{
 		xmitRate = strtol(tokens[6], NULL, 0);
 		oK(rfx_insert_contact(fromTime, toTime, fromNodeNbr,
-				toNodeNbr, xmitRate, prob));
-		//oK(_forecastNeeded(1));
+				toNodeNbr, xmitRate, confidence, &xaddr));
+		oK(_forecastNeeded(1));
 		return;
 	}
 
 	if (strcmp(tokens[1], "range") == 0)
 	{
-		owlt = atoi(tokens[6]);
+		owlt = strtol(tokens[6], NULL, 0);
 		oK(rfx_insert_range(fromTime, toTime, fromNodeNbr,
-				toNodeNbr, owlt));
+				toNodeNbr, owlt, &xaddr));
 		return;
 	}
 
 	SYNTAX_ERROR;
 }
+
 static void	executeDelete(int tokenCount, char **tokens)
 {
 	time_t	refTime;
@@ -137,7 +262,7 @@ static void	executeDelete(int tokenCount, char **tokens)
 	if (strcmp(tokens[1], "contact") == 0)
 	{
 		oK(rfx_remove_contact(timestamp, fromNodeNbr, toNodeNbr));
-		//oK(_forecastNeeded(1));
+		oK(_forecastNeeded(1));
 		return;
 	}
 
@@ -281,21 +406,261 @@ static void	executeList(int tokenCount, char **tokens)
 	SYNTAX_ERROR;
 }
 
-void initializeNode(int tokenCount, char **tokens)
+static void	manageUtcDelta(int tokenCount, char **tokens)
 {
-	char		*ownNodeNbrString = tokens[1];
-	IonParms	parms;
+	int	newDelta;
 
-	if (tokenCount < 2 || *ownNodeNbrString == '\0')
+	if (tokenCount != 3)
 	{
+		SYNTAX_ERROR;
 		return;
 	}
 
-	if (ionInitialize(&parms, strtouvast(ownNodeNbrString)) < 0)
+	newDelta = atoi(tokens[2]);
+	//CHKVOID(setDeltaFromUTC(newDelta) == 0);
+}
+
+static void	manageClockError(int tokenCount, char **tokens)
+{
+	Sdr	sdr = getIonsdr();
+	Object	iondbObj = getIonDbObject();
+	IonDB	iondb;
+	int	newMaxClockError;
+
+	if (tokenCount != 3)
 	{
-		putErrmsg("ionadmin can't initialize ION.", NULL);
+		SYNTAX_ERROR;
+		return;
+	}
+
+	newMaxClockError = atoi(tokens[2]);
+	if (newMaxClockError < 0 || newMaxClockError > 60)
+	{
+		putErrmsg("Maximum clock error out of range (0-60).", NULL);
+		return;
+	}
+
+	CHKVOID(sdr_begin_xn(sdr));
+	sdr_stage(sdr, (char *) &iondb, iondbObj, sizeof(IonDB));
+	iondb.maxClockError = newMaxClockError;
+	sdr_write(sdr, iondbObj, (char *) &iondb, sizeof(IonDB));
+	if (sdr_end_xn(sdr) < 0)
+	{
+		putErrmsg("Can't change maximum clock error.", NULL);
 	}
 }
+
+static void	manageClockSync(int tokenCount, char **tokens)
+{
+	Sdr	sdr;
+	Object	iondbObj;
+	IonDB	iondb;
+	int	newSyncVal;
+	char	buffer[128];
+
+	if (tokenCount < 2 || tokenCount > 3)
+	{
+		SYNTAX_ERROR;
+		return;
+	}
+
+	if (tokenCount == 3)
+	{
+		newSyncVal = atoi(tokens[2]);
+		sdr = getIonsdr();
+		iondbObj = getIonDbObject();
+		CHKVOID(sdr_begin_xn(sdr));
+		sdr_stage(sdr, (char *) &iondb, iondbObj, sizeof(IonDB));
+		iondb.clockIsSynchronized = (!(newSyncVal == 0));
+		sdr_write(sdr, iondbObj, (char *) &iondb, sizeof(IonDB));
+		if (sdr_end_xn(sdr) < 0)
+		{
+			putErrmsg("Can't change clock sync.", NULL);
+		}
+	}
+
+	/*isprintf(buffer, sizeof buffer, "clock sync = %d",
+			ionClockIsSynchronized());
+	printText(buffer);*/
+}
+
+static void	manageProduction(int tokenCount, char **tokens)
+{
+	Sdr	sdr = getIonsdr();
+	Object	iondbObj = getIonDbObject();
+	IonDB	iondb;
+	int	newRate;
+
+	if (tokenCount != 3)
+	{
+		SYNTAX_ERROR;
+		return;
+	}
+
+	newRate = atoi(tokens[2]);
+	if (newRate < 0)
+	{
+		newRate = -1;			/*	Not metered.	*/
+	}
+
+	CHKVOID(sdr_begin_xn(sdr));
+	sdr_stage(sdr, (char *) &iondb, iondbObj, sizeof(IonDB));
+	iondb.productionRate = newRate;
+	sdr_write(sdr, iondbObj, (char *) &iondb, sizeof(IonDB));
+	if (sdr_end_xn(sdr) < 0)
+	{
+		putErrmsg("Can't change bundle production rate.", NULL);
+	}
+
+	oK(_forecastNeeded(1));
+}
+
+static void	manageConsumption(int tokenCount, char **tokens)
+{
+	Sdr	sdr = getIonsdr();
+	Object	iondbObj = getIonDbObject();
+	IonDB	iondb;
+	int	newRate;
+
+	if (tokenCount != 3)
+	{
+		SYNTAX_ERROR;
+		return;
+	}
+
+	newRate = atoi(tokens[2]);
+	if (newRate < 0)
+	{
+		newRate = -1;			/*	Not metered.	*/
+	}
+
+	CHKVOID(sdr_begin_xn(sdr));
+	sdr_stage(sdr, (char *) &iondb, iondbObj, sizeof(IonDB));
+	iondb.consumptionRate = newRate;
+	sdr_write(sdr, iondbObj, (char *) &iondb, sizeof(IonDB));
+	if (sdr_end_xn(sdr) < 0)
+	{
+		putErrmsg("Can't change bundle consumption rate.", NULL);
+	}
+
+	oK(_forecastNeeded(1));
+}
+
+static void	manageHorizon(int tokenCount, char **tokens)
+{
+	Sdr	sdr = getIonsdr();
+	Object	iondbObj = getIonDbObject();
+	char	*horizonString;
+	time_t	refTime;
+	time_t	horizon;
+	IonDB	iondb;
+
+	if (tokenCount != 3)
+	{
+		SYNTAX_ERROR;
+		return;
+	}
+
+	horizonString = tokens[2];
+	if (*horizonString == '0' && *(horizonString + 1) == 0)
+	{
+		horizon = 0;	/*	Remove horizon from database.	*/
+	}
+	else
+	{
+		refTime = _referenceTime(NULL);
+		horizon = readTimestampUTC(horizonString, refTime);
+	}
+
+	CHKVOID(sdr_begin_xn(sdr));
+	sdr_stage(sdr, (char *) &iondb, iondbObj, sizeof(IonDB));
+	iondb.horizon = horizon;
+	sdr_write(sdr, iondbObj, (char *) &iondb, sizeof(IonDB));
+	if (sdr_end_xn(sdr) < 0)
+	{
+		putErrmsg("Can't change congestion forecast horizon.", NULL);
+	}
+
+	oK(_forecastNeeded(1));
+}
+
+
+static void	executeManage(int tokenCount, char **tokens)
+{
+	if (tokenCount < 2)
+	{
+		printText("Manage what?");
+		return;
+	}
+
+	if (strcmp(tokens[1], "utcdelta") == 0)
+	{
+		manageUtcDelta(tokenCount, tokens);
+		return;
+	}
+
+	if (strcmp(tokens[1], "clockerr") == 0)
+	{
+		manageClockError(tokenCount, tokens);
+		return;
+	}
+
+	if (strcmp(tokens[1], "clocksync") == 0)
+	{
+		manageClockSync(tokenCount, tokens);
+		return;
+	}
+
+	if (strcmp(tokens[1], "production") == 0
+	|| strcmp(tokens[1], "prod") == 0)
+	{
+		manageProduction(tokenCount, tokens);
+		return;
+	}
+
+	if (strcmp(tokens[1], "consumption") == 0
+	|| strcmp(tokens[1], "consum") == 0)
+	{
+		manageConsumption(tokenCount, tokens);
+		return;
+	}
+
+	if (strcmp(tokens[1], "horizon") == 0)
+	{
+		manageHorizon(tokenCount, tokens);
+		return;
+	}
+	SYNTAX_ERROR;
+}
+
+static void	switchEcho(int tokenCount, char **tokens)
+{
+	int	state;
+
+	if (tokenCount < 2)
+	{
+		printText("Echo on or off?");
+		return;
+	}
+
+	switch (*(tokens[1]))
+	{
+	case '0':
+		state = 0;
+		break;
+
+	case '1':
+		state = 1;
+		break;
+
+	default:
+		printText("Echo on or off?");
+		return;
+	}
+
+	oK(_echo(&state));
+}
+
 
 int	processLine(char *line, int lineLength)
 {
@@ -306,6 +671,11 @@ int	processLine(char *line, int lineLength)
 	char		buffer[80];
 	time_t		refTime;
 	time_t		currentTime;
+	struct timeval	done_time;
+	struct timeval	cur_time;
+
+	int max = 0;
+	int count = 0;
 
 	tokenCount = 0;
 	for (cursor = line, i = 0; i < 9; i++)
@@ -351,11 +721,11 @@ int	processLine(char *line, int lineLength)
 
 		case '?':
 		case 'h':
-			//printUsage();
+			printUsage();
 			return 0;
 
 		case 'v':
-			snprintf(buffer, sizeof buffer, "%s",
+			isprintf(buffer, sizeof buffer, "%s",
 					IONVERSIONNUMBER);
 			printText(buffer);
 			return 0;
@@ -364,76 +734,88 @@ int	processLine(char *line, int lineLength)
 			initializeNode(tokenCount, tokens);
 			return 0;
 
-
 		case '@':
-			if (tokenCount < 2)
+			if (ionAttach() == 0)
 			{
-				printText("Can't set reference time: \
+				if (tokenCount < 2)
+				{
+					printText("Can't set reference time: \
 no time.");
-			}
-			else if (strcmp(tokens[1], "0") == 0)
-			{
-				/*	Set reference time to
-				 *	the current time.	*/
+				}
+				else if (strcmp(tokens[1], "0") == 0)
+				{
+					/*	Set reference time to
+					 *	the current time.	*/
 
-				currentTime = getUTCTime();
-				oK(_referenceTime(&currentTime));
-			}
-			else
-			{
-				/*	Get current ref time.	*/
+					currentTime = getUTCTime();
+					oK(_referenceTime(&currentTime));
+				}
+				else
+				{
+					/*	Get current ref time.	*/
 
-				refTime = _referenceTime(NULL);
+					refTime = _referenceTime(NULL);
 
-				/*	Get new ref time, which
-				 *	may be an offset from
-				 *	the current ref time.	*/
+					/*	Get new ref time, which
+					 *	may be an offset from
+					 *	the current ref time.	*/
 
-				refTime = readTimestampUTC
+					refTime = readTimestampUTC
 						(tokens[1], refTime);
 
-				/*	Record new ref time
-				 *	for use by subsequent
-				 *	command lines.		*/
+					/*	Record new ref time
+					 *	for use by subsequent
+					 *	command lines.		*/
 
-				oK(_referenceTime(&refTime));
+					oK(_referenceTime(&refTime));
+				}
 			}
 
 			return 0;
 
 		case 'a':
-			executeAdd(tokenCount, tokens);
+			if (ionAttach() == 0)
+			{
+				executeAdd(tokenCount, tokens);
+			}
 
 			return 0;
 
 		case 'd':
-			executeDelete(tokenCount, tokens);
+			if (ionAttach() == 0)
+			{
+				executeDelete(tokenCount, tokens);
+			}
+
 			return 0;
 
 		case 'i':
-			executeInfo(tokenCount, tokens);
+			if (ionAttach() == 0)
+			{
+				executeInfo(tokenCount, tokens);
+			}
+
 			return 0;
 
 		case 'l':
-			executeList(tokenCount, tokens);
+			if (ionAttach() == 0)
+			{
+				executeList(tokenCount, tokens);
+			}
 
 			return 0;
 
 		case 'm':
-			//executeManage(tokenCount, tokens);
+			if (ionAttach() == 0)
+			{
+				executeManage(tokenCount, tokens);
+			}
 
-			return 0;
-
-		case 'r':
-			//executeRun(tokenCount, tokens);
 			return 0;
 
 		case 'e':
-			//switchEcho(tokenCount, tokens);
+			switchEcho(tokenCount, tokens);
 			return 0;
-
-		case 't':
-			//exit(ion_is_up(tokenCount, tokens));
 
 		case 'q':
 			return -1;	/*	End program.		*/
@@ -455,11 +837,44 @@ int	runIonadmin(char *cmdFileName)
 	oK(_referenceTime(&currentTime));
 	if (cmdFileName == NULL)		/*	Interactive.	*/
 	{
-		return -1; /* no stdin. */
+#ifdef FSWLOGGER
+		return 0;			/*	No stdin.	*/
+#else
+		cmdFile = fileno(stdin);
+		//isignal(SIGINT, handleQuit);
+		while (1)
+		{
+			printf(": ");
+			fflush(stdout);
+			if (igets(cmdFile, line, sizeof line, &len) == NULL)
+			{
+				if (len == 0)
+				{
+					break;
+				}
+
+				putErrmsg("igets failed.", NULL);
+				break;		/*	Out of loop.	*/
+			}
+
+			if (len == 0)
+			{
+				continue;
+			}
+
+			if (processLine(line, len))
+			{
+				break;		/*	Out of loop.	*/
+			}
+		}
+#endif
 	}
 	else if (strcmp(cmdFileName, ".") == 0) /*	Shutdown.	*/
 	{
-
+		if (ionAttach() == 0)
+		{
+			rfx_stop();
+		}
 	}
 	else					/*	Scripted.	*/
 	{
@@ -500,7 +915,38 @@ int	runIonadmin(char *cmdFileName)
 		}
 	}
 
+	//writeErrmsgMemos();
+	if (ionAttach() == 0)
+	{
+		if (_forecastNeeded(0))
+		{
+			//oK(pseudoshell("ionwarn"));
+		}
+	}
+
 	printText("Stopping ionadmin.");
 	//ionDetach();
+	return 0;
+}
+
+#if defined (ION_LWT)
+int	ionadmin(int a1, int a2, int a3, int a4, int a5,
+		int a6, int a7, int a8, int a9, int a10)
+{
+	char	*cmdFileName = (char *) a1;
+#else
+int	main(int argc, char **argv)
+{
+	char	*cmdFileName = (argc > 1 ? argv[1] : NULL);
+#endif
+	int	result;
+
+	result = runIonadmin(cmdFileName);
+	if (result < 0)
+	{
+		puts("ionadmin failed.");
+		return 1;
+	}
+
 	return 0;
 }
