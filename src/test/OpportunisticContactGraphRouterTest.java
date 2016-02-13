@@ -14,7 +14,7 @@ import routing.OpportunisticContactGraphRouter;
 public class OpportunisticContactGraphRouterTest extends AbstractRouterTest {
 	private static final int NROF_HOSTS = 6;
 	private OpportunisticContactGraphRouter r1,r2,r3,r4,r5,r6;
-	protected static final int TRANSMIT_SPEED = 100;
+	protected static final int TRANSMIT_SPEED = 10000;
 	
 	@Override
 	public void setUp() throws Exception {
