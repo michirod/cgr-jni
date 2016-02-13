@@ -75,9 +75,9 @@ char buf1[255], buf2[255];
 		}
 		rfx_insert_range(currentTime, MAX_POSIX_TIME, first, last,
 				0, &xaddr);
-		rfx_insert_contact(contact->fromTime, contact->toTime, first,
+		rfx_insert_contact(contact->fromTime, 0, first,
 				last, contact->xmitRate, contact->confidence, &xaddr);
-		rfx_insert_contact(contact->fromTime, contact->toTime, last,
+		rfx_insert_contact(contact->fromTime, 0, last,
 				first, contact->xmitRate, contact->confidence, &xaddr);
 		elt = lyst_next(elt);
 writeTimestampLocal(contact->fromTime, buf1);

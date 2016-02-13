@@ -14,7 +14,7 @@ import routing.OpportunisticContactGraphRouter;
 public class OpportunisticContactGraphRouterTest extends AbstractRouterTest {
 	private static final int NROF_HOSTS = 6;
 	private OpportunisticContactGraphRouter r1,r2,r3,r4,r5,r6;
-	protected static final int TRANSMIT_SPEED = 10000;
+	protected static final int TRANSMIT_SPEED = 100;
 	
 	@Override
 	public void setUp() throws Exception {
@@ -70,17 +70,17 @@ public class OpportunisticContactGraphRouterTest extends AbstractRouterTest {
 		r3.processLine("l range");
 		r3.processLine("l contact");
 		
-		Message m1 = new Message(h1,h2, msgId1, 10);
+		Message m1 = new Message(h1,h2, msgId1, 100);
 		h1.createNewMessage(m1);
-		Message m2 = new Message(h2,h3, msgId2, 10);
+		Message m2 = new Message(h2,h3, msgId2, 100);
 		h2.createNewMessage(m2);
-		Message m3 = new Message(h3,h4, msgId3, 10);
+		Message m3 = new Message(h3,h4, msgId3, 100);
 		h3.createNewMessage(m3);
-		Message m4 = new Message(h4,h5, msgId4, 10); 
+		Message m4 = new Message(h4,h5, msgId4, 100); 
 		h4.createNewMessage(m4);
-		Message m5 = new Message(h5,h6, msgId5, 10);
+		Message m5 = new Message(h5,h6, msgId5, 100);
 		h5.createNewMessage(m5);
-		Message m6 = new Message(h6,h1, "pippo", 10);
+		Message m6 = new Message(h6,h1, "pippo", 100);
 		h6.createNewMessage(m6);
 		checkCreates(6);
 		
@@ -142,23 +142,25 @@ public class OpportunisticContactGraphRouterTest extends AbstractRouterTest {
 		updateAllNodes();
 		clock.advance(11);
 		h1.forceConnection(h2, null, true);
-		testWait(1, 1);
+		r1.processLine("l contact");
+		testWait(1, 0.1);
 		h2.forceConnection(h3, null, true);
-		testWait(1, 1);
+		r2.processLine("l contact");
+		testWait(1, 0.1);
 		h3.forceConnection(h4, null, true);
-		testWait(1, 1);
+		r3.processLine("l contact");
+		testWait(1, 0.1);
 		h4.forceConnection(h5, null, true);
-		testWait(1, 1);
+		r4.processLine("l contact");
+		testWait(1, 0.1);
 		h5.forceConnection(h1, null, true);
-
+		r5.processLine("l contact");
+		
 		updateAllNodes();
 		
-		for (int j = 0; j < 2000; j++)
-		{
-			clock.advance(1);
-			updateAllNodes();
-		}
-		
+		r1.processLine("l contact");
+		//assertEquals(16, r1.getLimboSize());
+		testWait(20, 0.1);
 		int deliveredCount = 0;
 		for (DTNHost h : Utils.getAllNodes())
 		{
@@ -166,77 +168,25 @@ public class OpportunisticContactGraphRouterTest extends AbstractRouterTest {
 			deliveredCount += r.getDeliveredCount();
 		}
 		
-		assertEquals(20, deliveredCount);
-	}
-	
-	public void testReq_0033_prob_cgr()
-	{
-		String cp_path = (new 
-				File("resources/cp_req-0033-prob-CGR.txt")).getAbsolutePath();
-		r1.readContactPlan(cp_path);
-		r2.readContactPlan(cp_path);
-		r3.readContactPlan(cp_path);
-		r4.readContactPlan(cp_path);
-		r5.readContactPlan(cp_path);
-		r6.readContactPlan(cp_path);
-		// visual test
-		r3.processLine("l range");
-		r3.processLine("l contact");
-
-		
-		Message m1 = new Message(h1, h6, "MSG_0", 10);
-		Message m2 = new Message(h1, h4, "MSG_1", 10);
-		Message m3 = new Message(h1, h5, "MSG_2", 10);
-		
-		updateAllNodes();
-		clock.advance(5);
-		h1.createNewMessage(m1);
-		
-		testWait(6, 0.1);
-		h1.forceConnection(h2, null, true);
-		testWait(3, 0.1);
-		h1.createNewMessage(m2);
-		testWait(6, 0.1);
-		disconnect(h1);
-		disconnect(h2);
-		testWait(5, 0.1);
-		h1.forceConnection(h3, null, true);
-		testWait(3, 0.1);
-		h1.createNewMessage(m3);
-		testWait(6, 0.1);
-		disconnect(h1);
-		disconnect(h3);
-		testWait(5, 0.1);
-		h2.forceConnection(h4,  null,  true);
-		testWait(8, 0.1);
-		disconnect(h2);
-		disconnect(h4);
-		testWait(5, 0.1);
-		h3.forceConnection(h5, null, true);
-		testWait(8, 0.1);
-		disconnect(h3);
-		disconnect(h5);
-		assertEquals(true, r4.isDeliveredMessage(m2));
-		assertEquals(true, r5.isDeliveredMessage(m3));
-		assertEquals(1, r1.getLimboSize());
+		assertEquals(12, deliveredCount);
 	}
 	
 	public void testRoutingSimple()
 	{
-		Message m1 = new Message(h1, h2, "MSG_1", 1000);
-		Message m2 = new Message(h2, h1, "MSG_2", 1000);
-		Message m3 = new Message(h1, h2, "MSG_3", 1000);
-		Message m4 = new Message(h2, h1, "MSG_4", 1000);
-		Message m5 = new Message(h1, h2, "MSG_5", 1000);
-		Message m6 = new Message(h2, h1, "MSG_6", 1000);
-		Message m7 = new Message(h1, h2, "MSG_7", 1000);
-		Message m8 = new Message(h2, h1, "MSG_8", 1000);
+		Message m1 = new Message(h1, h2, "MSG_1", 100);
+		Message m2 = new Message(h2, h1, "MSG_2", 100);
+		Message m3 = new Message(h1, h2, "MSG_3", 100);
+		Message m4 = new Message(h2, h1, "MSG_4", 100);
+		Message m5 = new Message(h1, h2, "MSG_5", 100);
+		Message m6 = new Message(h2, h1, "MSG_6", 100);
+		Message m7 = new Message(h1, h2, "MSG_7", 100);
+		Message m8 = new Message(h2, h1, "MSG_8", 100);
 		
 		h1.createNewMessage(m1);
 		h2.createNewMessage(m2);
 		assertEquals(true, r1.isMessageIntoLimbo(m1));
 		assertEquals(true, r2.isMessageIntoLimbo(m2));
-		testWait(30, 1);
+		testWait(30, 0.1);
 		r1.processLine("l range");
 		r1.processLine("l contact");
 		r2.processLine("l range");
@@ -244,7 +194,7 @@ public class OpportunisticContactGraphRouterTest extends AbstractRouterTest {
 		System.out.println();
 		System.out.println("" + SimClock.getTime() + ": Node 1 and Node2 connected");
 		h1.forceConnection(h2, null, true);
-		testWait(10, 1);
+		testWait(10, 0.1);
 		r1.processLine("l range");
 		r1.processLine("l contact");
 		r2.processLine("l range");
@@ -262,11 +212,11 @@ public class OpportunisticContactGraphRouterTest extends AbstractRouterTest {
 		h2.createNewMessage(m4);
 		assertEquals(true, r1.isMessageIntoLimbo(m3));
 		assertEquals(true, r2.isMessageIntoLimbo(m4));
-		testWait(30, 1);
+		testWait(30, 0.1);
 		System.out.println();
 		System.out.println("" + SimClock.getTime() + ": Node 1 and Node2 connected");
 		h1.forceConnection(h2, null, true);
-		testWait(10, 1);
+		testWait(10, 0.1);
 		r1.processLine("l range");
 		r1.processLine("l contact");
 		r2.processLine("l range");
@@ -286,11 +236,11 @@ public class OpportunisticContactGraphRouterTest extends AbstractRouterTest {
 		assertEquals(true, r2.isMessageIntoOutduct(h1, m6));
 		assertEquals(true, r1.isMessageIntoLimbo(m5));
 		assertEquals(true, r2.isMessageIntoLimbo(m6));
-		testWait(30, 1);
+		testWait(30, 0.1);
 		System.out.println();
 		System.out.println("" + SimClock.getTime() + ": Node 1 and Node2 connected");
 		h1.forceConnection(h2, null, true);
-		testWait(10, 1);
+		testWait(10, 0.1);
 		r1.processLine("l range");
 		r1.processLine("l contact");
 		r2.processLine("l range");
@@ -302,7 +252,7 @@ public class OpportunisticContactGraphRouterTest extends AbstractRouterTest {
 		r1.processLine("l contact");
 		r2.processLine("l range");
 		r2.processLine("l contact");
-		testWait(30, 1);
+		testWait(30, 0.1);
 		assertEquals(true, r1.isDeliveredMessage(m6));
 		assertEquals(true, r2.isDeliveredMessage(m5));
 		h1.createNewMessage(m7);
