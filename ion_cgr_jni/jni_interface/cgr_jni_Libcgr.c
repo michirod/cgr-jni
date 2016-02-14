@@ -92,6 +92,7 @@ JNIEXPORT jint JNICALL Java_cgr_1jni_Libcgr_cgrForward
 	uvast unodeNum = (uvast) nodeNum;
 	setNodeNum(unodeNum);
 	result = cgrForwardONE(message, terminusNodeNbr);
+	fflush(stdout);
 	return result;
 }
 

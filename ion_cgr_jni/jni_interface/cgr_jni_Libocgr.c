@@ -27,6 +27,7 @@ JNIEXPORT jint JNICALL Java_cgr_1jni_Libocgr_predictContacts
 	uvast unodeNum = (uvast) nodeNum;
 	setNodeNum(unodeNum);
 	predictContacts();
+	fflush(stdout);
 	return 0;
 }
 
@@ -42,6 +43,7 @@ JNIEXPORT jint JNICALL Java_cgr_1jni_Libocgr_exchangeCurrentDiscoveredContatcs
 	uvast unodeNum2 = (uvast) nodeNum2;
 	setNodeNum(unodeNum1);
 	exchangeCurrentDiscoveredContacts(unodeNum1, unodeNum2);
+	fflush(stdout);
 	return 0;
 }
 
@@ -57,6 +59,7 @@ JNIEXPORT jint JNICALL Java_cgr_1jni_Libocgr_exchangeContactHistory
 	uvast unodeNum2 = (uvast) nodeNum2;
 	setNodeNum(unodeNum1);
 	exchangeContactHistory(unodeNum1, unodeNum2);
+	fflush(stdout);
 	return 0;
 }
 
@@ -72,6 +75,7 @@ JNIEXPORT jint JNICALL Java_cgr_1jni_Libocgr_contactDiscoveryAquired
 	uvast uneighborNum = (uvast) neighborNum;
 	setNodeNum(unodeNum);
 	newContactDiscovered(uneighborNum, (unsigned int) rate);
+	fflush(stdout);
 	return 0;
 }
 
@@ -87,5 +91,6 @@ JNIEXPORT jint JNICALL Java_cgr_1jni_Libocgr_contactDiscoveryLost
 	uvast uneighborNum = (uvast) neighborNum;
 	setNodeNum(unodeNum);
 	contactLost(uneighborNum);
+	fflush(stdout);
 	return 0;
 }

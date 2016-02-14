@@ -1,20 +1,27 @@
 package test;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 import cgr_jni.Utils;
 import core.DTNHost;
 import core.Message;
+import core.MessageListener;
 import core.NetworkInterface;
 import core.SimClock;
 import core.SimScenario;
+import routing.ContactGraphRouter;
 import routing.MessageRouter;
 import routing.OpportunisticContactGraphRouter;
 
 public class OpportunisticContactGraphRouterTest extends AbstractRouterTest {
 	private static final int NROF_HOSTS = 6;
 	private OpportunisticContactGraphRouter r1,r2,r3,r4,r5,r6;
-	protected static final int TRANSMIT_SPEED = 10000;
+	protected static final int TRANSMIT_SPEED = 100000;
+	public static String MsgIdString = "MSG_";
+
+	private int msgCounter = 0;
 	
 	@Override
 	public void setUp() throws Exception {
@@ -24,20 +31,44 @@ public class OpportunisticContactGraphRouterTest extends AbstractRouterTest {
 				core.SimScenario.NROF_HOSTS_S, "" + NROF_HOSTS);
 		ts.putSetting(Message.TTL_SECONDS_S, "true");
 		ts.putSetting(MessageRouter.MSG_TTL_S, "3600");
-		ts.putSetting(TestUtils.IFACE_NS + "." + 
+		
+		// Primary network interface settings
+		ts.putSetting(TestUtilsForCGR.IFACE1_NS + "." + 
 				NetworkInterface.TRANSMIT_RANGE_S, "1");
-		ts.putSetting(TestUtils.IFACE_NS + "." + 
+		ts.putSetting(TestUtilsForCGR.IFACE1_NS + "." + 
 				NetworkInterface.TRANSMIT_SPEED_S, ""+TRANSMIT_SPEED);
-		OpportunisticContactGraphRouter routerProto = 
-				new OpportunisticContactGraphRouter(ts);
+		
+		// Secondary network interface settings
+		ts.putSetting(TestUtilsForCGR.IFACE2_NS + "." + 
+				NetworkInterface.TRANSMIT_RANGE_S, "1");
+		ts.putSetting(TestUtilsForCGR.IFACE2_NS + "." + 
+				NetworkInterface.TRANSMIT_SPEED_S, ""+TRANSMIT_SPEED/1000);
+		OpportunisticContactGraphRouter routerProto = new OpportunisticContactGraphRouter(ts);
 		setRouterProto(routerProto);
-		super.setUp();	
+		this.mc = new MessageChecker();
+		mc.reset();
+		this.clock = SimClock.getInstance();
+		clock.setTime(0);
+		this.msgCounter = 0;
+
+		List<MessageListener> ml = new ArrayList<MessageListener>();
+		ml.add(mc);
+		this.utils = new TestUtilsForCGR(null,ml,ts);
+		this.utils.setMessageRouterProto(routerProto);
+		core.NetworkInterface.reset();
+		core.DTNHost.reset();
+		this.h1 = utils.createHost(c0, "h1");
+		this.h2 = utils.createHost(c0, "h2");
+		this.h3 = utils.createHost(c0, "h3");
+		this.h4 = utils.createHost(c0, "h4");
+		this.h5 = utils.createHost(c0, "h5");
+		this.h6 = utils.createHost(c0, "h6");
 		Utils.init(utils.getAllHosts());
 		for (DTNHost h : utils.getAllHosts())
 		{
 			disconnect(h);
 		}
-		
+
 		r1 = (OpportunisticContactGraphRouter)h1.getRouter();
 		r2 = (OpportunisticContactGraphRouter)h2.getRouter();
 		r3 = (OpportunisticContactGraphRouter)h3.getRouter();
@@ -130,17 +161,24 @@ public class OpportunisticContactGraphRouterTest extends AbstractRouterTest {
 	 * nodes (node 1 included)
 	 */
 	public void testRouting2()
-	{		
+	{	
+		/*
+		String cp_path = "";
+		cp_path = (new File("resources/contact_plan_test_discovery.txt"))
+				.getAbsolutePath();
+		r1.readContactPlan(cp_path);
+		r2.readContactPlan(cp_path);
+		r3.readContactPlan(cp_path);
+		r4.readContactPlan(cp_path);
+		r5.readContactPlan(cp_path);
+		*/
 		Message m;
 		int i;
-		disconnect(h1);
-		for (i = 0; i < 20; i++)
-		{
-			m = new Message(h1, Utils.getHostFromNumber((i % 5) + 1), "MSG_" + i, 10);
-			h1.createNewMessage(m);
-		}
+
+		m = createNewMessage(h1, h3, 100);
+		assertEquals(true, r1.isMessageIntoLimbo(m));
 		updateAllNodes();
-		clock.advance(11);
+		clock.advance(10);
 		h1.forceConnection(h2, null, true);
 		r1.processLine("l contact");
 		testWait(1, 0.1);
@@ -155,10 +193,15 @@ public class OpportunisticContactGraphRouterTest extends AbstractRouterTest {
 		testWait(1, 0.1);
 		h5.forceConnection(h1, null, true);
 		r5.processLine("l contact");
+		r1.processLine("l range");
+		r1.processLine("l contact");
 		
 		updateAllNodes();
 		
-		r1.processLine("l contact");
+		for (i = 0; i < 20; i++)
+		{
+			m = createNewMessage(h1, Utils.getHostFromNumber((i % 5) + 1), 10);
+		}
 		//assertEquals(16, r1.getLimboSize());
 		testWait(20, 0.1);
 		int deliveredCount = 0;
@@ -167,8 +210,14 @@ public class OpportunisticContactGraphRouterTest extends AbstractRouterTest {
 			OpportunisticContactGraphRouter r = (OpportunisticContactGraphRouter) h.getRouter();
 			deliveredCount += r.getDeliveredCount();
 		}
+		assertEquals(21, deliveredCount);
+		disconnectAll();
+		r1.processLine("l contact");
+		r2.processLine("l contact");
+		r3.processLine("l contact");
+		r4.processLine("l contact");
+		r5.processLine("l contact");
 		
-		assertEquals(12, deliveredCount);
 	}
 	
 	public void testRoutingSimple()
@@ -270,5 +319,23 @@ public class OpportunisticContactGraphRouterTest extends AbstractRouterTest {
 			clock.advance(gran);
 			updateAllNodes();
 		}
+	}
+	protected String getNextMsgId()
+	{
+		return MsgIdString + msgCounter++;
+	}
+	protected Message createNewMessage(DTNHost from, DTNHost to, int size)
+	{
+		Message m = new Message(from, to, getNextMsgId(), size);
+		from.getRouter().createNewMessage(m);
+		return m;
+	}
+	protected void disconnectAll()
+	{
+		for (DTNHost h : utils.getAllHosts())
+		{
+			disconnect(h);
+		}
+		updateAllNodes();
 	}
 }

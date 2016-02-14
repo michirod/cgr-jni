@@ -46,6 +46,7 @@ static void	printCgrTraceLine(void *data, unsigned int lineNbr,
 	printf("NODE %ld: ", getNodeNum());
 	vprintf(text, args);
 	putchar('\n');
+	fflush(stdout);
 
 	va_end(args);
 }

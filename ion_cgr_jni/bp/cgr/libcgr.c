@@ -1555,7 +1555,7 @@ static int	identifyProximateNodes(IonNode *terminusNode, Bundle *bundle,
 	 *	reason or another.					*/
 
 	routes = terminusNode->routingObject;
-	if (routes == 0)	/*	No current routes to this node.	*/
+	if (routes == 0 || sm_list_length(ionwm, routes) == 0)	/*	No current routes to this node.	*/
 	{
 		if ((routes = loadRouteList(terminusNode, currentTime, trace))
 				== 0)

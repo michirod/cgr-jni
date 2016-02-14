@@ -28,6 +28,7 @@ static int findDiscoveredContacts(uvast localNodeNbr, Lyst list)
 	IonContact * contact;
 	Object elt = NULL;
 	int count = 0;
+char buf1[255], buf2[255];
 	sdr_read(sdr, (char*) &iondb, iondbObj, sizeof(IonDB));
 	elt = sdr_list_first(sdr, iondb.contacts);
 	while (elt != NULL)
@@ -39,6 +40,10 @@ static int findDiscoveredContacts(uvast localNodeNbr, Lyst list)
 			memcpy(contact, &buf, sizeof(IonContact));
 			count++;
 			lyst_insert_last(list, contact);
+writeTimestampLocal(contact->fromTime, buf1);
+writeTimestampLocal(contact->toTime, buf2);
+printf ("Found discovered contact on %d, from %d to %d start %s end "
+"%s.\n", localNodeNbr, contact->fromNode, contact->toNode, buf1, buf2);
 		}
 		elt = sdr_list_next(sdr, elt);
 	}
@@ -49,7 +54,6 @@ static int findDiscoveredContacts(uvast localNodeNbr, Lyst list)
 static void copyDiscoveredContacts(Lyst from, int toNode)
 {
 	uvast currentNodeNum = getNodeNum();
-	time_t currentTime = getUTCTime();
 	IonContact * contact;
 	setNodeNum(toNode);
 	LystElt elt = lyst_first(from);
@@ -73,17 +77,19 @@ char buf1[255], buf2[255];
 			first = contact->toNode;
 			last = contact->fromNode;
 		}
-		rfx_insert_range(currentTime, MAX_POSIX_TIME, first, last,
+		rfx_insert_range(contact->fromTime, MAX_POSIX_TIME, first, last,
 				0, &xaddr);
-		rfx_insert_contact(contact->fromTime, 0, first,
+		/*rfx_insert_contact(contact->fromTime, 0, first,
 				last, contact->xmitRate, contact->confidence, &xaddr);
 		rfx_insert_contact(contact->fromTime, 0, last,
-				first, contact->xmitRate, contact->confidence, &xaddr);
+				first, contact->xmitRate, contact->confidence, &xaddr);*/
+		rfx_insert_contact(contact->fromTime, 0, contact->fromNode,
+				contact->toNode, contact->xmitRate, contact->confidence, &xaddr);
 		elt = lyst_next(elt);
 writeTimestampLocal(contact->fromTime, buf1);
 writeTimestampLocal(contact->toTime, buf2);
-printf ("Inserting range and symmetric contacts, from %d to %d"
-		"start %s end %s.\n", first, last, buf1, buf2);
+printf ("Inserting range and contact, from %d to %d "
+		"start %s end %s.\n", contact->fromNode, contact->toNode, buf1, buf2);
 	}
 	lyst_clear(from);
 	setNodeNum(currentNodeNum);
