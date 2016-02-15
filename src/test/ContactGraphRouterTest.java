@@ -50,7 +50,7 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 		ts.putSetting(TestUtilsForCGR.IFACE2_NS + "." + 
 				NetworkInterface.TRANSMIT_RANGE_S, "1");
 		ts.putSetting(TestUtilsForCGR.IFACE2_NS + "." + 
-				NetworkInterface.TRANSMIT_SPEED_S, ""+TRANSMIT_SPEED/1000);
+				NetworkInterface.TRANSMIT_SPEED_S, ""+TRANSMIT_SPEED*4);
 		ContactGraphRouter routerProto = new ContactGraphRouter(ts);
 		setRouterProto(routerProto);
 		this.mc = new MessageChecker();
@@ -1242,23 +1242,23 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 		h1.createNewMessage(m13);
 		Message m14 = new Message(h1,h4, "Messaggio 14", 100000);
 		h1.createNewMessage(m14);
-		//Message m15 = new Message(h1,h4, "Messaggio 15", 100000);
-		//h1.createNewMessage(m15);
+		Message m15 = new Message(h1,h4, "Messaggio 15", 100000);
+		h1.createNewMessage(m15);
 		//Message m16 = new Message(h1,h4, "Messaggio 16", 100000);
 		//h1.createNewMessage(m16);
 		
 
-		checkCreates(14);
+		checkCreates(15);
 		
 		updateAllNodes();	
-		h2.forceConnection(h4, null, true);
-		h3.forceConnection(h4, null, true);
-		assertEquals(r1.getOutducts().get(h2).getQueue().size(), 3);
-		assertEquals(r1.getOutducts().get(h3).getQueue().size(), 11);
+		h2.forceConnection(h4, TestUtilsForCGR.IFACE2_NS, true);
+		h3.forceConnection(h4, TestUtilsForCGR.IFACE2_NS, true);
+		assertEquals(r1.getOutducts().get(h2).getQueue().size(), 8);
+		assertEquals(r1.getOutducts().get(h3).getQueue().size(), 7);
 				
 		clock.advance(30);
 		
-		h1.forceConnection(h3, null, true);
+		h1.forceConnection(h3, TestUtilsForCGR.IFACE1_NS, true);
 		updateAllNodes();
 		
 		for (int i = 0; i < 120; i++)
@@ -1267,31 +1267,31 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 			clock.advance(0.25);
 		}	
 		
-		h1.forceConnection(h2, null, true);
+		h1.forceConnection(h2, TestUtilsForCGR.IFACE2_NS, true);
 				
+		for (int i = 0; i < 80; i++)
+		{
+			updateAllNodes();
+			clock.advance(0.25);
+		}	
+		
+		h1.forceConnection(h2, TestUtilsForCGR.IFACE2_NS, false);
+		
+		for (int i = 0; i < 40; i++)
+		{
+			updateAllNodes();
+			clock.advance(0.25);
+		}	
+		
+		h1.forceConnection(h3, TestUtilsForCGR.IFACE1_NS, false);
+		
 		for (int i = 0; i < 60; i++)
 		{
 			updateAllNodes();
 			clock.advance(0.25);
 		}	
 		
-		h1.forceConnection(h2, null, false);
-		
-		for (int i = 0; i < 60; i++)
-		{
-			updateAllNodes();
-			clock.advance(0.25);
-		}	
-		
-		h1.forceConnection(h3, null, false);
-		
-		for (int i = 0; i < 60; i++)
-		{
-			updateAllNodes();
-			clock.advance(0.25);
-		}	
-		
-		h1.forceConnection(h3, null, true);
+		h1.forceConnection(h3, TestUtilsForCGR.IFACE1_NS, true);
 		
 		for (int i = 0; i < 120; i++)
 		{
@@ -1299,7 +1299,7 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 			clock.advance(0.25);
 		}	
 		
-		h1.forceConnection(h3, null, false);
+		h1.forceConnection(h3, TestUtilsForCGR.IFACE1_NS, false);
 		
 		
 		disconnect(h1);
@@ -1337,7 +1337,7 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 	
 		assertEquals(true, r4.isDeliveredMessage(m14));
 		
-		//assertEquals(true, r4.isDeliveredMessage(m15));
+		assertEquals(true, r4.isDeliveredMessage(m15));
 	
 		//assertEquals(true, r4.isDeliveredMessage(m16));
 		
