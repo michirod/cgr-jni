@@ -13,7 +13,7 @@ libici_jni.so : utils.o library.o sdr.o
 	gcc -shared $(OPT) $(J_INCLUDES) $(LIB) -o $@ *.o -lpthread
 	
 library.o : 
-	gcc -c $(OPT) $(J_INCLUDES) library/*.c
+	gcc -c $(OPT) -DRFX_SIMULATION $(J_INCLUDES) library/*.c
 
 sdr.o : 
 	gcc -c $(OPT) $(J_INCLUDES) sdr/*.c

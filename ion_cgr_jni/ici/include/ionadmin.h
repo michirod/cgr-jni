@@ -11,6 +11,6 @@
 
 int	runIonadmin(const char *cmdFileName);
 int	processLine(const char *line, int lineLength);
-void initializeNode(int tokenCount, char **tokens);
+int runLogadmin(const char *cmdFileName);
 
 #endif /* JNI_INCLUDE_IONADMIN_H_ */

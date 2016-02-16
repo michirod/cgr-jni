@@ -156,4 +156,14 @@ public class IONInterface {
 		message.updateProperty(
 				OpportunisticContactGraphRouter.DLV_CONFIDENCE_PROP, conf);
 	}
+	
+	static void sendDiscoveryInfo(long destinationNode, long fromNode,
+			long toNode, long fromTime, long toTime, int xmitSpeed)
+	{
+		DTNHost local = getNodeFromNbr(destinationNode);
+		OpportunisticContactGraphRouter localRouter = 
+				(OpportunisticContactGraphRouter) local.getRouter();
+		localRouter.addDiscoveryInfo(fromNode, toNode, fromTime, 
+				toTime, xmitSpeed);
+	}
 }

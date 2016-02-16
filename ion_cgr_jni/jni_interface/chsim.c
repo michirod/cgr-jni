@@ -11,6 +11,7 @@
 #include <lyst.h>
 
 #include <init_global.h>
+#include <ONEtoION_interface.h>
 
 static void	freeLystContents(LystElt elt, void *userdata)
 {
@@ -33,7 +34,8 @@ char buf1[255], buf2[255];
 	elt = sdr_list_first(sdr, iondb.contacts);
 	while (elt != NULL)
 	{
-		sdr_read(sdr, (char*) &buf, sdr_list_data(sdr, elt), sizeof(IonContact));
+		sdr_read(sdr, (char*) &buf,
+				sdr_list_data(sdr, elt), sizeof(IonContact));
 		if (buf.discovered == 1)
 		{
 			contact = malloc(sizeof(IonContact));
@@ -57,34 +59,14 @@ static void copyDiscoveredContacts(Lyst from, int toNode)
 	IonContact * contact;
 	setNodeNum(toNode);
 	LystElt elt = lyst_first(from);
-	uvast first, last;
 	PsmAddress xaddr;
 char buf1[255], buf2[255];
 	while (elt != NULL)
 	{
 		contact = lyst_data(elt);
-		/*
-		 *  Range is bidirectional, so I need to put the least
-		 *  node number as fromNode.
-		 */
-		if (contact->fromNode < contact->toNode)
-		{
-			first = contact->fromNode;
-			last = contact->toNode;
-		}
-		else
-		{
-			first = contact->toNode;
-			last = contact->fromNode;
-		}
-		rfx_insert_range(contact->fromTime, MAX_POSIX_TIME, first, last,
-				0, &xaddr);
-		/*rfx_insert_contact(contact->fromTime, 0, first,
-				last, contact->xmitRate, contact->confidence, &xaddr);
-		rfx_insert_contact(contact->fromTime, 0, last,
-				first, contact->xmitRate, contact->confidence, &xaddr);*/
 		rfx_insert_contact(contact->fromTime, 0, contact->fromNode,
-				contact->toNode, contact->xmitRate, contact->confidence, &xaddr);
+				contact->toNode, contact->xmitRate,
+				contact->confidence, &xaddr);
 		elt = lyst_next(elt);
 writeTimestampLocal(contact->fromTime, buf1);
 writeTimestampLocal(contact->toTime, buf2);
@@ -114,28 +96,14 @@ void exchangeCurrentDiscoveredContacts(uvast node1, uvast node2)
 	fflush(stdout);
 }
 
-void newContactDiscovered(uvast neighborNode, unsigned int xmitRate)
+void insertNewDiscoveredContact(uvast neighborNode, unsigned int xmitRate)
 {
-	uvast first, last;
-	first = getNodeNum();
+	uvast localNode = getNodeNum();
 	time_t currentTime = getUTCTime();
 	PsmAddress xaddr;
-	/*
-	 *  Range is bidirectional, so I need to put the least
-	 *  node number as fromNode.
-	 */
-	if (first > neighborNode)
-	{
-		last = first;
-		first = neighborNode;
-	}
-	else
-		last = neighborNode;
-	rfx_insert_range(currentTime, MAX_POSIX_TIME, first,
-			last, 0, &xaddr);
-	rfx_insert_contact(currentTime, 0, first, last,
+	rfx_insert_contact(currentTime, 0, localNode, neighborNode,
 			xmitRate, 1, &xaddr);
-	rfx_insert_contact(currentTime, 0, last, first,
+	rfx_insert_contact(currentTime, 0, neighborNode, localNode,
 				xmitRate, 1, &xaddr);
 	fflush(stdout);
 }
@@ -159,7 +127,8 @@ static void getContactLog(uvast localNodeNbr, int idx, Lyst log)
 	while (elt != NULL)
 	{
 		contact = malloc(sizeof(PastContact));
-		sdr_read(sdr, (char*) contact, sdr_list_data(sdr, elt), sizeof(PastContact));
+		sdr_read(sdr, (char*) contact,
+				sdr_list_data(sdr, elt), sizeof(PastContact));
 		lyst_insert_last(log, contact);
 		elt = sdr_list_next(sdr, elt);
 	}
@@ -220,4 +189,53 @@ void predictContacts()
 {
 	rfx_predict_all_contacts();
 	fflush(stdout);
+}
+
+int	notifyNeighbor(uvast neighborNode, uvast fromNode, uvast toNode,
+			time_t fromTime, time_t toTime, unsigned int xmitRate)
+{
+	/**
+	PsmAddress cxaddr;
+	uvast currentNodeNum = getNodeNum();
+	setNodeNum(neighborNode);
+	if (toTime == MAX_POSIX_TIME)
+	{
+		// discovered contact acquired
+		rfx_insert_contact(fromTime, 0, fromNode, toNode,
+				xmitRate, 1, &cxaddr);
+		rfx_insert_contact(fromTime, 0, toNode, fromNode,
+				xmitRate, 1, &cxaddr);
+	}
+	else
+	{
+		// discovered contact lost
+		rfx_remove_contact(fromTime, fromNode, toNode);
+		rfx_remove_contact(fromTime, toNode, fromNode);
+	}
+	setNodeNum(currentNodeNum);
+	return 0;
+	*/
+	return sendDiscoveryInfoToNeighbor(neighborNode,
+			fromNode, toNode, fromTime, toTime, xmitRate);
+}
+
+int applyDiscoveryInfo(uvast fromNode, uvast toNode,
+			time_t fromTime, time_t toTime, unsigned int xmitRate)
+{
+	PsmAddress cxaddr;
+	if (toTime == MAX_POSIX_TIME)
+	{
+		// discovered contact acquired
+		rfx_insert_contact(fromTime, 0, fromNode, toNode,
+				xmitRate, 1, &cxaddr);
+		rfx_insert_contact(fromTime, 0, toNode, fromNode,
+				xmitRate, 1, &cxaddr);
+	}
+	else
+	{
+		// discovered contact lost
+		rfx_remove_contact(fromTime, fromNode, toNode);
+		rfx_remove_contact(fromTime, toNode, fromNode);
+	}
+	return 0;
 }

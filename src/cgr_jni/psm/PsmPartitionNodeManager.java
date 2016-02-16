@@ -2,11 +2,11 @@ package cgr_jni.psm;
 
 import java.util.HashMap;
 
-public class PsmNodePartitionManager {
+public class PsmPartitionNodeManager {
 	private long nodeNum;
 	private HashMap<Integer, PsmPartition> partitions = new HashMap<>();
 	
-	public PsmNodePartitionManager(long nodeNum)
+	public PsmPartitionNodeManager(long nodeNum)
 	{
 		this.nodeNum = nodeNum;
 	}

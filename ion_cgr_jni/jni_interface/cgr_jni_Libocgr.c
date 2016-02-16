@@ -74,7 +74,7 @@ JNIEXPORT jint JNICALL Java_cgr_1jni_Libocgr_contactDiscoveryAquired
 	uvast unodeNum = (uvast) nodeNum;
 	uvast uneighborNum = (uvast) neighborNum;
 	setNodeNum(unodeNum);
-	newContactDiscovered(uneighborNum, (unsigned int) rate);
+	insertNewDiscoveredContact(uneighborNum, (unsigned int) rate);
 	fflush(stdout);
 	return 0;
 }
@@ -94,3 +94,21 @@ JNIEXPORT jint JNICALL Java_cgr_1jni_Libocgr_contactDiscoveryLost
 	fflush(stdout);
 	return 0;
 }
+JNIEXPORT jint JNICALL Java_cgr_1jni_Libocgr_applyDiscoveryInfos
+  (JNIEnv *env, jclass thisObj, jint nodeNum, jlong fromNode,
+		  jlong toNode, jlong fromTime, jlong toTime, jint xmitRate)
+{
+
+	jint result;
+	if (javaVM == NULL)
+		(*env)->GetJavaVM(env, &javaVM);
+	init_global();
+	setThreadLocalEnv(env);
+	uvast unodeNum = (uvast) nodeNum;
+	setNodeNum(unodeNum);
+	applyDiscoveryInfo((uvast) fromNode, (uvast) toNode,
+			(uvast) fromTime, (uvast) toTime, (int) xmitRate);
+	fflush(stdout);
+	return 0;
+}
+

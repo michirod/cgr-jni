@@ -39,6 +39,9 @@ int		ionAttach()
 {
 	return 0;
 }
+void	ionDetach()
+{
+}
 
 PsmPartition getIonwm(){
 	return getIonWm();

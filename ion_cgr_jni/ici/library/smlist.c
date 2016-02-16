@@ -81,13 +81,12 @@ static void	eraseListElt(SmListElt *elt)
 
 static int	lockSmlist(SmList *list)
 {
-	//return sm_SemTake(list->lock);
-	return 0;
+	return sm_SemTake(list->lock);
 }
 
 static void	unlockSmlist(SmList *list)
 {
-	//sm_SemGive(list->lock);
+	sm_SemGive(list->lock);
 }
 
 PsmAddress	Sm_list_create(const char *fileName, int lineNbr,
@@ -511,7 +510,7 @@ PsmAddress	Sm_list_insert(const char *fileName, int lineNbr,
 	CHKZERO(listBuffer);
 	if (lockSmlist(listBuffer) == ERROR)
 	{
-		//putErrmsg(_cannotLockMsg(), NULL);
+		putErrmsg(_cannotLockMsg(), NULL);
 		return 0;
 	}
 

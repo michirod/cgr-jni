@@ -18,13 +18,21 @@ char * getIonvdbName();
 PsmPartition getIonPsmPartition(long nodeNum, int partNum)
 {
 	JNIEnv * jniEnv = getThreadLocalEnv();
-	jclass psmPartitionManagerClass = (*jniEnv)->FindClass(jniEnv, PsmPartitionManagerClass);
-	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv, psmPartitionManagerClass, "getPartition","(JI)Lcgr_jni/psm/PsmPartition;");
-	jobject partition = (*jniEnv)->CallStaticObjectMethod(jniEnv, psmPartitionManagerClass, method, nodeNum, partNum);
+	jclass psmPartitionManagerClass =
+			(*jniEnv)->FindClass(jniEnv, PsmPartitionManagerClass);
+	jmethodID method =
+			(*jniEnv)->GetStaticMethodID(jniEnv, psmPartitionManagerClass,
+					"getPartition","(JI)Lcgr_jni/psm/PsmPartition;");
+	jobject partition =
+			(*jniEnv)->CallStaticObjectMethod(jniEnv,
+					psmPartitionManagerClass, method, nodeNum, partNum);
 	if (partition == NULL)
 	{
-		method = (*jniEnv)->GetStaticMethodID(jniEnv, psmPartitionManagerClass, "newPartition","(JI)Lcgr_jni/psm/PsmPartition;");
-		partition = (*jniEnv)->CallStaticObjectMethod(jniEnv, psmPartitionManagerClass, method, nodeNum, partNum);
+		method = (*jniEnv)->GetStaticMethodID(jniEnv,
+				psmPartitionManagerClass, "newPartition",
+				"(JI)Lcgr_jni/psm/PsmPartition;");
+		partition = (*jniEnv)->CallStaticObjectMethod(jniEnv,
+				psmPartitionManagerClass, method, nodeNum, partNum);
 	}
 	return (PsmPartition) partition;
 }
@@ -32,18 +40,25 @@ PsmPartition getIonPsmPartition(long nodeNum, int partNum)
 PsmPartition newIonPsmPartition(long nodeNum, int partNum)
 {
 	JNIEnv * jniEnv = getThreadLocalEnv();
-	jclass psmPartitionManagerClass = (*jniEnv)->FindClass(jniEnv, PsmPartitionManagerClass);
-	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv, psmPartitionManagerClass, "newPartition","(JI)Lcgr_jni/psm/PsmPartition;");
-	jobject partition = (*jniEnv)->CallStaticObjectMethod(jniEnv, psmPartitionManagerClass, method, nodeNum, partNum);
+	jclass psmPartitionManagerClass =
+			(*jniEnv)->FindClass(jniEnv, PsmPartitionManagerClass);
+	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv,
+			psmPartitionManagerClass, "newPartition",
+			"(JI)Lcgr_jni/psm/PsmPartition;");
+	jobject partition = (*jniEnv)->CallStaticObjectMethod(jniEnv,
+			psmPartitionManagerClass, method, nodeNum, partNum);
 	return (PsmPartition) partition;
 }
 
 void eraseIonPsmPartition(long nodeNum, int partNum)
 {
 	JNIEnv * jniEnv = getThreadLocalEnv();
-	jclass psmPartitionManagerClass = (*jniEnv)->FindClass(jniEnv, PsmPartitionManagerClass);
-	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv, psmPartitionManagerClass, "erasePartition","(JI)V");
-	(*jniEnv)->CallStaticVoidMethod(jniEnv, psmPartitionManagerClass, method, nodeNum, partNum);
+	jclass psmPartitionManagerClass =
+			(*jniEnv)->FindClass(jniEnv, PsmPartitionManagerClass);
+	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv,
+			psmPartitionManagerClass, "erasePartition","(JI)V");
+	(*jniEnv)->CallStaticVoidMethod(jniEnv, psmPartitionManagerClass,
+			method, nodeNum, partNum);
 }
 
 void initIonWm()

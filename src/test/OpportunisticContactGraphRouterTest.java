@@ -192,9 +192,11 @@ public class OpportunisticContactGraphRouterTest extends AbstractRouterTest {
 		r4.processLine("l contact");
 		testWait(1, 0.1);
 		h5.forceConnection(h1, null, true);
-		r5.processLine("l contact");
-		r1.processLine("l range");
 		r1.processLine("l contact");
+		r2.processLine("l contact");
+		r3.processLine("l contact");
+		r4.processLine("l contact");
+		r5.processLine("l contact");
 		
 		updateAllNodes();
 		
@@ -211,12 +213,26 @@ public class OpportunisticContactGraphRouterTest extends AbstractRouterTest {
 			deliveredCount += r.getDeliveredCount();
 		}
 		assertEquals(21, deliveredCount);
-		disconnectAll();
+		h1.forceConnection(h2, null,  false);
+		testWait(1, 0.1);
+		h2.forceConnection(h3, null,  false);
+		testWait(1, 0.1);
+		h3.forceConnection(h4, null,  false);
+		testWait(1, 0.1);
+		h4.forceConnection(h5, null,  false);
+		testWait(1, 0.1);
+		h5.forceConnection(h1, null,  false);
+		testWait(1, 0.1);
 		r1.processLine("l contact");
 		r2.processLine("l contact");
 		r3.processLine("l contact");
 		r4.processLine("l contact");
 		r5.processLine("l contact");
+		h1.forceConnection(h2, null,  true);
+		testWait(1, 0.1);
+		r1.processLine("l contact");
+		r2.processLine("l contact");
+		
 		
 	}
 	

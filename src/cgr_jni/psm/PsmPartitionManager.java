@@ -4,14 +4,15 @@ import java.util.HashMap;
 
 public class PsmPartitionManager {
 	
-	private static HashMap<Long, PsmNodePartitionManager> nodes = new HashMap<>();
+	private static HashMap<Long, PsmPartitionNodeManager> nodes = 
+			new HashMap<>();
 	
 	public static PsmPartition newPartition(long nodeNum, int partNum)
 	{
-		PsmNodePartitionManager nodeMan;
+		PsmPartitionNodeManager nodeMan;
 		if (! nodes.keySet().contains(nodeNum))
 		{
-			nodeMan = new PsmNodePartitionManager(nodeNum);
+			nodeMan = new PsmPartitionNodeManager(nodeNum);
 			nodes.put(nodeNum, nodeMan);
 		}
 		else
@@ -23,7 +24,7 @@ public class PsmPartitionManager {
 	
 	public static PsmPartition getPartition(long nodeNum, int partNum)
 	{
-		PsmNodePartitionManager nodeMan = nodes.get(nodeNum);
+		PsmPartitionNodeManager nodeMan = nodes.get(nodeNum);
 		if (nodeMan != null)
 			return nodeMan.getPartition(partNum);
 		else
@@ -32,7 +33,7 @@ public class PsmPartitionManager {
 	
 	public static void erasePartition(long nodeNum, int partNum)
 	{
-		PsmNodePartitionManager nodeMan = nodes.get(nodeNum);
+		PsmPartitionNodeManager nodeMan = nodes.get(nodeNum);
 		if (nodeMan != null)
 		{
 			nodeMan.removePartition(partNum);

@@ -47,6 +47,14 @@ JNIEXPORT jint JNICALL Java_cgr_1jni_Libocgr_contactDiscoveryAquired
 JNIEXPORT jint JNICALL Java_cgr_1jni_Libocgr_contactDiscoveryLost
   (JNIEnv *, jclass, jint, jint);
 
+/*
+ * Class:     cgr_jni_Libocgr
+ * Method:    applyDiscoveryInfos
+ * Signature: (IJJJJI)I
+ */
+JNIEXPORT jint JNICALL Java_cgr_1jni_Libocgr_applyDiscoveryInfos
+  (JNIEnv *, jclass, jint, jlong, jlong, jlong, jlong, jint);
+
 #ifdef __cplusplus
 }
 #endif

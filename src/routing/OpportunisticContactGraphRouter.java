@@ -1,5 +1,8 @@
 package routing;
 
+import java.util.LinkedList;
+import java.util.Queue;
+
 import cgr_jni.Libocgr;
 import core.Connection;
 import core.DTNHost;
@@ -9,7 +12,7 @@ import core.Settings;
 public class OpportunisticContactGraphRouter extends ContactGraphRouter {
 
 	public static final String OCGR_NS = "OpportunisticContactGraphRouter";
-	
+	protected Queue<DiscoveryInfo> pendingDiscoveryInfos = new LinkedList<>();
 	
 	/**
 	 * Copy constructor.
@@ -114,14 +117,21 @@ public class OpportunisticContactGraphRouter extends ContactGraphRouter {
 	}
 
 	@Override
+	public void update() {
+		applyDiscoveryInfos();
+		super.update();
+	}
+	@Override
 	public void changedConnection(Connection con) {
 		super.changedConnection(con);
 		if (con.isUp()) // this is a new connection
 		{
 			discoveredContactStart(con);
+			applyDiscoveryInfos();
 		}
 		else // this connection went down
 		{
+			applyDiscoveryInfos();
 			discoveredContactEnd(con);
 		}
 	}
@@ -140,5 +150,43 @@ public class OpportunisticContactGraphRouter extends ContactGraphRouter {
 	@Override
 	protected String getRouterName() {
 		return OCGR_NS;
+	}
+	
+	public void addDiscoveryInfo(long fromNode, long toNode, long fromTime,
+			long toTime, int xmitSpeed)
+	{
+		DiscoveryInfo info = new DiscoveryInfo(fromNode, toNode, fromTime,
+				toTime, xmitSpeed);
+		pendingDiscoveryInfos.add(info);
+	}
+	
+	protected void applyDiscoveryInfos()
+	{
+		DiscoveryInfo info;
+		while ((info = pendingDiscoveryInfos.poll()) != null)
+		{
+			Libocgr.applyDiscoveryInfos(getHost().getAddress(),
+					info.fromNode, info.toNode,
+					info.fromTime, info.toTime, info.xmitSpeed);
+		}
+	}
+	
+	protected class DiscoveryInfo{
+		private long fromNode;
+		private long toNode;
+		private long fromTime;
+		private long toTime;
+		private int xmitSpeed;
+		
+		public DiscoveryInfo(long fromNode, long toNode, 
+				long fromTime, long toTime, int xmitSpeed) {
+			super();
+			this.fromNode = fromNode;
+			this.toNode = toNode;
+			this.fromTime = fromTime;
+			this.toTime = toTime;
+			this.xmitSpeed = xmitSpeed;
+		}
+		
 	}
 }

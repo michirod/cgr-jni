@@ -13,6 +13,9 @@
 #include "utils.h"
 #include "init_global.h"
 
+#ifndef OPPORTUNISTIC_ROUTING
+#define OPPORTUNISTIC_ROUTING
+#endif
 const char * jMessageClass = "core/Message";
 const char * jOuductClass = "routing/ContactGraphRouting$Outduct";
 const char * ONEtoION_interfaceClass = "cgr_jni/IONInterface";
@@ -503,6 +506,20 @@ int bpCloneONE(Bundle *oldBundle, Bundle *newBundle)
 	newBundle->ductXmitElt = NULL;
 	result = cloneMessage(getNodeNum(), interfaceInfo->currentMessage);
 	return result;
+}
+
+int sendDiscoveryInfoToNeighbor
+(uvast neighborNode, uvast fromNode, uvast toNode, time_t fromTime,
+		time_t toTime, unsigned int xmitRate)
+{
+	JNIEnv * jniEnv = getThreadLocalEnv();
+	jclass interfaceClass =
+			(*jniEnv)->FindClass(jniEnv, ONEtoION_interfaceClass);
+	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv,
+			interfaceClass, "sendDiscoveryInfo","(JJJJJI)V");
+	(*jniEnv)->CallStaticObjectMethod(jniEnv, interfaceClass, method,
+			neighborNode, fromNode, toNode, fromTime, toTime, xmitRate);
+	return 0;
 }
 
 int testMessage(jobject message)

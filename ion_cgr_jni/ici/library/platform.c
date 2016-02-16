@@ -16,6 +16,15 @@ void			microsnooze(unsigned int m)
 {
 	// TODO stub
 }
+
+void	isignal(int sig, void (*func)(int))
+{
+}
+
+void writeErrmsgMemos()
+{
+
+}
 void	_putErrmsg(const char *fileName, int lineNbr, const char *text,
 		const char *arg)
 {

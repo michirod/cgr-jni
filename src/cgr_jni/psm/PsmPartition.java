@@ -22,9 +22,8 @@ public class PsmPartition {
 	/**
 	 * 
 	 * @param name
-	 * @param objLocation
-	 * @param entry
-	 * @return the address of the object on success, -1 if @name is not found in catalog.
+	 * @return the address of the object on success, 
+	 * -1 if @name is not found in catalog.
 	 */
 	public long psmLocate(String name)
 	{

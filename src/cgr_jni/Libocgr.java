@@ -15,4 +15,8 @@ public class Libocgr extends Libcgr {
 	
 	public static native int contactDiscoveryLost
 	(int localNodeNbr, int neighborNodeNbr);
+
+	public static native int applyDiscoveryInfos
+	(int localNodeNbr, long fromNode, long toNode, 
+			long fromTime, long toTime, int xmitSpeed);
 }
