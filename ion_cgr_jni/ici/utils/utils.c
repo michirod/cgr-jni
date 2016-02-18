@@ -13,6 +13,8 @@
 #include "shared.h"
 #include "init_global.h"
 
+#define PsmPartitionManagerClass "cgr_jni/psm/PsmPartitionManager"
+
 char * getIonvdbName();
 
 PsmPartition getIonPsmPartition(long nodeNum, int partNum)

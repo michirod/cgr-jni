@@ -13,12 +13,13 @@
 #include "utils.h"
 #include "init_global.h"
 
-#ifndef OPPORTUNISTIC_ROUTING
-#define OPPORTUNISTIC_ROUTING
+#ifndef CGR_DEBUG
+#define CGR_DEBUG	0
 #endif
-const char * jMessageClass = "core/Message";
-const char * jOuductClass = "routing/ContactGraphRouting$Outduct";
-const char * ONEtoION_interfaceClass = "cgr_jni/IONInterface";
+
+#define jMessageClass "core/Message"
+#define jOuductClass "routing/ContactGraphRouting$Outduct"
+#define ONEtoION_interfaceClass "cgr_jni/IONInterface"
 
 pthread_key_t interfaceInfo_key;
 
@@ -30,11 +31,6 @@ struct InterfaceInfo_t {
 typedef struct InterfaceInfo_t InterfaceInfo;
 
 InterfaceInfo * interfaceInfo;
-
-
-#ifndef CGR_DEBUG
-#define CGR_DEBUG	0
-#endif
 
 #if CGR_DEBUG == 1
 static void	printCgrTraceLine(void *data, unsigned int lineNbr,
@@ -72,25 +68,34 @@ static InterfaceInfo * getInterfaceInfo()
 static uvast getMessageSenderNbr(jobject message)
 {
 	JNIEnv * jniEnv = getThreadLocalEnv();
-	jclass interfaceClass = (*jniEnv)->FindClass(jniEnv, ONEtoION_interfaceClass);
-	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv, interfaceClass, "getMessageSenderNbr","(Lcore/Message;)J");
-	jlong result = (*jniEnv)->CallStaticLongMethod(jniEnv, interfaceClass, method, message);
+	jclass interfaceClass = (*jniEnv)->FindClass(jniEnv,
+			ONEtoION_interfaceClass);
+	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv,
+			interfaceClass, "getMessageSenderNbr","(Lcore/Message;)J");
+	jlong result = (*jniEnv)->CallStaticLongMethod(jniEnv,
+			interfaceClass, method, message);
 	return (uvast) result;
 }
 static uvast getMessageDestinationNbr(jobject message)
 {
 	JNIEnv * jniEnv = getThreadLocalEnv();
-	jclass interfaceClass = (*jniEnv)->FindClass(jniEnv, ONEtoION_interfaceClass);
-	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv, interfaceClass, "getMessageDestinationNbr","(Lcore/Message;)J");
-	jlong result = (*jniEnv)->CallStaticLongMethod(jniEnv, interfaceClass, method, message);
+	jclass interfaceClass = (*jniEnv)->FindClass(jniEnv,
+			ONEtoION_interfaceClass);
+	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv,
+			interfaceClass, "getMessageDestinationNbr","(Lcore/Message;)J");
+	jlong result = (*jniEnv)->CallStaticLongMethod(jniEnv,
+			interfaceClass, method, message);
 	return (uvast) result;
 }
 static unsigned int getMessageCreationTime(jobject message)
 {
 	JNIEnv * jniEnv = getThreadLocalEnv();
-	jclass interfaceClass = (*jniEnv)->FindClass(jniEnv, ONEtoION_interfaceClass);
-	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv, interfaceClass, "getMessageCreationTime","(Lcore/Message;)J");
-	jlong result = (*jniEnv)->CallStaticLongMethod(jniEnv, interfaceClass, method, message);
+	jclass interfaceClass = (*jniEnv)->FindClass(jniEnv,
+			ONEtoION_interfaceClass);
+	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv,
+			interfaceClass, "getMessageCreationTime","(Lcore/Message;)J");
+	jlong result = (*jniEnv)->CallStaticLongMethod(jniEnv,
+			interfaceClass, method, message);
 	return (uvast) result + getONEReferenceTime();
 }
 /**
@@ -99,9 +104,12 @@ static unsigned int getMessageCreationTime(jobject message)
 static unsigned int getMessageTTL(jobject message)
 {
 	JNIEnv * jniEnv = getThreadLocalEnv();
-	jclass interfaceClass = (*jniEnv)->FindClass(jniEnv, ONEtoION_interfaceClass);
-	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv, interfaceClass, "getMessageTTL","(Lcore/Message;)J");
-	jlong result = (*jniEnv)->CallStaticLongMethod(jniEnv, interfaceClass, method, message);
+	jclass interfaceClass = (*jniEnv)->FindClass(jniEnv,
+			ONEtoION_interfaceClass);
+	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv,
+			interfaceClass, "getMessageTTL","(Lcore/Message;)J");
+	jlong result = (*jniEnv)->CallStaticLongMethod(jniEnv,
+			interfaceClass, method, message);
 	return (uvast) result;
 }
 /**
@@ -110,25 +118,27 @@ static unsigned int getMessageTTL(jobject message)
 static unsigned int getMessageSize(jobject message)
 {
 	JNIEnv * jniEnv = getThreadLocalEnv();
-	jclass interfaceClass = (*jniEnv)->FindClass(jniEnv, ONEtoION_interfaceClass);
-	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv, interfaceClass, "getMessageSize","(Lcore/Message;)J");
-	jlong result = (*jniEnv)->CallStaticLongMethod(jniEnv, interfaceClass, method, message);
+	jclass interfaceClass = (*jniEnv)->FindClass(jniEnv,
+			ONEtoION_interfaceClass);
+	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv,
+			interfaceClass, "getMessageSize","(Lcore/Message;)J");
+	jlong result = (*jniEnv)->CallStaticLongMethod(jniEnv,
+			interfaceClass, method, message);
 	return (uvast) result;
 }
 
 static void updateMessageForfeitTime(jobject message, time_t forfeitTime)
 {
 	JNIEnv * jniEnv = getThreadLocalEnv();
-	jclass interfaceClass = (*jniEnv)->FindClass(jniEnv, ONEtoION_interfaceClass);
+	jclass interfaceClass = (*jniEnv)->FindClass(jniEnv,
+			ONEtoION_interfaceClass);
 	time_t oneTime;
 	oneTime = convertIonTimeToOne(forfeitTime);
-	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv, interfaceClass, "updateMessageForfeitTime","(Lcore/Message;J)V");
-	(*jniEnv)->CallStaticVoidMethod(jniEnv, interfaceClass, method, message, oneTime);
+	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv,
+			interfaceClass, "updateMessageForfeitTime","(Lcore/Message;J)V");
+	(*jniEnv)->CallStaticVoidMethod(jniEnv, interfaceClass,
+			method, message, oneTime);
 }
-
-#define OPPORTUNISTIC_ROUTING
-#ifdef OPPORTUNISTIC_ROUTING
-
 
 static int getMessageXmitCopiesCount(jobject message)
 {
@@ -147,10 +157,10 @@ static int getMessageXmitCopies(jobject message, int copies[])
 	JNIEnv * jniEnv = getThreadLocalEnv();
 	jclass interfaceClass = (*jniEnv)->FindClass(jniEnv,
 			ONEtoION_interfaceClass);
-	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv, interfaceClass,
-			"getMessageXmitCopies","(Lcore/Message;)[I");
-	jintArray result = (*jniEnv)->CallStaticObjectMethod(jniEnv, interfaceClass,
-			method, message);
+	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv,
+			interfaceClass,	"getMessageXmitCopies","(Lcore/Message;)[I");
+	jintArray result = (*jniEnv)->CallStaticObjectMethod(jniEnv,
+			interfaceClass,	method, message);
 	jsize len = (*jniEnv)->GetArrayLength(jniEnv, result);
 	jint * elt = (*jniEnv)->GetIntArrayElements(jniEnv, result, 0);
 	int i;
@@ -220,17 +230,20 @@ static void updateXmitCopiesDlvConfidence(jobject message, Bundle * bundle)
 	setMessageXmitCopies(message, bundle->xmitCopies,
 			bundle->xmitCopiesCount);
 }
-#endif
-
 /**
- * return true if the outduct is blocked (in ONE this should return always false)
+ * return true if the outduct is blocked
+ * (in ONE this should return always false)
  */
 static bool_t isOutductBlocked(jobject jOutduct)
 {
 	JNIEnv * jniEnv = getThreadLocalEnv();
-	jclass interfaceClass = (*jniEnv)->FindClass(jniEnv, ONEtoION_interfaceClass);
-	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv, interfaceClass, "isOutductBlocked","(Lrouting/ContactGraphRouter$Outduct;)Z");
-	jboolean result = (*jniEnv)->CallStaticBooleanMethod(jniEnv, interfaceClass, method, jOutduct);
+	jclass interfaceClass = (*jniEnv)->FindClass(jniEnv,
+			ONEtoION_interfaceClass);
+	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv,
+			interfaceClass, "isOutductBlocked",
+			"(Lrouting/ContactGraphRouter$Outduct;)Z");
+	jboolean result = (*jniEnv)->CallStaticBooleanMethod(jniEnv,
+			interfaceClass, method, jOutduct);
 	return (bool_t) result;
 }
 /**
@@ -245,10 +258,15 @@ static char * getOutductName(jobject jOutduct, char * outductName)
 	if (outductName == NULL)
 		return NULL;
 	JNIEnv * jniEnv = getThreadLocalEnv();
-	jclass interfaceClass = (*jniEnv)->FindClass(jniEnv, ONEtoION_interfaceClass);
-	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv, interfaceClass, "getOutductName","(Lrouting/ContactGraphRouter$Outduct;)Ljava/lang/String;");
-	jstring result = (*jniEnv)->CallStaticObjectMethod(jniEnv, interfaceClass, method, jOutduct);
-	const char * nativeString = (*jniEnv)->GetStringUTFChars(jniEnv, result, NULL);
+	jclass interfaceClass = (*jniEnv)->FindClass(jniEnv,
+			ONEtoION_interfaceClass);
+	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv,
+			interfaceClass, "getOutductName",
+			"(Lrouting/ContactGraphRouter$Outduct;)Ljava/lang/String;");
+	jstring result = (*jniEnv)->CallStaticObjectMethod(jniEnv,
+			interfaceClass, method, jOutduct);
+	const char * nativeString = (*jniEnv)->GetStringUTFChars(jniEnv,
+			result, NULL);
 	strcpy(outductName, nativeString);
 	(*jniEnv)->ReleaseStringUTFChars(jniEnv, result, nativeString);
 	return outductName;
@@ -259,20 +277,29 @@ static char * getOutductName(jobject jOutduct, char * outductName)
 static unsigned int getMaxPayloadLen(jobject jOutduct)
 {
 	JNIEnv * jniEnv = getThreadLocalEnv();
-	jclass interfaceClass = (*jniEnv)->FindClass(jniEnv, ONEtoION_interfaceClass);
-	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv, interfaceClass, "getMaxPayloadLen","(Lrouting/ContactGraphRouter$Outduct;)I");
-	jint result = (*jniEnv)->CallStaticIntMethod(jniEnv, interfaceClass, method, jOutduct);
+	jclass interfaceClass = (*jniEnv)->FindClass(jniEnv,
+			ONEtoION_interfaceClass);
+	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv,
+			interfaceClass, "getMaxPayloadLen",
+			"(Lrouting/ContactGraphRouter$Outduct;)I");
+	jint result = (*jniEnv)->CallStaticIntMethod(jniEnv,
+			interfaceClass, method, jOutduct);
 	return (uvast) result;
 }
 /**
- * return the java Outduct object of the node localNodeNbr to the node toNodeNbr
+ * return the java Outduct object of the node localNodeNbr
+ * to the node toNodeNbr
  */
 static jobject getONEOutductToNode(uvast localNodeNbr, uvast toNodeNbr)
 {
 	JNIEnv * jniEnv = getThreadLocalEnv();
-	jclass interfaceClass = (*jniEnv)->FindClass(jniEnv, ONEtoION_interfaceClass);
-	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv, interfaceClass, "getONEOutductToNode","(JJ)Lrouting/ContactGraphRouter$Outduct;");
-	jobject result = (*jniEnv)->CallStaticObjectMethod(jniEnv, interfaceClass, method, localNodeNbr, toNodeNbr);
+	jclass interfaceClass = (*jniEnv)->FindClass(jniEnv,
+			ONEtoION_interfaceClass);
+	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv,
+			interfaceClass, "getONEOutductToNode",
+			"(JJ)Lrouting/ContactGraphRouter$Outduct;");
+	jobject result = (*jniEnv)->CallStaticObjectMethod(jniEnv,
+			interfaceClass, method, localNodeNbr, toNodeNbr);
 	return result;
 }
 
@@ -282,9 +309,13 @@ static jobject getONEOutductToNode(uvast localNodeNbr, uvast toNodeNbr)
 static long getOutductTotalEnqueuedBytes(jobject jOutduct)
 {
 	JNIEnv * jniEnv = getThreadLocalEnv();
-	jclass interfaceClass = (*jniEnv)->FindClass(jniEnv, ONEtoION_interfaceClass);
-	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv, interfaceClass, "getOutductTotalEnququedBytes","(Lrouting/ContactGraphRouter$Outduct;)J");
-	jlong result = (*jniEnv)->CallStaticLongMethod(jniEnv, interfaceClass, method, jOutduct);
+	jclass interfaceClass = (*jniEnv)->FindClass(jniEnv,
+			ONEtoION_interfaceClass);
+	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv,
+			interfaceClass, "getOutductTotalEnququedBytes",
+			"(Lrouting/ContactGraphRouter$Outduct;)J");
+	jlong result = (*jniEnv)->CallStaticLongMethod(jniEnv,
+			interfaceClass, method, jOutduct);
 	return (long) result;
 }
 
@@ -297,18 +328,22 @@ static int cloneMessage(uvast localNodeNbr, jobject jMessage)
 			"cloneMessage","(JLcore/Message;)V");
 	jint result = (*jniEnv)->CallStaticIntMethod(jniEnv, interfaceClass,
 			method, localNodeNbr, jMessage);
-	return 0;
+	return result;
 }
 
 /**
  * Enqueues a message into an outduct
  */
-static int insertBundleIntoOutduct(uvast localNodeNbr, jobject message, uvast toNodeNbr)
+static int insertBundleIntoOutduct(uvast localNodeNbr,
+		jobject message, uvast toNodeNbr)
 {
 	JNIEnv * jniEnv = getThreadLocalEnv();
-	jclass interfaceClass = (*jniEnv)->FindClass(jniEnv, ONEtoION_interfaceClass);
-	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv, interfaceClass, "insertBundleIntoOutduct","(JLcore/Message;J)I");
-	jint result = (*jniEnv)->CallStaticIntMethod(jniEnv, interfaceClass, method, localNodeNbr, message, toNodeNbr);
+	jclass interfaceClass = (*jniEnv)->FindClass(jniEnv,
+			ONEtoION_interfaceClass);
+	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv,
+			interfaceClass, "insertBundleIntoOutduct","(JLcore/Message;J)I");
+	jint result = (*jniEnv)->CallStaticIntMethod(jniEnv,
+			interfaceClass, method, localNodeNbr, message, toNodeNbr);
 	return (int) result;
 }
 /**
@@ -317,9 +352,12 @@ static int insertBundleIntoOutduct(uvast localNodeNbr, jobject message, uvast to
 static int insertBundleIntoLimbo(uvast localNodeNbr, jobject message)
 {
 	JNIEnv * jniEnv = getThreadLocalEnv();
-	jclass interfaceClass = (*jniEnv)->FindClass(jniEnv, ONEtoION_interfaceClass);
-	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv, interfaceClass, "insertBundleIntoLimbo","(JLcore/Message;J)I");
-	jint result = (*jniEnv)->CallStaticIntMethod(jniEnv, interfaceClass, method, localNodeNbr, message);
+	jclass interfaceClass = (*jniEnv)->FindClass(jniEnv,
+			ONEtoION_interfaceClass);
+	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv,
+			interfaceClass, "insertBundleIntoLimbo","(JLcore/Message;J)I");
+	jint result = (*jniEnv)->CallStaticIntMethod(jniEnv,
+			interfaceClass, method, localNodeNbr, message);
 	return (int) result;
 }
 
@@ -331,7 +369,10 @@ void ion_bundle(Bundle * bundle, jobject message)
 	memset(bundle, 0, sizeof(Bundle));
 	bundle->returnToSender = 1;
 	bundle->clDossier.senderNodeNbr = getMessageSenderNbr(message);
-	//bundle->expirationTime = getMessageCreationTime(message) + getMessageTTL(message);
+	/*
+	bundle->expirationTime =
+	 	 	 getMessageCreationTime(message) +getMessageTTL(message);
+	 */
 	bundle->expirationTime = getSimulatedUTCTime() + getMessageTTL(message);
 	bundle->destination.c.nodeNbr = getMessageDestinationNbr(message);
 	bundle->destination.c.serviceNbr = 0;
@@ -414,9 +455,11 @@ int	getONEDirective(uvast nodeNbr, Object plans, Bundle *bundle,
 			ion_outduct(&outduct, jOutduct);
 			// init sdr outduct object
 			outductObj = sdr_malloc(getIonsdr(), sizeof(Outduct));
-			sdr_write(getIonsdr(), outductObj, (char*)&outduct, sizeof(Outduct));
+			sdr_write(getIonsdr(), outductObj,
+					(char*)&outduct, sizeof(Outduct));
 			// put outduct into sdr list
-			outductElt = sdr_list_insert_first(getIonsdr(), interfaceInfo->outductList, outductObj);
+			outductElt = sdr_list_insert_first(getIonsdr(),
+					interfaceInfo->outductList, outductObj);
 			sdr_catlg(getIonsdr(), outductName, 0, outductElt);
 		}
 		directive->outductElt = outductElt;
@@ -428,9 +471,11 @@ int	getONEDirective(uvast nodeNbr, Object plans, Bundle *bundle,
 /**
  * Entry point for Contact Graph Router library
  * Tries to find the best route to terminusNodeNbr using libcgr.
- * If a feasible route is found, the bundle is enqueued into an outduct using bpEnqueONE().
+ * If a feasible route is found, the bundle is enqueued into an
+ * outduct using bpEnqueONE().
  * If not, no operations are performed.
- * Returns the nodeNbr of the proximate node that the bundle has been enqueued to
+ * Returns the nodeNbr of the proximate node that the
+ * bundle has been enqueued to
  * or 0 if no proximate nodes have been found
  * or -1 in case of any error.
  */
@@ -438,8 +483,9 @@ int cgrForwardONE(jobject bundleONE, jlong terminusNodeNbr)
 {
 	Bundle *bundle;
 	Object bundleObj;
-	Object plans = (Object) 42; // this value will never be read but it is needed to pass the null check in cgr_forward()
-	int result;
+	// this value will never be read but it is needed to
+	// pass the null check in cgr_forward()
+	Object plans = (Object) 42; 	int result;
 	CgrTrace * trace = NULL;
 #if CGR_DEBUG == 1
 	CgrTrace traceBuf;
@@ -477,25 +523,24 @@ int bpEnqueONE(FwdDirective *directive, Bundle *bundle, Object bundleObj)
 	Object ductAddr;
 	Outduct outduct;
 	BpEvent forfeitEvent;
-	sdr_read(getIonsdr(), (char*) &forfeitEvent, bundle->overdueElt, sizeof(BpEvent));
-	updateMessageForfeitTime(interfaceInfo->currentMessage, forfeitEvent.time);
+	sdr_read(getIonsdr(), (char*) &forfeitEvent,
+			bundle->overdueElt, sizeof(BpEvent));
+	updateMessageForfeitTime(interfaceInfo->currentMessage,
+			forfeitEvent.time);
 	localNodeNbr = getNodeNum();
 	ductAddr = sdr_list_data(getIonsdr(), directive->outductElt);
 	sdr_read(getIonsdr(), (char*)&outduct, ductAddr, sizeof(Outduct));
 	proximateNodeNbr = atol(outduct.name);
-	insertBundleIntoOutduct(localNodeNbr, interfaceInfo->currentMessage, proximateNodeNbr);
+	insertBundleIntoOutduct(localNodeNbr, interfaceInfo->currentMessage,
+			proximateNodeNbr);
 	interfaceInfo->forwardResult = proximateNodeNbr;
-#ifdef OPPORTUNISTIC_ROUTING
 	updateXmitCopiesDlvConfidence(interfaceInfo->currentMessage, bundle);
-#endif
 	return 0;
 }
 
 int bpLimboONE(Bundle *bundle, Object bundleObj)
 {
-#ifdef OPPORTUNISTIC_ROUTING
 	updateXmitCopiesDlvConfidence(interfaceInfo->currentMessage, bundle);
-#endif
 	return 0;
 }
 

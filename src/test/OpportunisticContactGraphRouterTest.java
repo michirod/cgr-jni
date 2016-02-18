@@ -15,11 +15,11 @@ import routing.ContactGraphRouter;
 import routing.MessageRouter;
 import routing.OpportunisticContactGraphRouter;
 
-public class OpportunisticContactGraphRouterTest extends AbstractRouterTest {
+public class OpportunisticContactGraphRouterTest extends ContactGraphRouterTest {
 	private static final int NROF_HOSTS = 6;
-	private OpportunisticContactGraphRouter r1,r2,r3,r4,r5,r6;
 	protected static final int TRANSMIT_SPEED = 100000;
 	public static String MsgIdString = "MSG_";
+	protected OpportunisticContactGraphRouter r1, r2, r3, r4, r5, r6;
 
 	private int msgCounter = 0;
 	
@@ -75,6 +75,12 @@ public class OpportunisticContactGraphRouterTest extends AbstractRouterTest {
 		r4 = (OpportunisticContactGraphRouter)h4.getRouter();
 		r5 = (OpportunisticContactGraphRouter)h5.getRouter();
 		r6 = (OpportunisticContactGraphRouter)h6.getRouter();
+		super.r1 = r1;
+		super.r2 = r2;
+		super.r3 = r3;
+		super.r4 = r4;
+		super.r5 = r5;
+		super.r6 = r6;
 	}
 	
 	@Override
@@ -89,13 +95,239 @@ public class OpportunisticContactGraphRouterTest extends AbstractRouterTest {
 	}
 
 	/**
+	 * Opportunistic version: message should be forwarded.
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void testRouting5() {
+		/*
+		 * NO CONTACT PLAN PROVIDED
+		 * Same connections as testRouting3
+		 * Messages should remain into limbo
+		 */
+
+		Message m1 = new Message(h1,h3, msgId1, 10);
+		h1.createNewMessage(m1);
+		Message m2 = new Message(h2,h4, msgId2, 10);
+		h2.createNewMessage(m2);
+		Message m3 = new Message(h3,h5, msgId3, 10);
+		h3.createNewMessage(m3);
+		Message m4 = new Message(h4,h6, msgId4, 10); 
+		h4.createNewMessage(m4);
+		Message m5 = new Message(h5,h6, msgId5, 10);
+		h5.createNewMessage(m5);
+		Message m6 = new Message(h6,h1, "pippo", 10);
+		h6.createNewMessage(m6);
+		checkCreates(6);
+
+		updateAllNodes();
+
+		//check all messages are into limbo
+		assertEquals(1, r1.getLimboSize());
+		assertEquals(1, r2.getLimboSize());
+		assertEquals(1, r3.getLimboSize());
+		assertEquals(1, r4.getLimboSize());
+		assertEquals(1, r5.getLimboSize());
+		assertEquals(1, r6.getLimboSize());
+
+		//1st round, contact 10-30
+		clock.advance(10);
+		h1.forceConnection(h2, null, true);
+
+
+		for (int i = 0; i < 20; i++)
+		{
+			clock.advance(1);
+			updateAllNodes();
+		}
+		//inserisco la disconnect 
+
+		disconnect(h1);
+		disconnect(h2);		
+
+		if (!r1.isEpidemicDropBack())
+		{
+			//check all message are into limbo
+			assertEquals(1, r1.getLimboSize());
+			assertEquals(1, r2.getLimboSize());
+			assertEquals(1, r3.getLimboSize());
+			assertEquals(1, r4.getLimboSize());
+			assertEquals(1, r5.getLimboSize());
+			assertEquals(1, r6.getLimboSize());
+		}
+		//no message delivered, 1st deliver h3 no contact available
+
+		//2nd round contact 40-80
+		for (int i = 0; i < 10; i++)
+		{
+			clock.advance(1);
+			updateAllNodes();
+		}	
+
+		h2.forceConnection(h3, null, true);		
+
+		for (int i = 0; i < 40; i++)
+		{
+			clock.advance(1);
+			updateAllNodes();
+		}	
+
+		disconnect(h2);
+		disconnect(h3);		
+
+		if (!r1.isEpidemicDropBack())
+		{
+			//check all message are into limbo
+			assertEquals(1, r1.getLimboSize());
+			assertEquals(1, r2.getLimboSize());
+			assertEquals(1, r3.getLimboSize());
+			assertEquals(1, r4.getLimboSize());
+			assertEquals(1, r5.getLimboSize());
+			assertEquals(1, r6.getLimboSize());
+		}
+		//3rd round contact 100-150
+
+		for (int i = 0; i < 20; i++)
+		{
+			clock.advance(1);
+			updateAllNodes();
+		}		
+
+		h3.forceConnection(h4, null, true);		
+
+		for (int i = 0; i < 50; i++)
+		{
+			clock.advance(1);
+			updateAllNodes();
+		}		
+
+		disconnect(h3);
+		disconnect(h4);		
+
+		if (!r1.isEpidemicDropBack())
+		{
+			//check all message are into limbo
+			assertEquals(1, r1.getLimboSize());
+			assertEquals(1, r2.getLimboSize());
+			assertEquals(1, r3.getLimboSize());
+			assertEquals(1, r4.getLimboSize());
+			assertEquals(1, r5.getLimboSize());
+			assertEquals(1, r6.getLimboSize());
+		}
+		//4th round contact 170-200
+
+		for (int i = 0; i < 20; i++)
+		{
+			clock.advance(1);
+			updateAllNodes();
+		}
+
+
+		h4.forceConnection(h5, null, true);
+
+		for (int i = 0; i < 30; i++)
+		{
+			clock.advance(1);
+			updateAllNodes();
+		}		
+
+		disconnect(h4);
+		disconnect(h5);		
+
+		if (!r1.isEpidemicDropBack())
+		{
+			//check all message are into limbo
+			assertEquals(1, r1.getLimboSize());
+			assertEquals(1, r2.getLimboSize());
+			assertEquals(1, r3.getLimboSize());
+			assertEquals(1, r4.getLimboSize());
+			assertEquals(1, r5.getLimboSize());
+			assertEquals(1, r6.getLimboSize());
+		}
+		//5th round contact 250-300
+
+		for (int i = 0; i < 50; i++)
+		{
+			clock.advance(1);
+			updateAllNodes();
+		}		
+
+		h5.forceConnection(h6, null, true);		
+
+		for (int i = 0; i < 50; i++)
+		{
+			clock.advance(1);
+			updateAllNodes();
+		}
+
+
+		disconnect(h5);
+		disconnect(h6);
+
+		if (!r1.isEpidemicDropBack())
+		{
+			//check all message are into limbo
+			assertEquals(1, r1.getLimboSize());
+			assertEquals(1, r2.getLimboSize());
+			assertEquals(1, r3.getLimboSize());
+			assertEquals(1, r4.getLimboSize());
+			// m5 should have been forwarded
+			assertEquals(0, r5.getLimboSize());
+			assertEquals(1, r6.getLimboSize());
+		}
+		//6th round
+
+		for (int i = 0; i < 20; i++)
+		{
+			clock.advance(1);
+			updateAllNodes();
+		}
+
+
+		h6.forceConnection(h1, null, true);
+
+		for (int i = 0; i < 60; i++)
+		{
+			clock.advance(1);
+			updateAllNodes();
+		}
+
+		disconnect(h1);
+		disconnect(h6);
+
+		if (!r1.isEpidemicDropBack())
+		{
+			//check all message are into limbo
+			assertEquals(1, r1.getLimboSize());
+			assertEquals(1, r2.getLimboSize());
+			assertEquals(1, r3.getLimboSize());
+			assertEquals(1, r4.getLimboSize());
+			assertEquals(0, r5.getLimboSize());
+			// m6 should have been forwarded
+			assertEquals(0, r6.getLimboSize());
+		}
+		else
+		{
+			int deliveredCount = 0;
+			for (DTNHost h : Utils.getAllNodes())
+			{
+				ContactGraphRouter r = (ContactGraphRouter) h.getRouter();
+				deliveredCount += r.getDeliveredCount();
+			}
+
+			assertEquals(6, deliveredCount);
+		}
+	}
+
+
+	/**
 	 * TEST 1
 	 * Each node has a contact with his previous and next nodeNbr
 	 * All contacts happen simultaneously.
 	 * Each node create a message for his next nodeNbr.
 	 * Messages should be delivered through a single hop route.
 	 */
-	public void testRouting1()
+	public void testOppRouting1()
 	{		
 		//test visuale
 		r3.processLine("l range");
@@ -138,12 +370,12 @@ public class OpportunisticContactGraphRouterTest extends AbstractRouterTest {
 			updateAllNodes();
 		}
 
-		assertEquals(r1.getOutducts().get(h2).getQueue().size(), 0);
-		assertEquals(r2.getOutducts().get(h3).getQueue().size(), 0);
-		assertEquals(r3.getOutducts().get(h4).getQueue().size(), 0);
-		assertEquals(r4.getOutducts().get(h5).getQueue().size(), 0);
-		assertEquals(r5.getOutducts().get(h6).getQueue().size(), 0);
-		assertEquals(r6.getOutducts().get(h1).getQueue().size(), 0);	
+		assertEquals(r1.getOutducts()[h2.getAddress()].getQueue().size(), 0);
+		assertEquals(r2.getOutducts()[h3.getAddress()].getQueue().size(), 0);
+		assertEquals(r3.getOutducts()[h4.getAddress()].getQueue().size(), 0);
+		assertEquals(r4.getOutducts()[h5.getAddress()].getQueue().size(), 0);
+		assertEquals(r5.getOutducts()[h6.getAddress()].getQueue().size(), 0);
+		assertEquals(r6.getOutducts()[h1.getAddress()].getQueue().size(), 0);	
 		
 		assertEquals(true, r2.isDeliveredMessage(m1));
 		assertEquals(true, r3.isDeliveredMessage(m2));
@@ -160,7 +392,7 @@ public class OpportunisticContactGraphRouterTest extends AbstractRouterTest {
 	 * Node 1 creates 20 Messages whose destination are all the simulated
 	 * nodes (node 1 included)
 	 */
-	public void testRouting2()
+	public void testOppRouting2()
 	{	
 		/*
 		String cp_path = "";
@@ -236,7 +468,7 @@ public class OpportunisticContactGraphRouterTest extends AbstractRouterTest {
 		
 	}
 	
-	public void testRoutingSimple()
+	public void testOppRoutingSimple()
 	{
 		Message m1 = new Message(h1, h2, "MSG_1", 100);
 		Message m2 = new Message(h2, h1, "MSG_2", 100);

@@ -21,6 +21,9 @@ int cgrForwardONE(jobject bundleONE, jlong terminusNodeNbr);
 int bpEnqueONE(FwdDirective *directive, Bundle *bundle, Object bundleObj);
 int bpCloneONE(Bundle *oldBundle, Bundle *newBundle);
 int bpLimboONE(Bundle *bundle, Object bundleObj);
+int sendDiscoveryInfoToNeighbor
+(uvast neighborNode, uvast fromNode, uvast toNode, time_t fromTime,
+		time_t toTime, unsigned int xmitRate);
 int testMessage(jobject message);
 int testOutduct(jobject jOuduct);
 

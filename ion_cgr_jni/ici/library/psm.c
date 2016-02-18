@@ -11,6 +11,8 @@
 #include "shared.h"
 #include "jni_thread.h"
 
+#define PsmPartitionClass "cgr_jni/psm/PsmPartition"
+
 PsmAddress	Psm_zalloc(const char * s, int n,
 		PsmPartition partition, unsigned long length)
 {

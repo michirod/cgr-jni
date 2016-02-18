@@ -18,8 +18,6 @@
 #include <jni.h>
 
 #include "platform.h"
-#define PsmPartitionClass "cgr_jni/psm/PsmPartition"
-#define PsmPartitionManagerClass "cgr_jni/psm/PsmPartitionManager"
 
 typedef struct
 {

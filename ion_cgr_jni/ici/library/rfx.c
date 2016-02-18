@@ -1016,7 +1016,9 @@ static void	insertLogEntry(Sdr sdr, Object log, Object entryObj,
 
 		/*	Identical; duplicate, so don't add to log.	*/
 
+#ifdef DEBUG_PRINTS
 puts("Duplicate log entry is rejected.");
+#endif
 		sdr_free(sdr, entryObj);
 		return;
 	}
@@ -1040,14 +1042,16 @@ void	rfx_log_discovered_contact(time_t fromTime, time_t toTime,
 	Object		log;
 	PastContact	entry;
 	Object		entryObj;
+
+#ifdef DEBUG_PRINTS
 char	buf1[64];
 char	buf2[64];
-
 writeTimestampLocal(fromTime, buf1);
 writeTimestampLocal(toTime, buf2);
 printf("Inserting new entry into discovered contact log, from "
 UVAST_FIELDSPEC " to " UVAST_FIELDSPEC ", start %s, stop %s.\n",
 fromNode, toNode, buf1, buf2);
+#endif
 	sdr_read(sdr, (char *) &db, dbobj, sizeof(IonDB));
 	log = db.contactLog[idx];
 	entry.fromTime = fromTime;
@@ -1085,9 +1089,11 @@ static void	deleteContact(PsmAddress cxaddr)
 
 	if (cxref->discovered)
 	{
+#ifdef DEBUG_PRINTS
 printf("Deleting discovered contact at " UVAST_FIELDSPEC ", from "
 UVAST_FIELDSPEC " to " UVAST_FIELDSPEC ".\n", ownNodeNbr,
 cxref->fromNode, cxref->toNode);
+#endif
 #if 0
 		oK(notifyDiscoveredNeighbors(cxref->fromTime, currentTime,
 			cxref->fromNode, cxref->toNode, cxref->xmitRate));
@@ -1308,7 +1314,9 @@ int	rfx_remove_discovered_contacts(uvast peerNode)
 	PsmAddress	nextCxelt;
 	PsmAddress	cxaddr;
 
+#ifdef DEBUG_PRINTS
 puts("In rfx_remove_discovered_contacts....");
+#endif
 	CHKERR(sdr_begin_xn(sdr));
 	sdr_read(sdr, (char *) &iondb, getIonDbObject(), sizeof(IonDB));
 	for (elt = sdr_list_first(sdr, iondb.contacts); elt; elt = nextElt)
@@ -1318,7 +1326,9 @@ puts("In rfx_remove_discovered_contacts....");
 		sdr_read(sdr, (char *) &contact, obj, sizeof(IonContact));
 		if (contact.discovered == 0)
 		{
+#ifdef DEBUG_PRINTS
 puts("(contact not discovered)");
+#endif
 			continue;	/*	Not discovered.		*/
 		}
 
@@ -1327,7 +1337,9 @@ puts("(contact not discovered)");
 		if (!((contact.fromNode == peerNode && contact.toNode == self)
 		|| (contact.toNode == peerNode && contact.fromNode == self)))
 		{
+#ifdef DEBUG_PRINTS
 puts("(contact not affected)");
+#endif
 			continue;	/*	Contact not affected.	*/
 		}
 
@@ -1345,7 +1357,9 @@ puts("(contact not affected)");
 			cxaddr = sm_rbt_data(ionwm, cxelt);
 			deleteContact(cxaddr);
 		}
+#ifdef DEBUG_PRINTS
 else puts("(contact not found in index)");
+#endif
 	}
 
 	if (sdr_end_xn(sdr) < 0)
@@ -1495,6 +1509,7 @@ static int	insertIntoPredictionBase(Lyst pb, PastContact *logEntry)
 	vast		duration;
 	LystElt		elt;
 	PbContact	*contact;
+#ifdef DEBUG_PRINTS
 char	buf1[64];
 char	buf2[64];
 
@@ -1503,6 +1518,7 @@ writeTimestampLocal(logEntry->toTime, buf2);
 printf("Inserting log entry into prediction base, contact from "
 UVAST_FIELDSPEC " to " UVAST_FIELDSPEC ", start %s, stop %s.\n",
 logEntry->fromNode, logEntry->toNode, buf1, buf2);
+#endif
 	duration = logEntry->toTime - logEntry->fromTime;
 	if (duration <= 0 || logEntry->xmitRate == 0)
 	{
@@ -1595,8 +1611,10 @@ static Lyst	constructPredictionBase(uvast fromNode, uvast toNode)
 	Object		elt;
 	PastContact	logEntry;
 
+#ifdef DEBUG_PRINTS
 printf("Building prediction base for contacts from " UVAST_FIELDSPEC " to "
 UVAST_FIELDSPEC ".\n", fromNode, toNode);
+#endif
 	pb = lyst_create_using(getIonMemoryMgr());
 	if (pb == NULL)
 	{
@@ -1681,10 +1699,12 @@ char	buf[255];
 	fromNode = contact->fromNode;
 	toNode = contact->toNode;
 	horizon = currentTime + (currentTime - contact->fromTime);
+#ifdef DEBUG_PRINTS
 writeTimestampLocal(currentTime, buf);
 printf("Current time: %s\n", buf);
 writeTimestampLocal(horizon, buf);
 printf("Horizon: %s\n", buf);
+#endif
 
 	/*	Compute totals and means.				*/
 
@@ -1692,8 +1712,10 @@ printf("Horizon: %s\n", buf);
 	prevElt = NULL;
 	while (1)
 	{
+#ifdef DEBUG_PRINTS
 printf("Contact capacity " UVAST_FIELDSPEC ", duration " UVAST_FIELDSPEC ".\n",
 contact->capacity, contact->duration);
+#endif
 		totalCapacity += contact->capacity;
 		totalContactDuration += contact->duration;
 		contactsCount++;
@@ -1701,7 +1723,9 @@ contact->capacity, contact->duration);
 		{
 			prevContact = (PbContact *) lyst_data(prevElt);
 			gapDuration = contact->fromTime - prevContact->toTime;
+#ifdef DEBUG_PRINTS
 printf("Gap duration " UVAST_FIELDSPEC ".\n", gapDuration);
+#endif
 			totalGapDuration += gapDuration;
 			gapsCount++;
 		}
@@ -1719,16 +1743,20 @@ printf("Gap duration " UVAST_FIELDSPEC ".\n", gapDuration);
 
 	if (gapsCount == 0)
 	{
+#ifdef DEBUG_PRINTS
 puts("No gaps in contact log, can't predict contacts.");
+#endif
 		return 0;
 	}
 
 	meanCapacity = totalCapacity / contactsCount;
 	meanContactDuration = totalContactDuration / contactsCount;
 	meanGapDuration = totalGapDuration / gapsCount;
+#ifdef DEBUG_PRINTS
 printf("Mean contact capacity " UVAST_FIELDSPEC ", mean contact duration "
 UVAST_FIELDSPEC ", mean gap duration " UVAST_FIELDSPEC ".\n",
 meanCapacity, meanContactDuration, meanGapDuration);
+#endif
 
 	/*	Compute standard deviations.				*/
 
@@ -1760,8 +1788,10 @@ meanCapacity, meanContactDuration, meanGapDuration);
 
 	contactStdDev = sqrt(contactDeviationsTotal / contactsCount);
 	gapStdDev = sqrt(gapDeviationsTotal / gapsCount);
+#ifdef DEBUG_PRINTS
 printf("Contact duration sigma " UVAST_FIELDSPEC ", gap duration sigma "
 UVAST_FIELDSPEC ".\n", contactStdDev, gapStdDev);
+#endif
 
 	/*	Select base confidence, compute net confidence.		*/
 
@@ -1776,7 +1806,9 @@ UVAST_FIELDSPEC ".\n", contactStdDev, gapStdDev);
 		baseConfidence = LOW_BASE_CONFIDENCE;
 	}
 
+#ifdef DEBUG_PRINTS
 printf("Base confidence %f.\n", baseConfidence);
+#endif
 	netDoubt = 1.0;
 	for (i = 0; i < contactsCount; i++)
 	{
@@ -1784,7 +1816,9 @@ printf("Base confidence %f.\n", baseConfidence);
 	}
 
 	netConfidence = 1.0 - netDoubt;
+#ifdef DEBUG_PRINTS
 printf("Net confidence %f.\n", netConfidence);
+#endif
 
 	/*	Insert predicted contacts.				*/
 
@@ -1792,8 +1826,10 @@ printf("Net confidence %f.\n", netConfidence);
 	now = contact->toTime;
 	while (now <= horizon)
 	{
+#ifdef DEBUG_PRINTS
 writeTimestampLocal(now, buf);
 printf("Now: %s\n", buf);
+#endif
 		if (gapStdDev < meanGapDuration)
 		{
 			/*	Gap duration may be underestimated.	*/
@@ -1804,14 +1840,18 @@ printf("Now: %s\n", buf);
 		{
 			gapEnd = now;
 		}
+#ifdef DEBUG_PRINTS
 writeTimestampLocal(gapEnd, buf);
 printf("Gap end: %s\n", buf);
+#endif
 
 		/*	Contact duration may be overestimated.		*/
 
 		contactEnd = gapEnd + meanContactDuration + contactStdDev;
+#ifdef DEBUG_PRINTS
 writeTimestampLocal(contactEnd, buf);
 printf("Contact end: %s\n", buf);
+#endif
 		xmitRate = meanCapacity / (contactEnd - gapEnd);
 		if (contactEnd > currentTime && xmitRate > 1)
 		{

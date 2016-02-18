@@ -42,10 +42,12 @@ char buf1[255], buf2[255];
 			memcpy(contact, &buf, sizeof(IonContact));
 			count++;
 			lyst_insert_last(list, contact);
+#ifdef DEBUG_PRINTS
 writeTimestampLocal(contact->fromTime, buf1);
 writeTimestampLocal(contact->toTime, buf2);
 printf ("Found discovered contact on %d, from %d to %d start %s end "
 "%s.\n", localNodeNbr, contact->fromNode, contact->toNode, buf1, buf2);
+#endif
 		}
 		elt = sdr_list_next(sdr, elt);
 	}
@@ -68,10 +70,12 @@ char buf1[255], buf2[255];
 				contact->toNode, contact->xmitRate,
 				contact->confidence, &xaddr);
 		elt = lyst_next(elt);
+#ifdef DEBUG_PRINTS
 writeTimestampLocal(contact->fromTime, buf1);
 writeTimestampLocal(contact->toTime, buf2);
 printf ("Inserting range and contact, from %d to %d "
 		"start %s end %s.\n", contact->fromNode, contact->toNode, buf1, buf2);
+#endif
 	}
 	lyst_clear(from);
 	setNodeNum(currentNodeNum);
@@ -86,10 +90,16 @@ void exchangeCurrentDiscoveredContacts(uvast node1, uvast node2)
 	found[0] = findDiscoveredContacts(node1, discoveredContacts[0]);
 	found[1] = findDiscoveredContacts(node2, discoveredContacts[1]);
 	// copy current discovered contact from node1 to node2
-	printf("COPYING CURRENT DISCOVERED CONTACTS FROM NODE %d TO NODE %d\n", node1, node2);
+#ifdef DEBUG_PRINTS
+printf("COPYING CURRENT DISCOVERED CONTACTS FROM NODE %d TO NODE %d\n",
+		node1, node2);
+#endif
 	copyDiscoveredContacts(discoveredContacts[0], node2);
 	// copy current discovered contact from node2 to node1
-	printf("COPYING CURRENT DISCOVERED CONTACTS FROM NODE %d TO NODE %d\n", node2, node1);
+#ifdef DEBUG_PRINTS
+printf("COPYING CURRENT DISCOVERED CONTACTS FROM NODE %d TO NODE %d\n",
+		node2, node1);
+#endif
 	copyDiscoveredContacts(discoveredContacts[1], node1);
 	lyst_destroy(discoveredContacts[0]);
 	lyst_destroy(discoveredContacts[1]);
@@ -171,10 +181,14 @@ void exchangeContactHistory(uvast node1, uvast node2)
 	getContactLog(node2, SENDER_NODE, node2Log[0]);
 	getContactLog(node2, RECEIVER_NODE, node2Log[1]);
 
-	printf("COPYING CONTACT HISTORY FROM NODE %d TO NODE %d\n", node1, node2);
+#ifdef DEBUG_PRINTS
+printf("COPYING CONTACT HISTORY FROM NODE %d TO NODE %d\n", node1, node2);
+#endif
 	copyContactHistory(node1Log[0], node2, SENDER_NODE);
 	copyContactHistory(node1Log[1], node2, RECEIVER_NODE);
-	printf("COPYING CONTACT HISTORY FROM NODE %d TO NODE %d\n", node2, node1);
+#ifdef DEBUG_PRINTS
+printf("COPYING CONTACT HISTORY FROM NODE %d TO NODE %d\n", node2, node1);
+#endif
 	copyContactHistory(node2Log[0], node1, SENDER_NODE);
 	copyContactHistory(node2Log[1], node1, RECEIVER_NODE);
 	fflush(stdout);
