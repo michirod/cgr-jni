@@ -82,12 +82,7 @@ public class IONInterface {
 			return 0;
 		}
 	*/
-		if(localRouter.getOutducts()[to.getAddress()] != null){
-			localRouter.getOutducts()[to.getAddress()]
-					.insertMessageIntoOutduct(message, true);
-			return 0;
-		}
-		return -1;
+		return localRouter.putMessageIntoOutduct(to, message, true);
 	}
 
 	static int insertBundleIntoLimbo(long localNodeNbr, Message message)

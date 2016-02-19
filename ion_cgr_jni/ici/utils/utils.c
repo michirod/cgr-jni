@@ -15,6 +15,60 @@
 
 #define PsmPartitionManagerClass "cgr_jni/psm/PsmPartitionManager"
 
+pthread_key_t ionPartitions_key = 0;
+typedef struct
+{
+	PsmPartition partition[2];
+	uvast nodeNbr;
+} IonPartitions;
+
+static IonPartitions * setIonPartitions(IonPartitions * ionPartitions)
+{
+	if ((pthread_getspecific(ionPartitions_key)) == NULL)
+	{
+		pthread_setspecific(ionPartitions_key, ionPartitions);
+	}
+	return ionPartitions;
+}
+static IonPartitions * getIonPartitions()
+{
+	return pthread_getspecific(ionPartitions_key);
+}
+static IonPartitions * initIonPartitions()
+{
+	IonPartitions * ionP = NULL;
+	if (ionPartitions_key == 0)
+		pthread_key_create(&ionPartitions_key, NULL);
+	else
+		ionP = getIonPartitions();
+	if (ionP == NULL)
+	{
+		ionP = malloc(sizeof(IonPartitions));
+		memset(ionP, 0, sizeof(IonPartitions));
+		setIonPartitions(ionP);
+	}
+	return ionP;
+}
+static IonPartitions * updateIonPartitions()
+{
+	JNIEnv * jniEnv = getThreadLocalEnv();
+	IonPartitions * ionP = getIonPartitions();
+	if (ionP->nodeNbr != getNodeNum())
+	{
+		ionP->nodeNbr = getNodeNum();
+		(*jniEnv)->DeleteGlobalRef(jniEnv, ionP->partition[WM_PSM_PARTITION]);
+		(*jniEnv)->DeleteGlobalRef(jniEnv, ionP->partition[SDR_PSM_PARTITION]);
+		ionP->partition[WM_PSM_PARTITION] =
+				(*jniEnv)->NewGlobalRef(jniEnv,
+				getIonPsmPartition(ionP->nodeNbr, WM_PSM_PARTITION));
+		ionP->partition[SDR_PSM_PARTITION] =
+				(*jniEnv)->NewGlobalRef(jniEnv,
+				getIonPsmPartition(ionP->nodeNbr, SDR_PSM_PARTITION));
+		setIonPartitions(ionP);
+	}
+	return ionP;
+}
+
 char * getIonvdbName();
 
 PsmPartition getIonPsmPartition(long nodeNum, int partNum)
@@ -66,6 +120,7 @@ void eraseIonPsmPartition(long nodeNum, int partNum)
 void initIonWm()
 {
 	newIonPsmPartition(getNodeNum(), WM_PSM_PARTITION);
+	initIonPartitions();
 }
 void destroyIonWm()
 {
@@ -73,12 +128,14 @@ void destroyIonWm()
 }
 PsmPartition getIonWm()
 {
-	return getIonPsmPartition(getNodeNum(), WM_PSM_PARTITION);
+	//return getIonPsmPartition(getNodeNum(), WM_PSM_PARTITION);
+	return updateIonPartitions()->partition[WM_PSM_PARTITION];
 }
 
 void initIonSdr()
 {
 	newIonPsmPartition(getNodeNum(), SDR_PSM_PARTITION);
+	initIonPartitions();
 }
 void destroyIonSdr()
 {
@@ -86,7 +143,8 @@ void destroyIonSdr()
 }
 Sdr	getIonSdr()
 {
-	return getIonPsmPartition(getNodeNum(), SDR_PSM_PARTITION);
+	//return getIonPsmPartition(getNodeNum(), SDR_PSM_PARTITION);
+	return updateIonPartitions()->partition[SDR_PSM_PARTITION];
 }
 
 IonDB * createIonDb(Sdr ionsdr, IonDB * iondbPtr)

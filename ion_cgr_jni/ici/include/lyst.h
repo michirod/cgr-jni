@@ -17,11 +17,13 @@
  * define types
  */
 /* define a lyst */
-
+#ifndef LYST_OPTIMIZATION
 typedef jobject Lyst;
 typedef jobject LystElt;
-//typedef struct LystStruct *Lyst;
-//typedef struct LystEltStruct *LystElt;
+#else
+typedef struct LystStruct *Lyst;
+typedef struct LystEltStruct *LystElt;
+#endif
 
 typedef enum {
   LIST_SORT_ASCENDING,

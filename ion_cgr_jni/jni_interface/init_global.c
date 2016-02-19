@@ -35,6 +35,7 @@ int init_global()
 		setlocale(LC_ALL, "en_US.UTF-8");
 		pthread_key_create(&nodeNum_key, NULL);
 		pthread_key_create(&jniEnv_key, NULL);
+		pthread_key_create(&interfaceInfo_key, NULL);
 		ONEreferenceTime = time(NULL);
 		initialized = 1;
 		return 1;

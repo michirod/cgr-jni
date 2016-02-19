@@ -1,5 +1,6 @@
 package routing;
 import java.util.List;
+import java.util.SortedSet;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -7,6 +8,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 import cgr_jni.Libcgr;
 import cgr_jni.Utils;
@@ -67,7 +69,7 @@ public class ContactGraphRouter extends ActiveRouter {
 		 * @param removeFromLimbo if true it tries to remove this 
 		 * message from limbo
 		 */
-		public void insertMessageIntoOutduct(Message message, 
+		protected void insertMessageIntoOutduct(Message message, 
 				boolean removeFromLimbo)
 		{
 			this.queue.add(message);
@@ -83,9 +85,10 @@ public class ContactGraphRouter extends ActiveRouter {
 			}
 			message.updateProperty(OUTDUCT_REF_PROP, host.getAddress());
 			totalEnqueuedBytes += message.getSize();
+			
 		}
 
-		public void removeMessageFromOutduct(Message m){
+		protected void removeMessageFromOutduct(Message m){
 			Iterator<Message> iter = queue.iterator();
 			Message m1;
 			while (iter.hasNext())
@@ -131,6 +134,47 @@ public class ContactGraphRouter extends ActiveRouter {
 		}
 	}
 	
+	public class RouteExpirationEvent 
+		implements Comparable<RouteExpirationEvent>
+	{
+		private long time;
+		private Outduct outduct;
+		private Message message;
+		
+		public RouteExpirationEvent(long time, Outduct outduct, Message message) {
+			this.time = time;
+			this.outduct = outduct;
+			this.message = message;
+		}
+		@Override
+		public int compareTo(RouteExpirationEvent o) {
+			int result = (int) (time - o.time);
+			if (result == 0)
+				result = outduct.address - o.outduct.address;
+			if (result == 0)
+				result = message.getUniqueId() - o.message.getUniqueId();
+			return result;
+			
+		}
+		public int execute()
+		{
+			/*
+			 * If a route has expired for a message, I put it into the limbo and 
+			 * invoke CGR, which possibly remove the message from limbo and
+			 * enqueue it into an outduct if a route has been found.
+			 */
+			outduct.removeMessageFromOutduct(message);
+			putMessageIntoLimbo(message, false);
+			return cgrForward(message, message.getTo());
+			
+		}
+		public String toString()
+		{
+			return "Time: " + time + ", Outduct: " + outduct.address + 
+					" Message: " + message;
+		}
+	}
+	
 	public static final String CGR_NS = "ContactGraphRouter";
 	public static final String CONTACT_PLAN_PATH_S = "ContactPlanPath";
 	public static final String DEBUG_S = "debug";
@@ -139,6 +183,7 @@ public class ContactGraphRouter extends ActiveRouter {
 	public static final String XMIT_COPIES_PROP = "XmitCopies";
 	public static final String XMIT_COPIES_COUNT_PROP = "XmitCopiesCount";
 	public static final String DLV_CONFIDENCE_PROP = "DlvConfidence";
+	public static final String ROUTE_EXP_EV_PROP = "RouteExpirationEvent";
 	
 	/** counter incremented every time a message is delivered to the local node,
 	 *  i.e. the message has reached its final destination. */
@@ -153,6 +198,7 @@ public class ContactGraphRouter extends ActiveRouter {
 	//protected TreeMap<DTNHost, Outduct> outducts = new TreeMap<DTNHost, Outduct>();
 	protected Outduct[] outducts = new Outduct[0];
 	protected Outduct limbo = new Outduct(null);
+	protected SortedSet<RouteExpirationEvent> events = new TreeSet<>();
 	//protected int hostAddress = -2;
 
 	/**
@@ -245,6 +291,24 @@ public class ContactGraphRouter extends ActiveRouter {
 		return false;
 	}
 	
+	public int putMessageIntoOutduct(DTNHost neighbor, Message message, 
+			boolean removeFromLimbo)
+	{
+		int toAdd = neighbor.getAddress();
+		if (outducts[toAdd] != null)
+		{
+			outducts[toAdd].
+				insertMessageIntoOutduct(message, removeFromLimbo);
+			RouteExpirationEvent exp = new RouteExpirationEvent(
+					(long) message.getProperty(ROUTE_FORWARD_TIMELIMIT_PROP), 
+					outducts[toAdd], message);
+			message.updateProperty(ROUTE_EXP_EV_PROP, exp);
+			events.add(exp);
+			return 0;
+		}
+		return -1;
+	}
+	
 	public void removeMessageFromOutduct(DTNHost h, Message m)
 	{
 		//Outduct o = getOutducts().get(h);
@@ -252,6 +316,8 @@ public class ContactGraphRouter extends ActiveRouter {
 		if (o != null && o.containsMessage(m))
 		{
 			o.removeMessageFromOutduct(m);
+			events.remove(m.getProperty(ROUTE_EXP_EV_PROP));
+			m.updateProperty(ROUTE_EXP_EV_PROP, null);
 		}
 	}
 	
@@ -302,8 +368,8 @@ public class ContactGraphRouter extends ActiveRouter {
 		int outductNum = (int) message.getProperty(OUTDUCT_REF_PROP);
 		if (removeFromOutduct && outductNum >= 0)
 			//getOutducts().get(Utils.getHostFromNumber(outductNum)).
-			getOutducts()[outductNum].
-				removeMessageFromOutduct(message);
+			removeMessageFromOutduct(
+					Utils.getHostFromNumber(outductNum), message);
 		limbo.insertMessageIntoOutduct(message, false);
 		message.updateProperty(OUTDUCT_REF_PROP, Outduct.LIMBO_ID);
 	}
@@ -354,6 +420,7 @@ public class ContactGraphRouter extends ActiveRouter {
 	 */
 	protected void checkExpiredRoutes()
 	{
+		/*
 		List<Message> expired = new ArrayList<>(getNrofMessages());
 		//for (Outduct o : getOutducts().values())
 		for (Outduct o : getOutducts())
@@ -375,11 +442,26 @@ public class ContactGraphRouter extends ActiveRouter {
 				 * invoke CGR, which possibly remove the message from limbo and
 				 * enqueue it into an outduct if a route has been found.
 				 */
+		/*
 				o.removeMessageFromOutduct(m);
 				putMessageIntoLimbo(m, false);
 				cgrForward(m, m.getTo());
 			}
 			expired.clear();
+		}
+		*/
+		RouteExpirationEvent exp;
+		List<RouteExpirationEvent> toExecute = new ArrayList<>();
+		Iterator<RouteExpirationEvent> iter = events.iterator();
+		while (iter.hasNext())
+		{
+			exp = iter.next();
+			if (exp.time > SimClock.getIntTime())
+				break;
+			toExecute.add(exp);
+		}
+		for (RouteExpirationEvent e : toExecute){
+			e.execute();
 		}
 	}
 
@@ -460,6 +542,7 @@ public class ContactGraphRouter extends ActiveRouter {
 		m.addProperty(XMIT_COPIES_PROP, new int[0]);
 		m.addProperty(XMIT_COPIES_COUNT_PROP, 0);
 		m.addProperty(DLV_CONFIDENCE_PROP, 0.0);
+		m.addProperty(ROUTE_EXP_EV_PROP, null);
 		return super.createNewMessage(m);
 	}
 	
@@ -478,7 +561,8 @@ public class ContactGraphRouter extends ActiveRouter {
 				//o = getOutducts().get(Utils.getHostFromNumber(outductNum));
 				o = getOutducts()[outductNum];
 			if (o != null)
-				o.removeMessageFromOutduct(m);
+				//o.removeMessageFromOutduct(m);
+				removeMessageFromOutduct(o.host, m);
 			else return null;
 		}
 		return m;
@@ -488,11 +572,14 @@ public class ContactGraphRouter extends ActiveRouter {
 		//for(Outduct o : getOutducts().values())
 		for (Outduct o: getOutducts())
 		{
+			if (o.host == null)
+				continue; // limbo: skip
 			for (Message m : o.queue)
 			{
 				if (m.getId().equals(id))
 				{
-					o.removeMessageFromOutduct(m);
+					//o.removeMessageFromOutduct(m);
+					removeMessageFromOutduct(o.host, m);
 					break;
 				}
 			}
@@ -521,7 +608,8 @@ public class ContactGraphRouter extends ActiveRouter {
 	{
 		super.transferDone(con);
 		Message transferred = con.getMessage();
-		removeFromOutducts(transferred);
+		//removeFromOutducts(transferred);
+		removeMessageFromOutduct(con.getOtherNode(getHost()), transferred);
 		if (debug)
 			System.out.println("" + SimClock.getTime() + 
 					": End transmission " + transferred + " " + con);

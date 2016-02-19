@@ -1,6 +1,8 @@
 package cgr_jni;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 
 import core.DTNHost;
 import core.SimScenario;
@@ -9,6 +11,7 @@ public class Utils {
 	
 	protected static Utils instance = null;
 	protected Collection<DTNHost> hostsReference;
+	protected DTNHost[] hostsArray;
 	
 	/**
 	 * Default constructor.
@@ -21,9 +24,22 @@ public class Utils {
 	protected Utils(Collection<DTNHost> hosts)
 	{
 		if (hosts == null) // Default value
+		{
 			hostsReference = SimScenario.getInstance().getHosts();
+		}
 		else
+		{
 			hostsReference = hosts;
+		}
+		hostsArray = new DTNHost[hostsReference.size()];
+		hostsArray = hostsReference.toArray(hostsArray);
+		Arrays.sort(hostsArray, new Comparator<DTNHost>() {
+
+			@Override
+			public int compare(DTNHost o1, DTNHost o2) {
+				return o1.getAddress() - o2.getAddress();
+			}
+		});
 	}
 	
 	public static Utils init(Collection<DTNHost> hosts)
@@ -57,12 +73,15 @@ public class Utils {
 
 	public static DTNHost getHostFromNumber(long nodeNbr)
 	{
+		/*
 		for(DTNHost host : getAllNodes()){
 			if(host.getAddress() == nodeNbr){
 				return host;
 			}
 		}
 		return null;
+		*/
+		return getInstance().hostsArray[(int) (nodeNbr -1)];
 	}
 
 }
