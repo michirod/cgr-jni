@@ -9,7 +9,7 @@
 #define ION_CGR_JNI_JNI_INTERFACE_INCLUDE_CHSIM_H_
 
 void exchangeCurrentDiscoveredContacts(uvast node1, uvast node2);
-void newContactDiscovered(uvast neighborNode, unsigned int xmitRate);
+void insertNewDiscoveredContact(uvast neighborNode, unsigned int xmitRate);
 void contactLost(uvast neighborNode);
 void exchangeContactHistory(uvast node1, uvast node2);
 void predictContacts();

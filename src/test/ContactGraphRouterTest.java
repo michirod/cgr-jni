@@ -1383,6 +1383,8 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 		 * Create message to node 4. Delivery confidence is higher than the 
 		 * threshold, so bundle should be enqueued to node 2 but not duplicated
 		 */
+
+		r1.processLine("l contact");
 		h1.createNewMessage(m2);
 		assertEquals(false, r1.isMessageIntoLimbo(m2));
 		assertEquals(true, r1.isMessageIntoOutduct(h2, m2));

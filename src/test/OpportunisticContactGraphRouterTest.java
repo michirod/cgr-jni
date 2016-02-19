@@ -534,6 +534,8 @@ public class OpportunisticContactGraphRouterTest extends ContactGraphRouterTest 
 		assertEquals(true, r1.isMessageIntoLimbo(m5));
 		assertEquals(true, r2.isMessageIntoLimbo(m6));
 		testWait(30, 0.1);
+		assertEquals(1, r1.getOutductSize(h2));
+		assertEquals(1, r2.getOutductSize(h1));
 		System.out.println();
 		System.out.println("" + SimClock.getTime() + ": Node 1 and Node2 connected");
 		h1.forceConnection(h2, null, true);
