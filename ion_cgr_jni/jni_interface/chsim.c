@@ -166,37 +166,37 @@ static void copyContactHistory(Lyst from, uvast toNode, int idx)
 void exchangeContactHistory(uvast node1, uvast node2)
 {
 	Lyst node1Log[2], node2Log[2];
-	node1Log[0] = lyst_create();
-	node1Log[1] = lyst_create();
-	node2Log[0] = lyst_create();
-	node2Log[1] = lyst_create();
+	node1Log[SENDER_NODE] = lyst_create();
+	node1Log[RECEIVER_NODE] = lyst_create();
+	node2Log[SENDER_NODE] = lyst_create();
+	node2Log[RECEIVER_NODE] = lyst_create();
 
-	lyst_delete_set(node1Log[0], freeLystContents, NULL);
-	lyst_delete_set(node1Log[1], freeLystContents, NULL);
-	lyst_delete_set(node2Log[0], freeLystContents, NULL);
-	lyst_delete_set(node2Log[1], freeLystContents, NULL);
+	lyst_delete_set(node1Log[SENDER_NODE], freeLystContents, NULL);
+	lyst_delete_set(node1Log[RECEIVER_NODE], freeLystContents, NULL);
+	lyst_delete_set(node2Log[SENDER_NODE], freeLystContents, NULL);
+	lyst_delete_set(node2Log[RECEIVER_NODE], freeLystContents, NULL);
 
-	getContactLog(node1, SENDER_NODE, node1Log[0]);
-	getContactLog(node1, RECEIVER_NODE, node1Log[1]);
-	getContactLog(node2, SENDER_NODE, node2Log[0]);
-	getContactLog(node2, RECEIVER_NODE, node2Log[1]);
+	getContactLog(node1, SENDER_NODE, node1Log[SENDER_NODE]);
+	getContactLog(node1, RECEIVER_NODE, node1Log[RECEIVER_NODE]);
+	getContactLog(node2, SENDER_NODE, node2Log[SENDER_NODE]);
+	getContactLog(node2, RECEIVER_NODE, node2Log[RECEIVER_NODE]);
 
 #ifdef DEBUG_PRINTS
 printf("COPYING CONTACT HISTORY FROM NODE %d TO NODE %d\n", node1, node2);
 #endif
-	copyContactHistory(node1Log[0], node2, SENDER_NODE);
-	copyContactHistory(node1Log[1], node2, RECEIVER_NODE);
+	copyContactHistory(node1Log[SENDER_NODE], node2, SENDER_NODE);
+	copyContactHistory(node1Log[RECEIVER_NODE], node2, RECEIVER_NODE);
 #ifdef DEBUG_PRINTS
 printf("COPYING CONTACT HISTORY FROM NODE %d TO NODE %d\n", node2, node1);
 #endif
-	copyContactHistory(node2Log[0], node1, SENDER_NODE);
-	copyContactHistory(node2Log[1], node1, RECEIVER_NODE);
+	copyContactHistory(node2Log[SENDER_NODE], node1, SENDER_NODE);
+	copyContactHistory(node2Log[RECEIVER_NODE], node1, RECEIVER_NODE);
 	fflush(stdout);
 
-	lyst_destroy(node1Log[0]);
-	lyst_destroy(node1Log[1]);
-	lyst_destroy(node2Log[0]);
-	lyst_destroy(node2Log[1]);
+	lyst_destroy(node1Log[SENDER_NODE]);
+	lyst_destroy(node1Log[RECEIVER_NODE]);
+	lyst_destroy(node2Log[SENDER_NODE]);
+	lyst_destroy(node2Log[RECEIVER_NODE]);
 }
 
 void predictContacts()

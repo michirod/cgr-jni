@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 
+import cgr_jni.Libcgr;
 import cgr_jni.Utils;
 import core.DTNHost;
 import core.Message;
@@ -87,11 +88,15 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 	@Override
 	public void tearDown() throws Exception 
 	{
+		/*
 		for (DTNHost h : Utils.getAllNodes())
 		{
 			ContactGraphRouter r = (ContactGraphRouter) h.getRouter();
-			r.finalize();
+			r.finalizeCGR();
 		}
+		Libcgr.finalizeGlobalMem();
+		*/
+		ContactGraphRouter.reset();
 	}
 
 	/**
@@ -1382,12 +1387,22 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 		/*
 		 * Create message to node 4. Delivery confidence is higher than the 
 		 * threshold, so bundle should be enqueued to node 2 but not duplicated
-		 */
-
+		 * 
 		r1.processLine("l contact");
 		h1.createNewMessage(m2);
 		assertEquals(false, r1.isMessageIntoLimbo(m2));
 		assertEquals(true, r1.isMessageIntoOutduct(h2, m2));
+		*/
+		
+		/*
+		 * With last libcgr.c review, bundles are not enqueued into outducts
+		 * unless the first contact has confidence 1.0. So message to node 4
+		 * will not be enqueued but it'll remain in limbo
+		 */
+		r1.processLine("l contact");
+		h1.createNewMessage(m2);
+		assertEquals(true, r1.isMessageIntoLimbo(m2));
+		assertEquals(false, r1.isMessageIntoOutduct(h2, m2));
 		
 		testWait(6, 0.1);
 		disconnect(h1);
@@ -1399,10 +1414,20 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 		 *  Create message to node 5. Delivery confidence is less than the 
 		 *  threshold, so bundle should be enqueued to node 3 AND duplicated
 		 *  into limbo
-		 */
+		 *
 		h1.createNewMessage(m3);
 		assertEquals(true, r1.isMessageIntoLimbo(m3));
 		assertEquals(true, r1.isMessageIntoOutduct(h3, m3));
+		*/
+		/*
+		 * With last libcgr.c review, bundles are not enqueued into outducts
+		 * unless the first contact has confidence 1.0.
+		 * So messageto node 5 should not be enqueued to any outduct.
+		 */
+		h1.createNewMessage(m3);
+		assertEquals(true, r1.isMessageIntoLimbo(m3));
+		assertEquals(false, r1.isMessageIntoOutduct(h3, m3));
+		
 		testWait(6, 0.1);
 		disconnect(h1);
 		disconnect(h3);

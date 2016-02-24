@@ -16,6 +16,7 @@
 #define SDR_PSM_PARTITION 1
 
 
+void destroyIonPartitions();
 PsmPartition getIonPsmPartition(long nodeNum, int partNum);
 PsmPartition newIonPsmPartition(long nodeNum, int partNum);
 void eraseIonPsmPartition(long nodeNum, int partNum);

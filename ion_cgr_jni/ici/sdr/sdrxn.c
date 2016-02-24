@@ -30,11 +30,18 @@ void	sdr_read(Sdr sdrv, char *into, Address from, long length)
 {
 	//TODO stub
 	//_sdrfetch(sdrv, into, from, length);
-	if (from != NULL && into != NULL)
+	if (from == NULL)
 	{
-		void * ptr = psp(sdrv, from);
-		memcpy(into, ptr, length);
+		putErrmsg("Error null pointer", "from");
+		return;
 	}
+	if (into == NULL)
+	{
+		putErrmsg("Error null pointer", "into");
+		return;
+	}
+	void * ptr = psp(sdrv, from);
+	memcpy(into, ptr, length);
 }
 void	Sdr_write(const char *file, int line, Sdr sdrv, Address into,
 		char *from, long length)

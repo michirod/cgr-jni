@@ -5,12 +5,14 @@ import routing.OpportunisticContactGraphRouter;
 import routing.ContactGraphRouter.Outduct;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 
 import core.DTNHost;
 import core.Message;
 
 public class IONInterface {	
-
+	
 	private static DTNHost getNodeFromNbr(long nodeNbr){
 		return Utils.getHostFromNumber(nodeNbr);
 	}
@@ -97,39 +99,43 @@ public class IONInterface {
 	{
 		DTNHost local = getNodeFromNbr(localNodeNbr);
 		ContactGraphRouter localRouter = (ContactGraphRouter) local.getRouter();
-		Message newMessage = message.replicate();
+		//Message newMessage = message.replicate();
 		/* xmitCopies array must be deep copied */
+		/*
 		int[] xmitCopies = (int[]) message.getProperty(
 				ContactGraphRouter.XMIT_COPIES_PROP);
 		newMessage.updateProperty(ContactGraphRouter.XMIT_COPIES_PROP,
 				xmitCopies.clone());
-		localRouter.putMessageIntoLimbo(newMessage, false);
+				*/
+		localRouter.putMessageIntoLimbo(message, false);
 	}
 	
 	/*
 	 * METHODS USED BY OPPORTUNISTIC CGR
 	 */
 	
+	@SuppressWarnings("unchecked")
 	static int getMessageXmitCopiesCount(Message message)
 	{
-		Integer result;
-		if ((result = (Integer) message.getProperty(
-				OpportunisticContactGraphRouter.XMIT_COPIES_COUNT_PROP)) != null)
-			return result.intValue();
+		HashSet<Integer> result;
+		if ((result = (HashSet<Integer>) message.getProperty(
+				OpportunisticContactGraphRouter.XMIT_COPIES_PROP)) != null)
+			return result.size();
 		return -1;
 	}
 	
+	@SuppressWarnings("unchecked")
 	static int[] getMessageXmitCopies(Message message)
 	{
-		int count = getMessageXmitCopiesCount(message);
-		int[] result;
-		if ((result = (int[]) message.getProperty(
+		HashSet<Integer> result;
+		if ((result = (HashSet<Integer>) message.getProperty(
 				OpportunisticContactGraphRouter.XMIT_COPIES_PROP)) != null)
 		{
-			if (count >= 0)
+			if (result.size() > 0)
 			{
-				return result;
+				return result.stream().mapToInt(i->i).toArray();
 			}
+			else return new int[0];
 		}
 		return null;
 	}
@@ -143,14 +149,21 @@ public class IONInterface {
 		return -1;
 	}
 	
+	@SuppressWarnings("unchecked")
 	static void setMessageXmitCopies(Message message, int[] copies)
 	{
-		message.updateProperty(
-				OpportunisticContactGraphRouter.XMIT_COPIES_COUNT_PROP, 
-				copies.length);
-		message.updateProperty(
-				OpportunisticContactGraphRouter.XMIT_COPIES_PROP,
-				copies.clone());
+		int copiesCount = getMessageXmitCopiesCount(message);
+		if (copies.length == copiesCount)
+		{
+			// did not change
+			return;
+		}
+		HashSet<Integer> javaCopies = (HashSet<Integer>) message.getProperty(
+				OpportunisticContactGraphRouter.XMIT_COPIES_PROP);
+		for (int c : copies)
+		{
+			javaCopies.add(c);
+		}
 	}
 	
 	static void setMessageDlvConfidence(Message message, double conf)

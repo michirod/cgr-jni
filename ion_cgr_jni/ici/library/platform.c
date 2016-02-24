@@ -105,6 +105,7 @@ char * istrcpy(char * to, const char * from, size_t size)
 }
 static void	logToStdout(char *text)
 {
+
 #ifdef DEBUG_PRINTS
 	if (text)
 	{

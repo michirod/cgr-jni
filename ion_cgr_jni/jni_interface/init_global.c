@@ -45,8 +45,10 @@ int init_global()
 
 void finalize_global()
 {
+	destroyIonPartitions();
 	pthread_key_delete(nodeNum_key);
 	pthread_key_delete(jniEnv_key);
+	pthread_key_delete(interfaceInfo_key);
 	initialized = 0;
 }
 

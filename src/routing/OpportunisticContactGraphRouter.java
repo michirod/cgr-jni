@@ -8,6 +8,7 @@ import core.Connection;
 import core.DTNHost;
 import core.Message;
 import core.Settings;
+import core.SimClock;
 
 public class OpportunisticContactGraphRouter extends ContactGraphRouter {
 
@@ -18,6 +19,7 @@ public class OpportunisticContactGraphRouter extends ContactGraphRouter {
 	protected Queue<DiscoveryInfo> pendingDiscoveryInfos = new LinkedList<>();
 	protected boolean epidemicDropBack = true;
 	protected boolean preventCGRForward = false;
+	private int epidemicSearchIndex;
 	
 	/**
 	 * Copy constructor.
@@ -162,18 +164,34 @@ public class OpportunisticContactGraphRouter extends ContactGraphRouter {
 	@Override
 	public void update() {
 		int result;
-		Message m;
+		Message first, cur;
 		applyDiscoveryInfos();
 		super.update();
 		if (!isTransferring() && epidemicDropBack)
 		{
-			m = getFirstEpidemicMessage();
-			if (m == null)
+			first = getFirstEpidemicMessage();
+			if (first == null)
 				return;
 			for (Connection c : getConnections()){
-				result = startTransfer(m, c);
-				if (result == RCV_OK)
-					m.updateProperty(EPIDEMIC_FLAG_PROP, false);
+				cur = first;
+				epidemicSearchIndex = 1;
+				while (cur != null)
+				{
+					result = startTransfer(cur, c);
+					if (result == RCV_OK)
+					{
+						if (debug)
+						{
+							System.out.println("" + SimClock.getTime() + 
+									": Begin epidemic transmission " 
+									+ cur + " " + c);
+						}
+						cur.updateProperty(EPIDEMIC_FLAG_PROP, false);
+						cur = null;
+						break;
+					}
+					cur = getNextEpidemicMessage();
+				}
 			}
 		}
 	}
@@ -181,7 +199,26 @@ public class OpportunisticContactGraphRouter extends ContactGraphRouter {
 		for (Message m : limbo.getQueue())
 		{
 			if ((boolean) m.getProperty(EPIDEMIC_FLAG_PROP))
+			{
 				return m;
+			}
+		}
+		return null;
+	}
+	private Message getNextEpidemicMessage()
+	{
+		int count = 0;
+		for (Message m : limbo.getQueue())
+		{
+			if ((boolean) m.getProperty(EPIDEMIC_FLAG_PROP))
+			{
+				count++;
+				if (count > epidemicSearchIndex)
+				{
+					epidemicSearchIndex = count;
+					return m;
+				}
+			}
 		}
 		return null;
 	}
@@ -203,6 +240,9 @@ public class OpportunisticContactGraphRouter extends ContactGraphRouter {
 	
 	@Override 
 	public boolean createNewMessage(Message m) {
+		if (debug)
+			System.out.println("" + SimClock.getIntTime() + 
+					"Node " + getHost().getAddress() + ": create new message");
 		m.addProperty(EPIDEMIC_FLAG_PROP, false);
 		return super.createNewMessage(m);
 	}
@@ -210,7 +250,7 @@ public class OpportunisticContactGraphRouter extends ContactGraphRouter {
 	@Override
 	public Message messageTransferred(String id, DTNHost from) {
 		Message transferred = super.messageTransferred(id, from);
-		transferred.updateProperty(EPIDEMIC_FLAG_PROP, false);
+		//transferred.updateProperty(EPIDEMIC_FLAG_PROP, false);
 		return transferred;
 	}
 	
@@ -277,6 +317,8 @@ public class OpportunisticContactGraphRouter extends ContactGraphRouter {
 			}*/
 			m.updateProperty(EPIDEMIC_FLAG_PROP, true);
 		}
+		else
+			m.updateProperty(EPIDEMIC_FLAG_PROP, false);
 		return result;
 	}
 }

@@ -12,10 +12,11 @@
 #include "rfx.h"
 #include "shared.h"
 #include "init_global.h"
+#include <pthread.h>
 
 #define PsmPartitionManagerClass "cgr_jni/psm/PsmPartitionManager"
 
-pthread_key_t ionPartitions_key = 0;
+pthread_key_t ionPartitions_key = -1;
 typedef struct
 {
 	PsmPartition partition[2];
@@ -32,12 +33,24 @@ static IonPartitions * setIonPartitions(IonPartitions * ionPartitions)
 }
 static IonPartitions * getIonPartitions()
 {
-	return pthread_getspecific(ionPartitions_key);
+	IonPartitions * ionP;
+	ionP = pthread_getspecific(ionPartitions_key);
+	if (ionP == NULL)
+	{
+		ionP = malloc(sizeof(IonPartitions));
+		memset(ionP, 0, sizeof(IonPartitions));
+		setIonPartitions(ionP);
+	}
+/*	char buf[256];
+	sprintf(buf, "nodeNum = %d\nionPartition_key = %lu\nionPartition = %lx\n",
+			getNodeNum(), ionPartitions_key, ionP);
+	writeMemo(buf);
+	*/return ionP;
 }
 static IonPartitions * initIonPartitions()
 {
 	IonPartitions * ionP = NULL;
-	if (ionPartitions_key == 0)
+	if (ionPartitions_key == -1)
 		pthread_key_create(&ionPartitions_key, NULL);
 	else
 		ionP = getIonPartitions();
@@ -53,6 +66,11 @@ static IonPartitions * updateIonPartitions()
 {
 	JNIEnv * jniEnv = getThreadLocalEnv();
 	IonPartitions * ionP = getIonPartitions();
+	if (ionP == NULL)
+	{
+		putErrmsg("Cannot retrieve ion partitions", NULL);
+		return NULL;
+	}
 	if (ionP->nodeNbr != getNodeNum())
 	{
 		ionP->nodeNbr = getNodeNum();
@@ -67,6 +85,16 @@ static IonPartitions * updateIonPartitions()
 		setIonPartitions(ionP);
 	}
 	return ionP;
+}
+void destroyIonPartitions()
+{
+	JNIEnv * jniEnv = getThreadLocalEnv();
+	IonPartitions * ionP = getIonPartitions();
+	(*jniEnv)->DeleteGlobalRef(jniEnv, ionP->partition[WM_PSM_PARTITION]);
+	(*jniEnv)->DeleteGlobalRef(jniEnv, ionP->partition[SDR_PSM_PARTITION]);
+	free(ionP);
+	pthread_key_delete(ionPartitions_key);
+	ionPartitions_key = -1;
 }
 
 char * getIonvdbName();
@@ -194,6 +222,7 @@ IonDB * createIonDb(Sdr ionsdr, IonDB * iondbPtr)
 	iondbPtr->contactLog[SENDER_NODE] = sdr_list_create(ionsdr);
 	iondbPtr->contactLog[RECEIVER_NODE] = sdr_list_create(ionsdr);
     //memcpy(&iondbBuf.parmcopy, parms, sizeof(IonParms));
+	//fprintf(stderr, "ionDb created: %d\n", getOwnNodeNbr());
 	return iondbPtr;
 }
 
@@ -209,6 +238,7 @@ void destroyIonDb(char *iondbName)
 	sdr_list_destroy(sdr, iondbBuf.contacts, NULL, NULL);
 	sdr_list_destroy(sdr, iondbBuf.ranges, NULL, NULL);
 	sdr_free(sdr, iondbObj);
+	//fprintf(stderr, "ionDb destroyed: %d\n", getOwnNodeNbr());
 }
 
 IonVdb * createIonVdb(char * ionvdbName)
@@ -271,6 +301,7 @@ IonVdb * createIonVdb(char * ionvdbName)
 	vdb->deltaFromUTC = iondb.deltaFromUTC;
 	sdr_exit_xn(sdr);	/*	Unlock memory.		*/
 
+	//fprintf(stderr, "ionVdb created: %d\n", getOwnNodeNbr());
 	return vdb;
 }
 
@@ -358,5 +389,6 @@ static void	ionDropVdb(char * vdbName)
 void destroyIonVdb(char * ionvdbName)
 {
 	ionDropVdb(ionvdbName);
+	//fprintf(stderr, "ionVdb destroyed: %d\n", getOwnNodeNbr());
 }
 

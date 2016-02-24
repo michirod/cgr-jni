@@ -26,6 +26,7 @@ pthread_key_t interfaceInfo_key;
 struct InterfaceInfo_t {
 	jobject currentMessage;
 	Object outductList;
+	Object protocol; // dummy entry to avoid null pointer errors
 	int forwardResult;
 };
 typedef struct InterfaceInfo_t InterfaceInfo;
@@ -396,12 +397,22 @@ void ion_outduct(Outduct * duct, jobject jOutduct)
 {
 	long totEnqueued;
 	char buf[MAX_CL_DUCT_NAME_LEN];
+	ClProtocol prot;
 	memset(duct, 0, sizeof(Outduct));
 	duct->blocked = isOutductBlocked(jOutduct);
 	duct->maxPayloadLen = getMaxPayloadLen(jOutduct);
 	totEnqueued = getOutductTotalEnqueuedBytes(jOutduct);
 	loadScalar(&(duct->stdBacklog), totEnqueued);
 	strncpy(duct->name, getOutductName(jOutduct, buf), MAX_CL_DUCT_NAME_LEN);
+	if (interfaceInfo->protocol == NULL)
+	{
+		interfaceInfo->protocol =
+				sdr_malloc(getIonsdr(), sizeof(ClProtocol));
+		memset(&prot, 0, sizeof(ClProtocol));
+		sdr_write(getIonsdr(), interfaceInfo->protocol,
+				(char*) &prot, sizeof(ClProtocol));
+	}
+	duct->protocol = interfaceInfo->protocol;
 }
 
 void init_ouduct_list()
@@ -497,6 +508,7 @@ int cgrForwardONE(jobject bundleONE, jlong terminusNodeNbr)
 	interfaceInfo->forwardResult = 0;
 	interfaceInfo->currentMessage = bundleONE;
 	interfaceInfo->outductList = NULL;
+	interfaceInfo->protocol = NULL;
 	setInterfaceInfo(interfaceInfo);
 	bundle = malloc(sizeof(Bundle));
 	ion_bundle(bundle, bundleONE);
@@ -508,6 +520,7 @@ int cgrForwardONE(jobject bundleONE, jlong terminusNodeNbr)
 	if (result >= 0)
 		result = interfaceInfo->forwardResult;
 	sdr_free(getIonsdr(), bundleObj);
+	sdr_free(getIonsdr(), interfaceInfo->protocol);
 	free(interfaceInfo);
 	free(bundle);
 	return result;

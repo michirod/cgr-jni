@@ -78,6 +78,7 @@ IonVdb	*getIonVdb()
 		return vdb;
 	}
 
+	putErrmsg("Failed searching for vdb.", itoa(getOwnNodeNbr()));
 	return NULL;
 }
 
@@ -97,6 +98,8 @@ Object	getIonDbObject()
 	//TODO stub
 	Object result;
 	result = sdr_find(getIonsdr(), _iondbName(), NULL);
+	if (result == NULL)
+		putErrmsg("Failed to locate ionDb.", itoa(getOwnNodeNbr()));
 	return result;
 	//return _iondbObject(NULL);
 }

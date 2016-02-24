@@ -583,6 +583,7 @@ static int	findNextBestRoute(PsmPartition ionwm, IonCXref *rootContact,
 	PsmAddress	addr;
 	CgrRoute	*route;
 
+printf("findNextBestRoute node: %lu\n", getNodeNum());
 	*routeAddr = 0;		/*	Default.			*/
 	addr = psm_zalloc(ionwm, sizeof(CgrRoute));
 	if (addr == 0)
@@ -696,6 +697,7 @@ static PsmAddress	loadRouteList(IonNode *terminusNode, time_t currentTime,
 
 	CHKZERO(ionvdb);
 	CHKZERO(cgrvdb);
+printf("loadRouteList node: %lu\n", getNodeNum());
 
 	/*	First create route list for this destination node.	*/
 
@@ -1343,6 +1345,7 @@ static int	tryRoute(CgrRoute *route, time_t currentTime, Bundle *bundle,
 	time_t		eto;
 	ProximateNode	*proxNode;
 
+printf("tryRoute node: %lu\n", getOwnNodeNbr());
 	if (getDirective(route->toNodeNbr, plans, bundle, &directive) == 0)
 	{
 		TRACE(CgrIgnoreRoute, CgrNoApplicableDirective);
@@ -1522,6 +1525,7 @@ static int	identifyProximateNodes(IonNode *terminusNode, Bundle *bundle,
 	uvast		contactToNodeNbr;
 	time_t		contactFromTime;
 	int		payloadClass;
+	IonCXref	*contact;
 
 	deadline = bundle->expirationTime + EPOCH_2000_SEC;
 
@@ -1592,6 +1596,15 @@ static int	identifyProximateNodes(IonNode *terminusNode, Bundle *bundle,
 
 				nextElt = sm_list_first(ionwm, routes);
 			}
+
+			continue;
+		}
+
+		addr = sm_list_data(ionwm, sm_list_first(ionwm, route->hops));
+		contact = (IonCXref *) psp(ionwm, addr);
+		if (contact->confidence < 1.0)
+		{
+			/*	Not a currently active route.		*/
 
 			continue;
 		}
@@ -2133,13 +2146,13 @@ static int 	cgrForward(Bundle *bundle, Object bundleObj,
 	 *	regardless of whether that node is the bundle's
 	 *	final destination or an intermediate forwarding
 	 *	station.			 			*/
-
+printf("CgrForward init, Node: %lu\n", getNodeNum());
 	CHKERR(bundle && bundleObj && terminusNodeNbr && plans && getDirective);
 
 	TRACE(CgrBuildRoutes, terminusNodeNbr, bundle->payload.length,
 			(unsigned int)(atTime));
 
-	if (ionvdb->lastEditTime > cgrvdb->lastLoadTime) 
+	if (ionvdb->lastEditTime > cgrvdb->lastLoadTime)
 	{
 		/*	Contact plan has been modified, so must discard
 		 *	all route lists and reconstruct them as needed.	*/
@@ -2596,10 +2609,10 @@ void	cgr_stop()
 	{
 		vdb = (CgrVdb *) psp(wm, vdbAddress);
 		sm_list_destroy(wm, vdb->routeLists, NULL, NULL);
-		psm_free(wm, vdbAddress);
 		if (psm_uncatlg(wm, name) < 0)
 		{
 			putErrmsg("Failed Uncataloging vdb.",NULL);
 		}
+		//psm_free(wm, vdbAddress);
 	}
 }

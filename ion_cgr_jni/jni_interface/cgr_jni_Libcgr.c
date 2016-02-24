@@ -38,12 +38,11 @@ JNIEXPORT jint JNICALL Java_cgr_1jni_Libcgr_initializeNode
 JNIEXPORT jint JNICALL Java_cgr_1jni_Libcgr_finalizeNode
 	(JNIEnv *env, jclass thisObj, jint nodeNum)
 {
-
 	if (javaVM == NULL)
 		(*env)->GetJavaVM(env, &javaVM);
 	setThreadLocalEnv(env);
 	setNodeNum(nodeNum);
-	//cgr_stop();
+	cgr_stop();
 	ionTerminate();
 	destroy_node();
 	return 0;
@@ -108,4 +107,12 @@ JNIEXPORT jint JNICALL Java_cgr_1jni_Libcgr_genericTest
 	setNodeNum(unodeNum);
 	result = testMessage(message);
 	return result;
+}
+
+JNIEXPORT jint JNICALL Java_cgr_1jni_Libcgr_finalizeGlobalMem
+  (JNIEnv *env, jclass thisObj)
+{
+	setThreadLocalEnv(env);
+	finalize_global();
+	return 0;
 }

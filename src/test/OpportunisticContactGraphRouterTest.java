@@ -43,6 +43,9 @@ public class OpportunisticContactGraphRouterTest extends ContactGraphRouterTest 
 				NetworkInterface.TRANSMIT_RANGE_S, "1");
 		ts.putSetting(TestUtilsForCGR.IFACE2_NS + "." + 
 				NetworkInterface.TRANSMIT_SPEED_S, ""+TRANSMIT_SPEED/1000);
+		// ContactGraphRouter debug active
+		ts.putSetting(ContactGraphRouter.CGR_NS + 
+				"." + ContactGraphRouter.DEBUG_S, "true");
 		OpportunisticContactGraphRouter routerProto = new OpportunisticContactGraphRouter(ts);
 		setRouterProto(routerProto);
 		this.mc = new MessageChecker();
@@ -81,17 +84,6 @@ public class OpportunisticContactGraphRouterTest extends ContactGraphRouterTest 
 		super.r4 = r4;
 		super.r5 = r5;
 		super.r6 = r6;
-	}
-	
-	@Override
-	public void tearDown() throws Exception 
-	{
-		for (DTNHost h : Utils.getAllNodes())
-		{
-			OpportunisticContactGraphRouter r = 
-					(OpportunisticContactGraphRouter) h.getRouter();
-			r.finalize();
-		}
 	}
 
 	/**
@@ -520,7 +512,7 @@ public class OpportunisticContactGraphRouterTest extends ContactGraphRouterTest 
 		r2.processLine("l contact");
 		System.out.println();
 		System.out.println("" + SimClock.getTime() + ": Node 1 and Node2 disconnected");
-		disconnect(h1);
+		h1.forceConnection(h2, null, false);
 		r1.processLine("l range");
 		r1.processLine("l contact");
 		r2.processLine("l range");
@@ -529,13 +521,25 @@ public class OpportunisticContactGraphRouterTest extends ContactGraphRouterTest 
 		assertEquals(true, r2.isDeliveredMessage(m3));
 		h1.createNewMessage(m5);
 		h2.createNewMessage(m6);
+		/*
+		 * with last libcgr.c review, messages are not enqueued to any outduct
+		 * unless the first route contact has confidence 1.0. 
+		 * So messages remain in limbo if no discovered contacts are active.
+		 *
 		assertEquals(true, r1.isMessageIntoOutduct(h2, m5));
 		assertEquals(true, r2.isMessageIntoOutduct(h1, m6));
+		*/
 		assertEquals(true, r1.isMessageIntoLimbo(m5));
 		assertEquals(true, r2.isMessageIntoLimbo(m6));
 		testWait(30, 0.1);
+		/*
+		 * with last libcgr.c review, messages are not enqueued to any outduct
+		 * unless the first route contact has confidence 1.0. 
+		 * So messages remain in limbo if no discovered contacts are active.
+		 *
 		assertEquals(1, r1.getOutductSize(h2));
 		assertEquals(1, r2.getOutductSize(h1));
+		*/
 		System.out.println();
 		System.out.println("" + SimClock.getTime() + ": Node 1 and Node2 connected");
 		h1.forceConnection(h2, null, true);
@@ -556,8 +560,68 @@ public class OpportunisticContactGraphRouterTest extends ContactGraphRouterTest 
 		assertEquals(true, r2.isDeliveredMessage(m5));
 		h1.createNewMessage(m7);
 		h2.createNewMessage(m8);
+		/*
+		 * with last libcgr.c review, messages are not enqueued to any outduct
+		 * unless the first route contact has confidence 1.0. 
+		 * So messages remain in limbo if no discovered contacts are active.
+		 *
 		assertEquals(true, r1.isMessageIntoOutduct(h2, m7));
 		assertEquals(true, r2.isMessageIntoOutduct(h1, m8));
+		*/
+		assertEquals(true, r1.isMessageIntoLimbo(m7));
+		assertEquals(true, r2.isMessageIntoLimbo(m8));
+		
+		
+	}
+	
+	public void testOppRouting3()
+	{
+		DTNHost h, hp;
+		ContactGraphRouter r, rp;
+		Message m0 = createNewMessage(h1,  h5, 1000);
+		assertEquals(true, r1.isMessageIntoLimbo(m0));
+		for (int j = 0; j < 3; j++)
+		{
+			for (int i = 1; i <= 5; i++)
+			{
+				h = getNodeFromNbr(i);
+				hp = getNodeFromNbr(i != 5 ? i + 1: 1);
+				r = (ContactGraphRouter)h.getRouter();
+				rp = (ContactGraphRouter)hp.getRouter();
+				h.forceConnection(hp, null, true);
+				r.processLine("l contact");
+				rp.processLine("l contact");
+				testWait(30, 0.1);
+				h.forceConnection(hp, null, false);
+				r.processLine("l contact");
+				rp.processLine("l contact");
+				testWait(30, 0.1);
+			}
+		}
+		assertEquals(true, r5.isDeliveredMessage(m0));
+		Message m1 = createNewMessage(h1,  h2,  100);
+		testWait(1, 0.1);
+		h1.forceConnection(h2, null, true);
+		r1.processLine("l contact");
+		assertEquals(true, r1.isMessageIntoLimbo(m1));
+		/*
+		 * with last libcgr.c review, messages are not enqueued to any outduct
+		 * unless the first route contact has confidence 1.0. 
+		 * So messages remain in limbo if no discovered contacts are active.
+		 *
+		assertEquals(true, r1.isMessageIntoOutduct(h2, m1));
+		*/
+		testWait(10, 0.1);
+		h1.forceConnection(h2, null, false);
+		r1.processLine("l contact");
+		assertEquals(true, r2.isDeliveredMessage(m1));
+		Message m2 = createNewMessage(h1,  h5,  100);
+		testWait(1, 0.1);
+		assertEquals(true, r1.isMessageIntoLimbo(m2));
+		h1.forceConnection(h2, null, true);
+		r1.update();
+		assertEquals(true, r1.isMessageIntoOutduct(h2, m2));
+		
 		
 	}
 	

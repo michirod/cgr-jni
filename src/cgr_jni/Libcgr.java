@@ -14,5 +14,6 @@ public class Libcgr {
 	public static native int processLine(int nodeNum, String contactLine);
 	public static native int cgrForward(int nodeNum, Message bundle, long terminusNodeNbr);
 	public static native int genericTest(int nodeNum, Message message);
+	public static native int finalizeGlobalMem();
 
 }

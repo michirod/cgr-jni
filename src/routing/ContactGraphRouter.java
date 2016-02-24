@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.TreeMap;
@@ -14,6 +15,7 @@ import cgr_jni.Libcgr;
 import cgr_jni.Utils;
 import core.Connection;
 import core.DTNHost;
+import core.DTNSim;
 import core.Message;
 import core.MessageListener;
 import core.Settings;
@@ -63,51 +65,69 @@ public class ContactGraphRouter extends ActiveRouter {
 			return false;
 		}
 		
+		public Message getMessage(String id)
+		{
+			for(Message m : queue){
+				if(m.getId().equals(id))
+					return m;
+			}
+			return null;
+		}
+		
 		/**
 		 * Enqueues a message in this outduct
 		 * @param message the message to be enqueued
 		 * @param removeFromLimbo if true it tries to remove this 
 		 * message from limbo
 		 */
-		protected void insertMessageIntoOutduct(Message message, 
+		protected int insertMessageIntoOutduct(Message message, 
 				boolean removeFromLimbo)
 		{
-			this.queue.add(message);
 			boolean thisIsLimbo = host == null;
 			if (thisIsLimbo)
 			{
 				message.updateProperty(OUTDUCT_REF_PROP, LIMBO_ID);
-				return;
+				if (!queue.contains(message))
+					queue.add(message);
+				else return -1;
+				return 0;
 			}
-			else if (removeFromLimbo && isMessageIntoLimbo(message))
+			this.queue.add(message);
+			if (removeFromLimbo && isMessageIntoLimbo(message))
 			{
 				removeMessageFromLimbo(message);
 			}
 			message.updateProperty(OUTDUCT_REF_PROP, host.getAddress());
 			totalEnqueuedBytes += message.getSize();
-			
+			return 0;
 		}
 
 		protected void removeMessageFromOutduct(Message m){
-			Iterator<Message> iter = queue.iterator();
-			Message m1;
-			while (iter.hasNext())
-			{
-				m1 = iter.next();
-				if (m1.getId().equals(m.getId()))
-				{	
-					iter.remove();
-					m.updateProperty(OUTDUCT_REF_PROP, NONE_ID);
-					totalEnqueuedBytes -= m.getSize();
-					return;
+			try {
+				Iterator<Message> iter = queue.iterator();
+				Message m1;
+				while (iter.hasNext())
+				{
+					m1 = iter.next();
+					if (m1.getId().equals(m.getId()))
+					{	
+						iter.remove();
+						m.updateProperty(OUTDUCT_REF_PROP, NONE_ID);
+						totalEnqueuedBytes -= m.getSize();
+						return;
+					}
 				}
+			} catch(Exception e)
+			{
+				e.printStackTrace();
+				return;
 			}
 		}
-		
+
 		public int getEnqueuedMessageNum(){
 			return queue.size();
 		}
-		
+
 		@Override
 		public int compareTo(Outduct o) {
 			return address - o.address;
@@ -164,6 +184,10 @@ public class ContactGraphRouter extends ActiveRouter {
 			 * enqueue it into an outduct if a route has been found.
 			 */
 			outduct.removeMessageFromOutduct(message);
+			if (isMessageIntoLimbo(message))
+			{
+				Message temp = limbo.getMessage(message.getId());				
+			}
 			putMessageIntoLimbo(message, false);
 			return cgrForward(message, message.getTo());
 			
@@ -184,6 +208,27 @@ public class ContactGraphRouter extends ActiveRouter {
 	public static final String XMIT_COPIES_COUNT_PROP = "XmitCopiesCount";
 	public static final String DLV_CONFIDENCE_PROP = "DlvConfidence";
 	public static final String ROUTE_EXP_EV_PROP = "RouteExpirationEvent";
+	
+	/**
+	 * static reference to initialized nodes that need to be reset after 
+	 * every batch run of the simulator.
+	 */
+	private static ArrayList<ContactGraphRouter> initializedNodes = 
+			new ArrayList<>();
+	static {
+		DTNSim.registerForReset(ContactGraphRouter
+				.class.getCanonicalName());
+		}
+	public static void reset()
+	{
+		System.out.println("RESET");
+		for (ContactGraphRouter r : initializedNodes)
+		{
+			r.finalizeCGR();
+		}
+		initializedNodes.clear();
+		Libcgr.finalizeGlobalMem();
+	}
 	
 	/** counter incremented every time a message is delivered to the local node,
 	 *  i.e. the message has reached its final destination. */
@@ -244,12 +289,6 @@ public class ContactGraphRouter extends ActiveRouter {
 			return;
 		else
 			readContactPlan(contactPlanPath);		
-	}
-	
-	@Override
-	public void finalize()
-	{
-		finalizeCGR();
 	}
 	
 	/**
@@ -356,8 +395,7 @@ public class ContactGraphRouter extends ActiveRouter {
 	
 	/**
 	 * Puts a message into the limbo. 
-	 * If the message is currently into an outduct, the message will be removed
-	 * from it. The outduct reference property {@link ContactGraphRouter#OUTDUCT_REF_PROP}
+	 * The outduct reference property {@link ContactGraphRouter#OUTDUCT_REF_PROP}
 	 * is updated. 
 	 * @param message to put into the limbo
 	 * @param removeFromOutduct if set to true, tries to remove them message from the
@@ -530,6 +568,17 @@ public class ContactGraphRouter extends ActiveRouter {
 				return;
 			}
 		}
+		if (contactPlanChanged)
+		{
+			/* contact plan has changed but messages in limbo have not been
+			 * reforwarded yet. I need to try routes for messages in limbo 
+			 * before invoke cgrForward for the new bundle.
+			 * By doing this I can avoid a double CGR computation if the 
+			 * new bundle remains in limbo
+			 */
+			tryRouteForMessageIntoLimbo();
+			contactPlanChanged = false;
+		}
 		putMessageIntoLimbo(m, false);
 		super.addToMessages(m, newMessage);
 		cgrForward(m, m.getTo());
@@ -539,8 +588,8 @@ public class ContactGraphRouter extends ActiveRouter {
 	public boolean createNewMessage(Message m) {
 		m.addProperty(ROUTE_FORWARD_TIMELIMIT_PROP, (long)0);
 		m.addProperty(OUTDUCT_REF_PROP, Outduct.NONE_ID);
-		m.addProperty(XMIT_COPIES_PROP, new int[0]);
-		m.addProperty(XMIT_COPIES_COUNT_PROP, 0);
+		m.addProperty(XMIT_COPIES_PROP, new HashSet<Integer>());
+		//m.addProperty(XMIT_COPIES_COUNT_PROP, 0);
 		m.addProperty(DLV_CONFIDENCE_PROP, 0.0);
 		m.addProperty(ROUTE_EXP_EV_PROP, null);
 		return super.createNewMessage(m);
@@ -619,8 +668,8 @@ public class ContactGraphRouter extends ActiveRouter {
 	public Message messageTransferred(String id, DTNHost from)
 	{
 		Message transferred = super.messageTransferred(id, from);
-		transferred.updateProperty(XMIT_COPIES_PROP, new int[0]);
-		transferred.updateProperty(XMIT_COPIES_COUNT_PROP, 0);
+		transferred.updateProperty(XMIT_COPIES_PROP, new HashSet<Integer>());
+		//transferred.updateProperty(XMIT_COPIES_COUNT_PROP, 0);
 		transferred.updateProperty(DLV_CONFIDENCE_PROP, 0.0);
 		if (transferred.getTo().equals(getHost()))
 		{
@@ -790,13 +839,15 @@ public class ContactGraphRouter extends ActiveRouter {
 	
 	protected void initCGR()
 	{
-		if (getHost().getAddress() == 0)
+		int localAddress = getHost().getAddress();
+		if (localAddress == 0)
 		{
 			System.out.println("ERROR: ContactGraphRouter cannot be inizialized if "
 					+ "local node number is 0");
 			System.exit(1);
 		}
-		Libcgr.initializeNode(getHost().getAddress());
+		Libcgr.initializeNode(localAddress);
+		initializedNodes.add(this);
 	}
 
 	/**
@@ -806,6 +857,8 @@ public class ContactGraphRouter extends ActiveRouter {
 	 */
 	public void finalizeCGR()
 	{
+		if (debug)
+			System.out.println("Finalizing node " + getHost().getAddress());
 		Libcgr.finalizeNode(getHost().getAddress());
 	}
 	
@@ -820,11 +873,13 @@ public class ContactGraphRouter extends ActiveRouter {
 		System.out.println("Node " + getHost().getAddress() 
 				+ ": process line '" + line +"'");
 		Libcgr.processLine(this.getHost().getAddress(), line);
-		contactPlanChanged();
+		if (!line.startsWith("l "))
+			contactPlanChanged();
 	}
 	
 	public int cgrForward(Message m, DTNHost terminusNode)
 	{
+		System.out.println("Node " + getHost().getAddress() + ": cgrForward");
 		//return -1;
 		return Libcgr.cgrForward(this.getHost().getAddress(), m, terminusNode.getAddress());
 	}

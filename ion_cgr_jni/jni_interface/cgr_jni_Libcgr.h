@@ -55,6 +55,14 @@ JNIEXPORT jint JNICALL Java_cgr_1jni_Libcgr_cgrForward
 JNIEXPORT jint JNICALL Java_cgr_1jni_Libcgr_genericTest
   (JNIEnv *, jclass, jint, jobject);
 
+/*
+ * Class:     cgr_jni_Libcgr
+ * Method:    finalizeGlobalMem
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_cgr_1jni_Libcgr_finalizeGlobalMem
+  (JNIEnv *, jclass);
+
 #ifdef __cplusplus
 }
 #endif
