@@ -1606,9 +1606,6 @@ static int	processSequence(LystElt start, LystElt end, time_t currentTime)
 	float		netDoubt;
 	float		netConfidence;
 	int		i;
-	time_t		now;
-	time_t		gapEnd;
-	time_t		contactEnd;
 	unsigned int	xmitRate;
 	PsmAddress	cxaddr;
 char	buf[255];
@@ -1743,52 +1740,17 @@ printf("Base confidence %f.\n", baseConfidence);
 printf("Net confidence %f.\n", netConfidence);
 #endif
 
-	/*	Insert predicted contacts.				*/
+	/*	Insert predicted contact (aggregate).			*/
 
-	contact = (PbContact *) lyst_data(end);
-	now = contact->toTime;
-	int count = 0;
-	while (now <= horizon && count < 3)
+	xmitRate = totalCapacity / (horizon - currentTime);
+	if (xmitRate > 1)
 	{
-#ifdef DEBUG_PRINTS
-writeTimestampLocal(now, buf);
-printf("Now: %s\n", buf);
-#endif
-		if (gapStdDev < meanGapDuration)
+		if (rfx_insert_contact(currentTime, horizon, fromNode, toNode,
+				xmitRate, netConfidence, &cxaddr) < 0)
 		{
-			/*	Gap duration may be underestimated.	*/
-
-			gapEnd = now + (meanGapDuration - gapStdDev);
+			putErrmsg("Can't insert contact.", NULL);
+			return -1;
 		}
-		else
-		{
-			gapEnd = now;
-		}
-#ifdef DEBUG_PRINTS
-writeTimestampLocal(gapEnd, buf);
-printf("Gap end: %s\n", buf);
-#endif
-
-		/*	Contact duration may be overestimated.		*/
-
-		contactEnd = gapEnd + meanContactDuration + contactStdDev;
-#ifdef DEBUG_PRINTS
-writeTimestampLocal(contactEnd, buf);
-printf("Contact end: %s\n", buf);
-#endif
-		xmitRate = meanCapacity / (contactEnd - gapEnd);
-		if (contactEnd > currentTime && xmitRate > 1)
-		{
-			if (rfx_insert_contact(gapEnd, contactEnd, fromNode,
-				toNode, xmitRate, netConfidence, &cxaddr) < 0)
-			{
-				putErrmsg("Can't insert contact.", NULL);
-				return -1;
-			}
-			count++;
-		}
-
-		now = contactEnd;
 	}
 
 	return 0;

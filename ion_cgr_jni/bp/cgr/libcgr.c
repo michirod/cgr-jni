@@ -583,7 +583,7 @@ static int	findNextBestRoute(PsmPartition ionwm, IonCXref *rootContact,
 	PsmAddress	addr;
 	CgrRoute	*route;
 
-printf("Node %lu: findNextBestRoute to: %lu\n", getOwnNodeNbr(), terminusNode->nodeNbr);
+//printf("Node %lu: findNextBestRoute to: %lu\n", getOwnNodeNbr(), terminusNode->nodeNbr);
 	*routeAddr = 0;		/*	Default.			*/
 	addr = psm_zalloc(ionwm, sizeof(CgrRoute));
 	if (addr == 0)
@@ -697,7 +697,7 @@ static PsmAddress	loadRouteList(IonNode *terminusNode, time_t currentTime,
 
 	CHKZERO(ionvdb);
 	CHKZERO(cgrvdb);
-printf("Node %lu: loadRouteList to: %lu\n", getOwnNodeNbr(), terminusNode->nodeNbr);
+//printf("Node %lu: loadRouteList to: %lu\n", getOwnNodeNbr(), terminusNode->nodeNbr);
 
 	/*	First create route list for this destination node.	*/
 
@@ -1345,7 +1345,7 @@ static int	tryRoute(CgrRoute *route, time_t currentTime, Bundle *bundle,
 	time_t		eto;
 	ProximateNode	*proxNode;
 
-printf("Node %lu: tryRoute to: %lu\n", getOwnNodeNbr(), route->toNodeNbr);
+//printf("Node %lu: tryRoute to: %lu\n", getOwnNodeNbr(), route->toNodeNbr);
 
 	if (getDirective(route->toNodeNbr, plans, bundle, &directive) == 0)
 	{
@@ -2147,7 +2147,7 @@ static int 	cgrForward(Bundle *bundle, Object bundleObj,
 	 *	regardless of whether that node is the bundle's
 	 *	final destination or an intermediate forwarding
 	 *	station.			 			*/
-printf("Node %lu: cgrForward to: %lu\n", getOwnNodeNbr(), terminusNodeNbr);
+//printf("Node %lu: cgrForward to: %lu\n", getOwnNodeNbr(), terminusNodeNbr);
 
 	CHKERR(bundle && bundleObj && terminusNodeNbr && plans && getDirective);
 
