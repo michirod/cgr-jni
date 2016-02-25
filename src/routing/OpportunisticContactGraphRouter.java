@@ -303,18 +303,23 @@ public class OpportunisticContactGraphRouter extends ContactGraphRouter {
 		if (!preventCGRForward)
 		{
 			result = super.cgrForward(m, terminusNode);
+			if (true)
+			{
+				if (result == 0)
+					System.out.println("Node " + getHost().getAddress() + 
+							": no routes found to " + terminusNode.getAddress());
+				else if (result > 0)
+					System.out.println("Node " + getHost().getAddress() + 
+							": route found to " + terminusNode.getAddress() + 
+							" through " + result);
+				else
+					System.out.println("Node " + getHost().getAddress() + 
+							": ERROR finding routes to " + terminusNode.getAddress());
+			}
 		}
 		else result = 0;
 		if (result == 0 && epidemicDropBack)
 		{
-			/* EPIDEMIC DROP BACK */
-			/*
-			for (Connection c : getConnections())
-			{
-				Message cloned = m.replicate();
-				DTNHost peer = c.getOtherNode(getHost());
-				getOutducts().get(peer).insertMessageIntoOutduct(cloned, false);
-			}*/
 			m.updateProperty(EPIDEMIC_FLAG_PROP, true);
 		}
 		else

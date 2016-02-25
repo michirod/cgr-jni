@@ -205,6 +205,7 @@ static void setMessageXmitCopies(jobject message, int copies[], int len)
 	(*jniEnv)->SetIntArrayRegion(jniEnv, array, 0, len, copies);
 	(*jniEnv)->CallStaticVoidMethod(jniEnv, interfaceClass,
 			method, message, array);
+	array = 0;
 }
 
 static void setMessageDlvConfidence(jobject message, float dlvConf)
@@ -496,7 +497,7 @@ int cgrForwardONE(jobject bundleONE, jlong terminusNodeNbr)
 	Object bundleObj;
 	// this value will never be read but it is needed to
 	// pass the null check in cgr_forward()
-	Object plans = (Object) 42; 	int result;
+	Object plans = (Object) 42; 	int result = -1;
 	CgrTrace * trace = NULL;
 #if CGR_DEBUG == 1
 	CgrTrace traceBuf;

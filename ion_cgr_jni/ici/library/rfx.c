@@ -1747,7 +1747,8 @@ printf("Net confidence %f.\n", netConfidence);
 
 	contact = (PbContact *) lyst_data(end);
 	now = contact->toTime;
-	while (now <= horizon)
+	int count = 0;
+	while (now <= horizon && count < 3)
 	{
 #ifdef DEBUG_PRINTS
 writeTimestampLocal(now, buf);
@@ -1784,6 +1785,7 @@ printf("Contact end: %s\n", buf);
 				putErrmsg("Can't insert contact.", NULL);
 				return -1;
 			}
+			count++;
 		}
 
 		now = contactEnd;

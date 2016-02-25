@@ -1,10 +1,12 @@
 package routing;
 import java.util.List;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -20,10 +22,11 @@ import core.Message;
 import core.MessageListener;
 import core.Settings;
 import core.SimClock;
+import report.MessageStatsReport;
 import util.Tuple;
 
 public class ContactGraphRouter extends ActiveRouter {
-	
+
 	public class Outduct implements Comparable<Outduct> {
 		public static final int LIMBO_ID = -1;
 		public static final int NONE_ID = -2;
@@ -32,29 +35,29 @@ public class ContactGraphRouter extends ActiveRouter {
 		private LinkedList<Message> queue;
 		private long totalEnqueuedBytes;
 		protected boolean debug = false;
-		
+
 		public Outduct(DTNHost host) {
 			this.host = host;
 			this.address = host != null ? host.getAddress() : -1;
 			this.queue = new LinkedList<Message>();
 			this.totalEnqueuedBytes = 0;
 		}		
-		
+
 		public DTNHost getHost() {
 			return host;
 		}
 		public void setHost(DTNHost host) {
 			this.host = host;
 		}
-		
+
 		public LinkedList<Message> getQueue() {
 			return queue;
 		}
-		
+
 		public long getTotalEnqueuedBytes() {
 			return totalEnqueuedBytes;
 		}
-		
+
 		public boolean containsMessage(Message m)
 		{
 			for(Message m1 : queue){
@@ -64,7 +67,7 @@ public class ContactGraphRouter extends ActiveRouter {
 			}
 			return false;
 		}
-		
+
 		public Message getMessage(String id)
 		{
 			for(Message m : queue){
@@ -73,7 +76,7 @@ public class ContactGraphRouter extends ActiveRouter {
 			}
 			return null;
 		}
-		
+
 		/**
 		 * Enqueues a message in this outduct
 		 * @param message the message to be enqueued
@@ -84,9 +87,11 @@ public class ContactGraphRouter extends ActiveRouter {
 				boolean removeFromLimbo)
 		{
 			boolean thisIsLimbo = host == null;
+			MessageStatus status = getMessageStatus(message);
 			if (thisIsLimbo)
 			{
-				message.updateProperty(OUTDUCT_REF_PROP, LIMBO_ID);
+				//message.updateProperty(OUTDUCT_REF_PROP, LIMBO_ID);
+				status.addOutductReference(this);
 				if (!queue.contains(message))
 					queue.add(message);
 				else return -1;
@@ -97,23 +102,26 @@ public class ContactGraphRouter extends ActiveRouter {
 			{
 				removeMessageFromLimbo(message);
 			}
-			message.updateProperty(OUTDUCT_REF_PROP, host.getAddress());
+			//message.updateProperty(OUTDUCT_REF_PROP, host.getAddress());
+			status.addOutductReference(this);
 			totalEnqueuedBytes += message.getSize();
 			return 0;
 		}
 
-		protected void removeMessageFromOutduct(Message m){
+		protected void removeMessageFromOutduct(Message message){
 			try {
+				MessageStatus status = getMessageStatus(message);
 				Iterator<Message> iter = queue.iterator();
 				Message m1;
 				while (iter.hasNext())
 				{
 					m1 = iter.next();
-					if (m1.getId().equals(m.getId()))
+					if (m1.getId().equals(message.getId()))
 					{	
 						iter.remove();
-						m.updateProperty(OUTDUCT_REF_PROP, NONE_ID);
-						totalEnqueuedBytes -= m.getSize();
+						//message.updateProperty(OUTDUCT_REF_PROP, NONE_ID);
+						status.removeOutductReference(this);
+						totalEnqueuedBytes -= message.getSize();
 						return;
 					}
 				}
@@ -132,7 +140,7 @@ public class ContactGraphRouter extends ActiveRouter {
 		public int compareTo(Outduct o) {
 			return address - o.address;
 		}
-		
+
 		@Override
 		public String toString()
 		{
@@ -153,14 +161,14 @@ public class ContactGraphRouter extends ActiveRouter {
 			return b.toString();
 		}
 	}
-	
+
 	public class RouteExpirationEvent 
-		implements Comparable<RouteExpirationEvent>
+	implements Comparable<RouteExpirationEvent>
 	{
 		private long time;
 		private Outduct outduct;
 		private Message message;
-		
+
 		public RouteExpirationEvent(long time, Outduct outduct, Message message) {
 			this.time = time;
 			this.outduct = outduct;
@@ -174,7 +182,7 @@ public class ContactGraphRouter extends ActiveRouter {
 			if (result == 0)
 				result = message.getUniqueId() - o.message.getUniqueId();
 			return result;
-			
+
 		}
 		public int execute()
 		{
@@ -183,14 +191,19 @@ public class ContactGraphRouter extends ActiveRouter {
 			 * invoke CGR, which possibly remove the message from limbo and
 			 * enqueue it into an outduct if a route has been found.
 			 */
+			destroy();
 			outduct.removeMessageFromOutduct(message);
 			if (isMessageIntoLimbo(message))
 			{
 				Message temp = limbo.getMessage(message.getId());				
 			}
-			putMessageIntoLimbo(message, false);
+			putMessageIntoLimbo(message);
 			return cgrForward(message, message.getTo());
-			
+
+		}
+		public void destroy()
+		{
+			events.remove(this);
 		}
 		public String toString()
 		{
@@ -198,17 +211,120 @@ public class ContactGraphRouter extends ActiveRouter {
 					" Message: " + message;
 		}
 	}
+
+	public class MessageStatus
+	{
+		private Message message;
+		private HashSet<Integer> xmitCopies = new HashSet<>();
+		private double dlvConfidence;
+		private boolean isInLimbo;
+		private boolean epidemicFlag;
+		private long routeTimelimit; // temp
+		private HashMap<Outduct, RouteExpirationEvent> outductsReference = 
+				new HashMap<>();
+
+		/**
+		 * Constructor for creating a new MessageStatus object.
+		 * To use only on new message creation or reception.
+		 * @param m message back reference.
+		 */
+		protected MessageStatus(Message m)
+		{
+			this.message = m;
+			this.dlvConfidence = 0;
+			this.epidemicFlag = false;
+			this.isInLimbo = false;
+			this.routeTimelimit = 0;
+		}
+		
+		public void updateRouteTimelimit(long timelimit){
+			this.routeTimelimit = timelimit;
+		}
+		public long getRouteTimelimit(){
+			return this.routeTimelimit;
+		}
+
+		public HashSet<Integer> getXmitCopies() {
+			return xmitCopies;
+		}
+		public double getDlvConfidence(){
+			return dlvConfidence;
+		}
+		public void setDlvConfidence(double conf) {
+			this.dlvConfidence = conf;
+		}
+		public void addOutductReference(Outduct outduct)
+		{
+			if (outduct.host == null)
+			{
+				// outduct is limbo
+				this.isInLimbo = true;
+			}
+			else
+			{
+				this.outductsReference.put(outduct, null);
+			}
+
+		}
+		public void removeOutductReference(Outduct outduct) 
+		{
+			if (outduct.host == null)
+			{
+				// outduct is limbo
+				this.isInLimbo = false;
+			}
+			else
+			{
+				RouteExpirationEvent exp = outductsReference.get(outduct);
+				if (exp != null)
+					exp.destroy();
+				this.outductsReference.remove(outduct);
+			}
+		}
+		public void addRouteExpirationEvent(RouteExpirationEvent exp)
+		{
+			outductsReference.put(exp.outduct, exp);
+		}
+		public Set<Outduct> getOutducts(){
+			return this.outductsReference.keySet();
+		}
+		/**
+		 * returns the number of outduct this message is currently enqueued in
+		 */
+		public int getEnqueuedNum(){
+			return this.outductsReference.size();
+		}
+
+		public String toString()
+		{
+			StringBuilder b = new StringBuilder();
+			b.append(" isInLimbo=" + isInLimbo);
+			b.append(" xmitCopies=" + xmitCopies.toString());
+			b.append(" outducts=" + outductsReference.keySet().toString());
+			return b.toString();
+		}
+
+	}
+
+	public static MessageStatus getMessageStatus(Message message)
+	{
+		MessageStatus result;
+		result = (MessageStatus) message.getProperty(
+				ContactGraphRouter.MESSAGE_STATUS_PROP);
+		return result;
+	}
 	
 	public static final String CGR_NS = "ContactGraphRouter";
 	public static final String CONTACT_PLAN_PATH_S = "ContactPlanPath";
 	public static final String DEBUG_S = "debug";
-	public static final String ROUTE_FORWARD_TIMELIMIT_PROP = "ForwardTimelimit";
-	public static final String OUTDUCT_REF_PROP = "OutducReference";
-	public static final String XMIT_COPIES_PROP = "XmitCopies";
-	public static final String XMIT_COPIES_COUNT_PROP = "XmitCopiesCount";
-	public static final String DLV_CONFIDENCE_PROP = "DlvConfidence";
-	public static final String ROUTE_EXP_EV_PROP = "RouteExpirationEvent";
-	
+	//public static final String ROUTE_FORWARD_TIMELIMIT_PROP = "ForwardTimelimit";
+	//public static final String OUTDUCT_REF_PROP = "OutductReference";
+	//public static final String XMIT_COPIES_PROP = "XmitCopies";
+	//public static final String XMIT_COPIES_COUNT_PROP = "XmitCopiesCount";
+	//public static final String DLV_CONFIDENCE_PROP = "DlvConfidence";
+	//public static final String ROUTE_EXP_EV_PROP = "RouteExpirationEvent";
+	public static final String MESSAGE_STATUS_PROP = "MessageStatus";
+
 	/**
 	 * static reference to initialized nodes that need to be reset after 
 	 * every batch run of the simulator.
@@ -333,15 +449,18 @@ public class ContactGraphRouter extends ActiveRouter {
 	public int putMessageIntoOutduct(DTNHost neighbor, Message message, 
 			boolean removeFromLimbo)
 	{
+		MessageStatus status = getMessageStatus(message);
 		int toAdd = neighbor.getAddress();
 		if (outducts[toAdd] != null)
 		{
 			outducts[toAdd].
 				insertMessageIntoOutduct(message, removeFromLimbo);
 			RouteExpirationEvent exp = new RouteExpirationEvent(
-					(long) message.getProperty(ROUTE_FORWARD_TIMELIMIT_PROP), 
+					//(long) message.getProperty(ROUTE_FORWARD_TIMELIMIT_PROP),
+					status.getRouteTimelimit(),
 					outducts[toAdd], message);
-			message.updateProperty(ROUTE_EXP_EV_PROP, exp);
+			//message.updateProperty(ROUTE_EXP_EV_PROP, exp);
+			status.addRouteExpirationEvent(exp);
 			events.add(exp);
 			return 0;
 		}
@@ -355,8 +474,8 @@ public class ContactGraphRouter extends ActiveRouter {
 		if (o != null && o.containsMessage(m))
 		{
 			o.removeMessageFromOutduct(m);
-			events.remove(m.getProperty(ROUTE_EXP_EV_PROP));
-			m.updateProperty(ROUTE_EXP_EV_PROP, null);
+			//events.remove(m.getProperty(ROUTE_EXP_EV_PROP));
+			//m.updateProperty(ROUTE_EXP_EV_PROP, null);
 		}
 	}
 	
@@ -387,6 +506,8 @@ public class ContactGraphRouter extends ActiveRouter {
 	protected void contactPlanChanged()
 	{
 		contactPlanChanged = true;
+		if (debug)
+			processLine("l contact");
 	}
 	protected boolean isContactPlanChanged()
 	{
@@ -398,18 +519,16 @@ public class ContactGraphRouter extends ActiveRouter {
 	 * The outduct reference property {@link ContactGraphRouter#OUTDUCT_REF_PROP}
 	 * is updated. 
 	 * @param message to put into the limbo
-	 * @param removeFromOutduct if set to true, tries to remove them message from the
-	 * outduct it was enqueued into.
 	 */
-	public void putMessageIntoLimbo(Message message, boolean removeFromOutduct)
+	public void putMessageIntoLimbo(Message message)
 	{
-		int outductNum = (int) message.getProperty(OUTDUCT_REF_PROP);
-		if (removeFromOutduct && outductNum >= 0)
+		//int outductNum = (int) message.getProperty(OUTDUCT_REF_PROP);
+		//if (removeFromOutduct && outductNum >= 0)
 			//getOutducts().get(Utils.getHostFromNumber(outductNum)).
-			removeMessageFromOutduct(
-					Utils.getHostFromNumber(outductNum), message);
+			//removeMessageFromOutduct(
+				//	Utils.getHostFromNumber(outductNum), message);
 		limbo.insertMessageIntoOutduct(message, false);
-		message.updateProperty(OUTDUCT_REF_PROP, Outduct.LIMBO_ID);
+		//message.updateProperty(OUTDUCT_REF_PROP, Outduct.LIMBO_ID);
 	}
 	/**
 	 * Remove a message from the limbo. The message won't be in any outduct and the
@@ -420,7 +539,7 @@ public class ContactGraphRouter extends ActiveRouter {
 	public void removeMessageFromLimbo(Message message)
 	{
 		limbo.removeMessageFromOutduct(message);
-		message.updateProperty(OUTDUCT_REF_PROP, Outduct.NONE_ID);
+		//message.updateProperty(OUTDUCT_REF_PROP, Outduct.NONE_ID);
 	}
 	/**
 	 * Checks if a message is into the limbo.
@@ -429,7 +548,9 @@ public class ContactGraphRouter extends ActiveRouter {
 	 */
 	public boolean isMessageIntoLimbo(Message message)
 	{
-		return limbo.containsMessage(message);
+		MessageStatus status = getMessageStatus(message);
+		return status.isInLimbo;
+		//return limbo.containsMessage(message);
 	}
 	
 	/**
@@ -579,69 +700,44 @@ public class ContactGraphRouter extends ActiveRouter {
 			tryRouteForMessageIntoLimbo();
 			contactPlanChanged = false;
 		}
-		putMessageIntoLimbo(m, false);
+		putMessageIntoLimbo(m);
 		super.addToMessages(m, newMessage);
 		cgrForward(m, m.getTo());
 	}
 
 	@Override 
 	public boolean createNewMessage(Message m) {
-		m.addProperty(ROUTE_FORWARD_TIMELIMIT_PROP, (long)0);
-		m.addProperty(OUTDUCT_REF_PROP, Outduct.NONE_ID);
-		m.addProperty(XMIT_COPIES_PROP, new HashSet<Integer>());
+		//m.addProperty(ROUTE_FORWARD_TIMELIMIT_PROP, (long)0);
+		//m.addProperty(OUTDUCT_REF_PROP, Outduct.NONE_ID);
+		//m.addProperty(XMIT_COPIES_PROP, new HashSet<Integer>());
 		//m.addProperty(XMIT_COPIES_COUNT_PROP, 0);
-		m.addProperty(DLV_CONFIDENCE_PROP, 0.0);
-		m.addProperty(ROUTE_EXP_EV_PROP, null);
+		//m.addProperty(DLV_CONFIDENCE_PROP, 0.0);
+		//m.addProperty(ROUTE_EXP_EV_PROP, null);
+		m.addProperty(MESSAGE_STATUS_PROP, new MessageStatus(m));
 		return super.createNewMessage(m);
 	}
 	
 	protected Message removeFromOutducts(Message m)
 	{
-		int outductNum;
-		Outduct o;
-		if (m != null)
+		MessageStatus status = getMessageStatus(m);
+		Outduct[] outducts = new Outduct[status.getEnqueuedNum()];
+		outducts = status.getOutducts().toArray(outducts);
+		for (Outduct o : outducts)
 		{
-			outductNum = (int) m.getProperty(OUTDUCT_REF_PROP);
-			if (outductNum == Outduct.LIMBO_ID) // this message is into limbo
-				o = limbo;
-			else if (outductNum == Outduct.NONE_ID) // this message isn't in any outduct
-				o = null;
-			else
-				//o = getOutducts().get(Utils.getHostFromNumber(outductNum));
-				o = getOutducts()[outductNum];
-			if (o != null)
-				//o.removeMessageFromOutduct(m);
-				removeMessageFromOutduct(o.host, m);
-			else return null;
+			o.removeMessageFromOutduct(m);
+		}
+		if (status.isInLimbo)
+		{
+			limbo.removeMessageFromOutduct(m);
+			status.isInLimbo = false;
 		}
 		return m;
 	}
 
 	protected void removeFromOutducts(String id) {
 		//for(Outduct o : getOutducts().values())
-		for (Outduct o: getOutducts())
-		{
-			if (o.host == null)
-				continue; // limbo: skip
-			for (Message m : o.queue)
-			{
-				if (m.getId().equals(id))
-				{
-					//o.removeMessageFromOutduct(m);
-					removeMessageFromOutduct(o.host, m);
-					break;
-				}
-			}
-		}
-		for(Message m : limbo.queue)
-		{
-			if (m.getId().equals(id))
-			{
-				removeMessageFromLimbo(m);
-				break;
-			}
-		}
-		
+		Message m = getMessage(id);
+		removeFromOutducts(m);
 	}
 
 	
@@ -668,9 +764,11 @@ public class ContactGraphRouter extends ActiveRouter {
 	public Message messageTransferred(String id, DTNHost from)
 	{
 		Message transferred = super.messageTransferred(id, from);
-		transferred.updateProperty(XMIT_COPIES_PROP, new HashSet<Integer>());
+		//transferred.updateProperty(XMIT_COPIES_PROP, new HashSet<Integer>());
 		//transferred.updateProperty(XMIT_COPIES_COUNT_PROP, 0);
-		transferred.updateProperty(DLV_CONFIDENCE_PROP, 0.0);
+		//transferred.updateProperty(DLV_CONFIDENCE_PROP, 0.0);
+		transferred.updateProperty(MESSAGE_STATUS_PROP, 
+				new MessageStatus(transferred));
 		if (transferred.getTo().equals(getHost()))
 		{
 			deliveredCount++;
@@ -879,7 +977,7 @@ public class ContactGraphRouter extends ActiveRouter {
 	
 	public int cgrForward(Message m, DTNHost terminusNode)
 	{
-		System.out.println("Node " + getHost().getAddress() + ": cgrForward");
+		//System.out.println("Node " + getHost().getAddress() + ": cgrForward");
 		//return -1;
 		return Libcgr.cgrForward(this.getHost().getAddress(), m, terminusNode.getAddress());
 	}

@@ -65,6 +65,7 @@ int	psm_locate(PsmPartition partition , char *objName,
 	}
 	*objLocation = (PsmAddress) result;
 	*entryElt = (PsmAddress) result;
+	name = 0;
 	return 0;
 }
 
@@ -85,6 +86,7 @@ int	Psm_catlg(const char * s, int n,
 	jstring name = (*jniEnv)->NewStringUTF(jniEnv, objName);
 	jint result = (*jniEnv)->CallIntMethod(jniEnv, partition,
 			method, name, (jlong) objLocation);
+	name = 0;
 	return result;
 }
 
@@ -105,6 +107,7 @@ int	Psm_uncatlg(const char * s, int n,
 	jstring name = (*jniEnv)->NewStringUTF(jniEnv, objName);
 	jint result = (*jniEnv)->CallIntMethod(jniEnv,
 			partition, method, name);
+	name = 0;
 	return result;
 }
 

@@ -2,6 +2,7 @@ package cgr_jni;
 
 import routing.ContactGraphRouter;
 import routing.OpportunisticContactGraphRouter;
+import routing.ContactGraphRouter.MessageStatus;
 import routing.ContactGraphRouter.Outduct;
 
 import java.util.ArrayList;
@@ -41,7 +42,9 @@ public class IONInterface {
 	}
 	static void updateMessageForfeitTime(Message message, long forfeitTime)
 	{
-		message.updateProperty(ContactGraphRouter.ROUTE_FORWARD_TIMELIMIT_PROP, forfeitTime);
+		//message.updateProperty(ContactGraphRouter.ROUTE_FORWARD_TIMELIMIT_PROP, forfeitTime);
+		MessageStatus status = (MessageStatus) message.getProperty(ContactGraphRouter.MESSAGE_STATUS_PROP);
+		status.updateRouteTimelimit(forfeitTime);
 	}
 	
 	static boolean isOutductBlocked(Outduct jOutduct)
@@ -84,6 +87,7 @@ public class IONInterface {
 			return 0;
 		}
 	*/
+		
 		return localRouter.putMessageIntoOutduct(to, message, true);
 	}
 
@@ -91,7 +95,7 @@ public class IONInterface {
 	{
 		DTNHost local = getNodeFromNbr(localNodeNbr);
 		ContactGraphRouter localRouter = (ContactGraphRouter) local.getRouter();
-		localRouter.putMessageIntoLimbo(message, false);
+		localRouter.putMessageIntoLimbo(message);
 		return 0;	
 	}
 	
@@ -107,29 +111,34 @@ public class IONInterface {
 		newMessage.updateProperty(ContactGraphRouter.XMIT_COPIES_PROP,
 				xmitCopies.clone());
 				*/
-		localRouter.putMessageIntoLimbo(message, false);
+		localRouter.putMessageIntoLimbo(message);
 	}
 	
 	/*
 	 * METHODS USED BY OPPORTUNISTIC CGR
 	 */
 	
-	@SuppressWarnings("unchecked")
+	static MessageStatus getMessageStatus(Message message)
+	{
+		return ContactGraphRouter.getMessageStatus(message);
+	}
+	
 	static int getMessageXmitCopiesCount(Message message)
 	{
 		HashSet<Integer> result;
-		if ((result = (HashSet<Integer>) message.getProperty(
-				OpportunisticContactGraphRouter.XMIT_COPIES_PROP)) != null)
+		MessageStatus status = getMessageStatus(message);
+		result = status.getXmitCopies();
+		if (result != null)
 			return result.size();
 		return -1;
 	}
 	
-	@SuppressWarnings("unchecked")
 	static int[] getMessageXmitCopies(Message message)
 	{
 		HashSet<Integer> result;
-		if ((result = (HashSet<Integer>) message.getProperty(
-				OpportunisticContactGraphRouter.XMIT_COPIES_PROP)) != null)
+		MessageStatus status = getMessageStatus(message);
+		result = status.getXmitCopies();
+		if (result != null)
 		{
 			if (result.size() > 0)
 			{
@@ -142,24 +151,22 @@ public class IONInterface {
 
 	static double getMessageDlvConfidence(Message message)
 	{
-		Double result;
-		if ((result = (Double) message.getProperty(
-				OpportunisticContactGraphRouter.DLV_CONFIDENCE_PROP)) != null)
-			return result.doubleValue();
-		return -1;
+		double result;
+		MessageStatus status = getMessageStatus(message);
+		result = status.getDlvConfidence();
+		return result;
 	}
 	
-	@SuppressWarnings("unchecked")
 	static void setMessageXmitCopies(Message message, int[] copies)
 	{
+		MessageStatus status = getMessageStatus(message);
 		int copiesCount = getMessageXmitCopiesCount(message);
 		if (copies.length == copiesCount)
 		{
 			// did not change
 			return;
 		}
-		HashSet<Integer> javaCopies = (HashSet<Integer>) message.getProperty(
-				OpportunisticContactGraphRouter.XMIT_COPIES_PROP);
+		HashSet<Integer> javaCopies = status.getXmitCopies();
 		for (int c : copies)
 		{
 			javaCopies.add(c);
@@ -168,8 +175,8 @@ public class IONInterface {
 	
 	static void setMessageDlvConfidence(Message message, double conf)
 	{
-		message.updateProperty(
-				OpportunisticContactGraphRouter.DLV_CONFIDENCE_PROP, conf);
+		MessageStatus status = getMessageStatus(message);
+		status.setDlvConfidence(conf);
 	}
 	
 	static void sendDiscoveryInfo(long destinationNode, long fromNode,
