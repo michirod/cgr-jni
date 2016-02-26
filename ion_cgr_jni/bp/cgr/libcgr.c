@@ -759,6 +759,10 @@ static PsmAddress	loadRouteList(IonNode *terminusNode, time_t currentTime,
 
 			memset((char *) work, 0, sizeof(CgrContactNote));
 			work->arrivalTime = MAX_TIME;
+if (contact->confidence < 1.0)
+{
+	work->suppressed = 1;
+}
 		}
 
 		while (1)
@@ -1522,11 +1526,11 @@ static int	identifyProximateNodes(IonNode *terminusNode, Bundle *bundle,
 	PsmAddress	elt;
 	PsmAddress	nextElt;
 	PsmAddress	addr;
+	IonCXref	*contact;
 	CgrRoute	*route;
 	uvast		contactToNodeNbr;
 	time_t		contactFromTime;
 	int		payloadClass;
-	IonCXref	*contact;
 
 	deadline = bundle->expirationTime + EPOCH_2000_SEC;
 
@@ -1601,20 +1605,19 @@ static int	identifyProximateNodes(IonNode *terminusNode, Bundle *bundle,
 			continue;
 		}
 
-		addr = sm_list_data(ionwm, sm_list_first(ionwm, route->hops));
-		contact = (IonCXref *) psp(ionwm, addr);
-		if (contact->confidence < 1.0)
-		{
-			/*	Not a currently active route.		*/
-
-			continue;
-		}
-
 		if (route->arrivalTime > deadline)
 		{
 			/*	Not a plausible route.			*/
 
 			continue;
+		}
+
+		addr = sm_list_data(ionwm, sm_list_first(ionwm, route->hops));
+		contact = (IonCXref *) psp(ionwm, addr);
+//printf("Contact confidence %f.\n", contact->confidence);
+		if (contact->confidence != 1.0)
+		{
+			continue;	/*	Not currently usable.	*/
 		}
 
 		/*	Never route to self unless self is the final
@@ -2154,7 +2157,7 @@ static int 	cgrForward(Bundle *bundle, Object bundleObj,
 	TRACE(CgrBuildRoutes, terminusNodeNbr, bundle->payload.length,
 			(unsigned int)(atTime));
 
-	if (ionvdb->lastEditTime > cgrvdb->lastLoadTime)
+	if (ionvdb->lastEditTime > cgrvdb->lastLoadTime) 
 	{
 		/*	Contact plan has been modified, so must discard
 		 *	all route lists and reconstruct them as needed.	*/
@@ -2615,6 +2618,6 @@ void	cgr_stop()
 		{
 			putErrmsg("Failed Uncataloging vdb.",NULL);
 		}
-		//psm_free(wm, vdbAddress);
+		psm_free(wm, vdbAddress);
 	}
 }
