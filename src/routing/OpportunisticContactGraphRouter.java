@@ -242,7 +242,7 @@ public class OpportunisticContactGraphRouter extends ContactGraphRouter {
 	public boolean createNewMessage(Message m) {
 		if (debug)
 			System.out.println("" + SimClock.getIntTime() + 
-					"Node " + getHost().getAddress() + ": create new message");
+					" Node " + getHost().getAddress() + ": create new message");
 		m.addProperty(EPIDEMIC_FLAG_PROP, false);
 		return super.createNewMessage(m);
 	}
@@ -250,7 +250,7 @@ public class OpportunisticContactGraphRouter extends ContactGraphRouter {
 	@Override
 	public Message messageTransferred(String id, DTNHost from) {
 		Message transferred = super.messageTransferred(id, from);
-		//transferred.updateProperty(EPIDEMIC_FLAG_PROP, false);
+		transferred.updateProperty(EPIDEMIC_FLAG_PROP, false);
 		return transferred;
 	}
 	
@@ -300,10 +300,11 @@ public class OpportunisticContactGraphRouter extends ContactGraphRouter {
 	@Override
 	public int cgrForward(Message m, DTNHost terminusNode) {
 		int result;
-		if (!preventCGRForward)
+		if (!preventCGRForward )
+			//&& getConnections().size() != 0)
 		{
 			result = super.cgrForward(m, terminusNode);
-			if (true)
+			if (debug)
 			{
 				if (result == 0)
 					System.out.println("Node " + getHost().getAddress() + 

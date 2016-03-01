@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Comparator;
 
 import core.DTNHost;
+import core.DTNSim;
 import core.SimScenario;
 
 public class Utils {
@@ -12,6 +13,17 @@ public class Utils {
 	protected static Utils instance = null;
 	protected Collection<DTNHost> hostsReference;
 	protected DTNHost[] hostsArray;
+	
+	static {
+		DTNSim.registerForReset(Utils
+				.class.getCanonicalName());
+		}
+	public static void reset()
+	{
+		instance.hostsReference.clear();
+		instance.hostsArray = null;
+		instance = null;
+	}
 	
 	/**
 	 * Default constructor.
