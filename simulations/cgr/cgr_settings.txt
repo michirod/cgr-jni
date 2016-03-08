@@ -1,0 +1,4 @@
+Scenario.name = ContactGraphRouter
+Group.router = ContactGraphRouter
+
+ContactGraphRouter.ContactPlanPath = boh

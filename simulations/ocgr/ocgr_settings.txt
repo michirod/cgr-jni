@@ -1,0 +1,7 @@
+Scenario.name = OpportunisticContactGraphRouter
+Group.router = OpportunisticContactGraphRouter
+Report.report2 = OCGRMessageStatsReport
+
+OpportunisticContactGraphRouter.epidemicDropBack = false
+OpportunisticContactGraphRouter.preventCGRForward = false
+OpportunisticContactGraphRouter.debug = false
