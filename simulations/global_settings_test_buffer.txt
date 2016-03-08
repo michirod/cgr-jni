@@ -1,0 +1,7 @@
+
+Group.bufferSize = [5M; 10M; 15M; 20M; 25M; 30M; 35M]
+
+EventLogReport.output = [BufferELG1;BufferELG2;BufferELG3;BufferELG4;BufferELG5;BufferELG6;BufferELG7]
+MessageStatsReport.output = [BufferMSR1;BufferMSR2;BufferMSR3;BufferMSR4;BufferMSR5;BufferMSR6;BufferMSR7]
+OCGRMessageStatsReport.output = [BufferMSR1;BufferMSR2;BufferMSR3;BufferMSR4;BufferMSR5;BufferMSR6;BufferMSR7]
+

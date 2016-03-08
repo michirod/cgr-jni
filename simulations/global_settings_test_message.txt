@@ -1,0 +1,7 @@
+
+Events1.size = [100k,1M ; 1.5M,2M ;2.5M,3M ;3.5M,4M ;4.5M,5M ;5.5M,6M ;6.5M,7M]
+
+EventLogReport.output = [MessageELG1;MessageELG2;MessageELG3;MessageELG4;MessageELG5;MessageELG6;MessageELG7]
+MessageStatsReport.output = [MessageMSR1;MessageMSR2;MessageMSR3;MessageMSR4;MessageMSR5;MessageMSR6;MessageMSR7]
+OCGRMessageStatsReport.output = [MessageMSR1;MessageMSR2;MessageMSR3;MessageMSR4;MessageMSR5;MessageMSR6;MessageMSR7]
+
