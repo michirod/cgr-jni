@@ -14,6 +14,7 @@
 #include "platform.h"
 #include "shared.h"
 #include "init_global.h"
+#include "jni_thread.h"
 #include "chsim.h"
 
 

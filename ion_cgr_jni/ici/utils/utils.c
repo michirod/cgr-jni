@@ -12,6 +12,7 @@
 #include "rfx.h"
 #include "shared.h"
 #include "init_global.h"
+#include "jni_thread.h"
 #include <pthread.h>
 
 #define PsmPartitionManagerClass "cgr_jni/psm/PsmPartitionManager"

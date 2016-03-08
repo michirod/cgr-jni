@@ -12,6 +12,7 @@
 #include "shared.h"
 #include "utils.h"
 #include "init_global.h"
+#include "jni_thread.h"
 
 #ifndef CGR_DEBUG
 #define CGR_DEBUG	0

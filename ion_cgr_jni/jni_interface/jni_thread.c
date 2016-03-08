@@ -13,9 +13,6 @@
 
 #include "shared.h"
 
-
-int initialized = 0;
-pthread_key_t nodeNum_key;
 pthread_key_t jniEnv_key;
 
 static void * __jni_thread_run(void * arg)

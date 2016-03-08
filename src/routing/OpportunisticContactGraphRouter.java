@@ -12,12 +12,41 @@ import core.SimClock;
 
 public class OpportunisticContactGraphRouter extends ContactGraphRouter {
 
+	/**
+	 * Setting namespace for the OpportunisictContactGraphRouter: ({@value})
+	 */
 	public static final String OCGR_NS = "OpportunisticContactGraphRouter";
+	/**
+	 * Epidemic dropback setting ({@value}): 
+	 * if true OCGR tries to send the message epidemically if no routes
+	 * can be found by the cgrForward() function.
+	 */
 	public static final String EPIDEMIC_DROPBACK_S = "epidemicDropBack";
+	/**
+	 * prevent cgrForward setting ({@value}): 
+	 * for test and debug purpose: if true the function cgrForward() will
+	 * never be invoked.
+	 */
 	public static final String PREVENT_CGRFORWARD_S = "preventCGRForward";
+	/**
+	 * message epidemic flag property ({@value}):
+	 * if true this message is being epidemically forwarded.
+	 */
 	public static final String EPIDEMIC_FLAG_PROP = "epidemicFlag";
+	/**
+	 * list of pending discovered contact to be added to the contact plan.
+	 * Used by the implementation of the discovered contact exchange algorithm.
+	 */
 	protected Queue<DiscoveryInfo> pendingDiscoveryInfos = new LinkedList<>();
+	/**
+	 * if true OCGR tries to send the message epidemically if no routes
+	 * can be found by the cgrForward() function.
+	 */
 	protected boolean epidemicDropBack = true;
+	/**
+	 * for test and debug purpose: if true the function cgrForward() will
+	 * never be invoked.
+	 */
 	protected boolean preventCGRForward = false;
 	private int epidemicSearchIndex;
 	
@@ -60,14 +89,30 @@ public class OpportunisticContactGraphRouter extends ContactGraphRouter {
 		return new OpportunisticContactGraphRouter(this);
 	}
 	
+	/**
+	 * check if this router has the epidemic dropback enabled
+	 * @return true if this router has the epidemic dropback enabled
+	 */
 	public boolean isEpidemicDropBack() {
 		return epidemicDropBack;
 	}
 
+	/**
+	 * sets this router epidemic dropback behavior.
+	 * @param epidemicDropBack true to enable the epidemic dropback, false
+	 * to disable it.
+	 */
 	public void setEpidemicDropBack(boolean epidemicDropBack) {
 		this.epidemicDropBack = epidemicDropBack;
 	}
 
+	/**
+	 * invoked upon the detection of a new connection.
+	 * it performs discovered contacts and contact history exchange, triggers
+	 * the contact prediction and the new discovered contact insertion to 
+	 * both ends of the connection.
+	 * @param con the new connection detected
+	 */
 	protected void discoveredContactStart(Connection con)
 	{
 		exchangeCurrentDiscoveredContacts(con);
@@ -77,6 +122,11 @@ public class OpportunisticContactGraphRouter extends ContactGraphRouter {
 		contactPlanChanged();
 	}
 
+	/**
+	 * invoked upon the loss of a connection.
+	 * it informs the OCGR that the discovered contact has ended 
+	 * @param con the connection lost.
+	 */
 	protected void discoveredContactEnd(Connection con)
 	{
 		contactLost(con);
@@ -259,6 +309,16 @@ public class OpportunisticContactGraphRouter extends ContactGraphRouter {
 		return OCGR_NS;
 	}
 	
+	/**
+	 * prepare the insertion of a new discovered contact announced by a
+	 * neighbor. This function is invoked by the IONInterface and implements
+	 * a discovered contacts exchange protocol.
+	 * @param fromNode 
+	 * @param toNode
+	 * @param fromTime
+	 * @param toTime
+	 * @param xmitSpeed
+	 */
 	public void addDiscoveryInfo(long fromNode, long toNode, long fromTime,
 			long toTime, int xmitSpeed)
 	{
@@ -267,6 +327,10 @@ public class OpportunisticContactGraphRouter extends ContactGraphRouter {
 		pendingDiscoveryInfos.add(info);
 	}
 	
+	/**
+	 * inserts in this node's contact plan the discovered contacts announced
+	 * by neighboring nodes.
+	 */
 	protected void applyDiscoveryInfos()
 	{
 		DiscoveryInfo info;
@@ -278,6 +342,12 @@ public class OpportunisticContactGraphRouter extends ContactGraphRouter {
 		}
 	}
 	
+	/**
+	 * Describes a discovered contact to be added to this node's contact
+	 * plan. 
+	 * @author michele
+	 *
+	 */
 	protected class DiscoveryInfo{
 		private long fromNode;
 		private long toNode;

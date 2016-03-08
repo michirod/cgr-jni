@@ -7,6 +7,7 @@
 
 
 #include "init_global.h"
+#include "jni_thread.h"
 #include "shared.h"
 
 #include <pthread.h>
@@ -24,7 +25,7 @@ JavaVM *javaVM = NULL;
 static time_t ONEreferenceTime = 0;
 pthread_key_t nodeNum_key;
 pthread_key_t jniEnv_key;
-//int initialized = 0;
+int initialized = 0;
 
 
 

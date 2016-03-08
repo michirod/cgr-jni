@@ -10,8 +10,6 @@
 #include <jni.h>
 #include <pthread.h>
 
-#include "jni_thread.h"
-
 /**
  * Questa variabile globale rappresenta il Java Runtime (la VM)
  * L'ho messo qua, cosi' recupero il riferimento una volta per tutte.
