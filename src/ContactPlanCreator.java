@@ -14,16 +14,18 @@ class ContactPlanCreator {
     BufferedReader br2 = new BufferedReader(new InputStreamReader(System.in));
     System.out.println("Insert the full path of the input file for the Contact Plan Creator\n");
     inputFilePath = br2.readLine();
-    System.out.println("Insert the datarate for the Contact Plan, in B/s\n");
-    datarate = Integer.parseInt(br2.readLine());
+   // System.out.println("Insert the datarate for the Contact Plan, in B/s\n");
+    //datarate = Integer.parseInt(br2.readLine());
     fr = new FileReader(inputFilePath);
 	BufferedReader br = new BufferedReader(fr);
 	
     SortedSet<ContactPlanLine> contactPlan = new TreeSet<>();
     ContactPlanLine riga;
     String fileLine;
+    String lastLine = "";
     while((fileLine = br.readLine()) != null)
     {
+    	lastLine = fileLine;
     	int node1, node2; 
     	int start;
     	int stop;
@@ -38,6 +40,7 @@ class ContactPlanCreator {
     			node1 = Integer.parseInt(temp1);
     			node2 = Integer.parseInt(temp2);
     			if(tokenizer.nextToken().equalsIgnoreCase("UP")){
+    				datarate = Integer.parseInt(tokenizer.nextToken());
     				stop = 0;
     				riga = new ContactPlanLine(start, stop, node1, node2, datarate);
     				contactPlan.add(riga);
@@ -59,6 +62,8 @@ class ContactPlanCreator {
     }
     br.close();
     fr.close();
+    StringTokenizer tokenizerLastLine = new StringTokenizer(lastLine);
+    int lastIndex = (int) (Double.parseDouble(tokenizerLastLine.nextToken()) + 2);
     System.out.println("Insert the output contact plan path");
     outputPath = br2.readLine();
     PrintWriter pw = new PrintWriter(outputPath);
@@ -72,6 +77,16 @@ class ContactPlanCreator {
     	bw.write(c.toStringTwoWays());
     	bw.newLine();
     	}
+    	else{
+    		c.setStop(lastIndex);
+    		bw.write(c.toStringRange());
+        	bw.newLine();
+        	bw.write(c.toString());
+        	bw.newLine();
+        	bw.write(c.toStringTwoWays());
+        	bw.newLine();
+    	}
+    	
     }
     bw.close();
     pw.close();
