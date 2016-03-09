@@ -1,4 +1,4 @@
 Scenario.name = ContactGraphRouter
 Group.router = ContactGraphRouter
 
-ContactGraphRouter.ContactPlanPath = boh
+ContactGraphRouter.ContactPlanPath = /home/michele/git/cgr-jni/simulations/cgr/cp.txt
