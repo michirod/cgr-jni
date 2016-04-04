@@ -7,7 +7,7 @@ class ContactPlanCreator {
   public static void main(String args[])
   throws IOException {
 	  
-	final String defaultPath = "/home/jakojo/Scaricati/one_1.5.1-RC2/reports/default_scenario_EventLogReport.txt";
+	final String defaultPath = "/home/tab/workspace/one16/reports/default_scenario_EventLogReport.txt";
     FileReader fr;
     String inputFilePath, outputPath;
     int datarate;
