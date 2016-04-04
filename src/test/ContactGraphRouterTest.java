@@ -15,6 +15,7 @@ import core.SimClock;
 import core.SimScenario;
 import routing.ContactGraphRouter;
 import routing.MessageRouter;
+import test.AbstractRouterTest;
 
 public class ContactGraphRouterTest extends AbstractRouterTest {
 
@@ -37,7 +38,7 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 				SimScenario.NROF_GROUPS_S, "1");
 		ts.putSetting(SimScenario.GROUP_NS + "." + 
 				core.SimScenario.NROF_HOSTS_S, "" + NROF_HOSTS);
-		ts.putSetting(Message.TTL_SECONDS_S, "true");
+		//ts.putSetting(Message.TTL_SECONDS_S, "true");
 		ts.putSetting(MessageRouter.MSG_TTL_S, "3600");
 		
 		// Primary network interface settings

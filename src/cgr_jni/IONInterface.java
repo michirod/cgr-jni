@@ -27,7 +27,7 @@ public class IONInterface {
 	}
 	
 	static long getMessageTTL(Message message){
-		long result = (long) message.getTtl();
+		long result = (long) message.getTtl()*60;
 		return result;
 	}
 	static long getMessageSize(Message message){
