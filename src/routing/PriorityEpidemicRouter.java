@@ -15,6 +15,7 @@ import util.Tuple;
 
 public class PriorityEpidemicRouter extends ActiveRouter {
 
+	protected boolean removing;
 	/**
 	 * Constructor. Creates a new message router based on the settings in
 	 * the given Settings object.
@@ -22,6 +23,7 @@ public class PriorityEpidemicRouter extends ActiveRouter {
 	 */
 	public PriorityEpidemicRouter(Settings s) {
 		super(s);
+		this.removing = false;
 	}
 
 	/**
@@ -30,6 +32,7 @@ public class PriorityEpidemicRouter extends ActiveRouter {
 	 */
 	protected PriorityEpidemicRouter(PriorityEpidemicRouter r){
 		super(r);
+		this.removing = r.removing;
 	}
 	
 	@Override
@@ -59,6 +62,7 @@ public class PriorityEpidemicRouter extends ActiveRouter {
 		Collection<Message> messages = this.getMessageCollection();
 		Message oldest = null;
 		List<Message> lmessages = new ArrayList<Message>(messages);
+		setRemoving(true);
 		sortByQueueMode(lmessages);
 		for(int i=0;i<lmessages.size();i++)
 		{
@@ -68,9 +72,11 @@ public class PriorityEpidemicRouter extends ActiveRouter {
 			{
 				continue; // skip the message(s) that router is sending
 			}
-			oldest=lmessages.get(lmessages.size()-1-i);				
+			oldest=lmessages.get(lmessages.size()-1-i);		
+			setRemoving(false);
 			return oldest;
-		}		
+		}	
+		setRemoving(false);
 		return oldest;		
 	}
 
@@ -107,18 +113,35 @@ public class PriorityEpidemicRouter extends ActiveRouter {
 				if (pdiff != 0)						
 					return (pdiff < 0 ? 1 : -1);
 				
-				else
+				diff = m1.getReceiveTime() - m2.getReceiveTime();
+				if (diff == 0) 
 				{
-					diff = m1.getReceiveTime() - m2.getReceiveTime();
-					if (diff == 0) {
-						return 0;
-					}
+					return 0;
+				}
+				else if (!isRemoving())
+				{					
+					return (diff < 0 ? -1 : 1);
+				}	
+				//if isRemoving i need the oldest with lower priority
+				else if(isRemoving())
+				{
 					return (diff < 0 ? 1 : -1);
-				}				
+				}
+				
+				//not reached
+				return 0;
 			}			 
 		});
 		
 		return list;
+	}
+
+	public boolean isRemoving() {
+		return removing;
+	}
+
+	public void setRemoving(boolean removing) {
+		this.removing = removing;
 	}
 	
 	
