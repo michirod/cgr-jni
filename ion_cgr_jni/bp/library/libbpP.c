@@ -16,8 +16,27 @@
 void	computePriorClaims(ClProtocol *protocol, Outduct *duct, Bundle *bundle,
 		Scalar *priorClaims, Scalar *totalBacklog)
 {
-	copyScalar(totalBacklog, &(duct->stdBacklog));
-	copyScalar(priorClaims, totalBacklog);
+	//	copyScalar(totalBacklog, &(duct->stdBacklog));
+	//	copyScalar(priorClaims, totalBacklog);
+	//AB mod
+	//in base alla priorità cambiare la priorclaims
+
+	copyScalar(totalBacklog,&(duct->bulkBacklog));
+	addToScalar(totalBacklog,&(duct->stdBacklog));
+	addToScalar(totalBacklog,&(duct->urgentBacklog));
+
+	int priority = COS_FLAGS(bundle->bundleProcFlags) & 0x03;
+	copyScalar(priorClaims,&(duct->urgentBacklog));
+	if(priority==1)
+	{
+		addToScalar(priorClaims,&(duct->stdBacklog));
+	}
+	else if(priority==0)
+	{
+		addToScalar(priorClaims,&(duct->stdBacklog));
+		addToScalar(priorClaims,&(duct->bulkBacklog));
+	}
+
 }
 
 int	guessBundleSize(Bundle *bundle)

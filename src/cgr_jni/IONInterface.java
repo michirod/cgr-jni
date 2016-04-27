@@ -2,8 +2,10 @@ package cgr_jni;
 
 import routing.ContactGraphRouter;
 import routing.ContactGraphRouter.Outduct;
+import routing.PriorityContactGraphRouter.PriorityOutduct;
 import core.DTNHost;
 import core.Message;
+import core.PriorityMessage;
 
 public class IONInterface {	
 
@@ -92,5 +94,40 @@ public class IONInterface {
 		DTNHost local = getNodeFromNbr(localNodeNbr);
 		ContactGraphRouter localRouter = (ContactGraphRouter) local.getRouter();
 		localRouter.createNewMessage(message.replicate());
+	}
+	
+	/* A.B mod*/
+	/* not safe */
+	
+	static int getMessagePriority(Message message)
+	{
+		if(message instanceof PriorityMessage)
+			return ((PriorityMessage)message).getPriority();
+		
+		return 1;
+	}
+	
+	static long getOutductBulkBacklog(Outduct jOuduct)
+	{
+		if(jOuduct instanceof PriorityOutduct)
+			return((PriorityOutduct) jOuduct).getBulkBacklog();
+		
+		return jOuduct.getTotalEnqueuedBytes();
+	}
+	
+	static long getOutductNormalBacklog(Outduct jOuduct)
+	{
+		if(jOuduct instanceof PriorityOutduct)
+			return((PriorityOutduct) jOuduct).getNormalBacklog();
+		
+		return jOuduct.getTotalEnqueuedBytes();
+	}
+	
+	static long getOutductExpeditedBacklog(Outduct jOuduct)
+	{
+		if(jOuduct instanceof PriorityOutduct)
+			return((PriorityOutduct) jOuduct).getExpeditedBacklog();
+		
+		return jOuduct.getTotalEnqueuedBytes();
 	}
 }
