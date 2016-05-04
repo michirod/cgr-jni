@@ -69,7 +69,10 @@ public class ContactPlanLine implements Comparable{
 	
 	
 	public String toStringRange() {
-		return "a range " + "\t+" + start + "\t+" + stop + "\t" + from + "\t" + to + "\t" + "1";
+		if(from < to)
+			return "a range " + "\t+" + start + "\t+" + stop + "\t" + from + "\t" + to + "\t" + "1";
+		else
+			return "a range " + "\t+" + start + "\t+" + stop + "\t" + to + "\t" + from + "\t" + "1";
 	}
 	
 
