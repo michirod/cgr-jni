@@ -1252,6 +1252,7 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 		checkCreates(15);
 		
 		updateAllNodes();	
+		System.out.println(r1.getOutducts().get(h2).getQueue().size());
 		h2.forceConnection(h4, TestUtilsForCGR.IFACE2_NS, true);
 		h3.forceConnection(h4, TestUtilsForCGR.IFACE2_NS, true);
 		assertEquals(r1.getOutducts().get(h2).getQueue().size(), 8);

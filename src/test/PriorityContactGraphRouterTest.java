@@ -25,7 +25,7 @@ public class PriorityContactGraphRouterTest extends AbstractRouterTest{
 	private static final int NROF_HOSTS = 6;
 	private PriorityContactGraphRouter r1,r2,r3,r4,r5,r6;
 	private static PriorityContactGraphRouterTest instance = null;
-	protected static final int TRANSMIT_SPEED = 128000;
+	protected static final int TRANSMIT_SPEED = 16000;
 
 	@Override
 	public void setUp() throws Exception {
@@ -360,8 +360,8 @@ public class PriorityContactGraphRouterTest extends AbstractRouterTest{
 		checkCreates(15);
 		
 		updateAllNodes();	
-		h2.forceConnection(h4, null, true);
-		h3.forceConnection(h4, null, true);
+		h2.forceConnection(h4, TestUtilsForCGR.IFACE2_NS, true);
+		h3.forceConnection(h4, TestUtilsForCGR.IFACE2_NS, true);
 		assertEquals(((PriorityOutduct)r1.getOutducts().get(h2)).getBulkQueue().size(), 5);
 		assertEquals(((PriorityOutduct)r1.getOutducts().get(h3)).getBulkQueue().size(), 6);
 		assertEquals(((PriorityOutduct)r1.getOutducts().get(h3)).getExpeditedQueue().size(), 4);

@@ -112,7 +112,7 @@ public class IONInterface {
 		if(jOuduct instanceof PriorityOutduct)
 			return((PriorityOutduct) jOuduct).getBulkBacklog();
 		
-		return jOuduct.getTotalEnqueuedBytes();
+		return 0;
 	}
 	
 	static long getOutductNormalBacklog(Outduct jOuduct)
@@ -128,6 +128,6 @@ public class IONInterface {
 		if(jOuduct instanceof PriorityOutduct)
 			return((PriorityOutduct) jOuduct).getExpeditedBacklog();
 		
-		return jOuduct.getTotalEnqueuedBytes();
+		return 0;
 	}
 }
