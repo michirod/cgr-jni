@@ -15,6 +15,7 @@ import core.SimClock;
 import core.SimScenario;
 import routing.ContactGraphRouter;
 import routing.MessageRouter;
+import routing.PriorityContactGraphRouter.PriorityOutduct;
 import test.AbstractRouterTest;
 
 public class ContactGraphRouterTest extends AbstractRouterTest {
@@ -1253,6 +1254,12 @@ public class ContactGraphRouterTest extends AbstractRouterTest {
 		
 		updateAllNodes();	
 		System.out.println(r1.getOutducts().get(h2).getQueue().size());
+		System.out.println("VIA H3");
+		for(Message m : (r1.getOutducts().get(h3)).getQueue())
+			System.out.println(m.getId());
+		System.out.println("VIA H2");
+		for(Message m : (r1.getOutducts().get(h2)).getQueue())
+			System.out.println(m.getId());
 		h2.forceConnection(h4, TestUtilsForCGR.IFACE2_NS, true);
 		h3.forceConnection(h4, TestUtilsForCGR.IFACE2_NS, true);
 		assertEquals(r1.getOutducts().get(h2).getQueue().size(), 8);

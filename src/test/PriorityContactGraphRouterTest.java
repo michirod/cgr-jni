@@ -231,10 +231,16 @@ public class PriorityContactGraphRouterTest extends AbstractRouterTest{
 		checkCreates(15);
 		
 		updateAllNodes();	
-		h2.forceConnection(h4, null, true);
-		h3.forceConnection(h4, null, true);
+		h2.forceConnection(h4, TestUtilsForCGR.IFACE2_NS, true);
+		h3.forceConnection(h4, TestUtilsForCGR.IFACE2_NS, true);
 		assertEquals(((PriorityOutduct)r1.getOutducts().get(h2)).getBulkQueue().size(), 8);
 		assertEquals(((PriorityOutduct)r1.getOutducts().get(h3)).getBulkQueue().size(), 7);
+		System.out.println("VIA H3");
+		for(Message m : ((PriorityOutduct)r1.getOutducts().get(h3)).getBulkQueue())
+			System.out.println(m.getId());
+		System.out.println("VIA H2");
+		for(Message m : ((PriorityOutduct)r1.getOutducts().get(h2)).getBulkQueue())
+			System.out.println(m.getId());
 		
 		clock.advance(30);
 		
