@@ -96,9 +96,6 @@ public class IONInterface {
 		localRouter.createNewMessage(message.replicate());
 	}
 	
-	/* A.B mod*/
-	/* not safe */
-	
 	static int getMessagePriority(Message message)
 	{
 		if(message instanceof PriorityMessage)
@@ -130,4 +127,6 @@ public class IONInterface {
 		
 		return 0;
 	}
+	
+	
 }

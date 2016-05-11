@@ -215,7 +215,6 @@ static int insertBundleIntoLimbo(uvast localNodeNbr, jobject message)
 	return (int) result;
 }
 
-/* A.B. MOD*/
 static int getMessagePriority(jobject message)
 {
 	JNIEnv * jniEnv = getThreadLocalEnv();
@@ -251,7 +250,6 @@ static long getOutductExpBacklog(jobject jOutduct)
 	jlong result = (*jniEnv)->CallStaticLongMethod(jniEnv, interfaceClass, method, jOutduct);
 	return (long) result;
 }
-/*AB MOD END*/
 
 
 /**
@@ -269,13 +267,12 @@ void ion_bundle(Bundle * bundle, jobject message)
 	bundle->destination.cbhe = 1;
 	bundle->payload.length = getMessageSize(message);
 	bundle->bundleProcFlags = BDL_DOES_NOT_FRAGMENT;
-	/*AB MOD*/
+
 	int pri = getMessagePriority(message);
 	if(pri==1)
-		 bundle->bundleProcFlags += 128;  //modifica
+		 bundle->bundleProcFlags += 128;
 	else if(pri==2)
 		 bundle->bundleProcFlags += 256;
-	/*AB MOD END*/
 
 	bundle->extendedCOS.ordinal = 0;
 	bundle->extendedCOS.flags = 0;
@@ -294,16 +291,16 @@ void ion_outduct(Outduct * duct, jobject jOutduct)
 	memset(duct, 0, sizeof(Outduct));
 	duct->blocked = isOutductBlocked(jOutduct);
 	duct->maxPayloadLen = getMaxPayloadLen(jOutduct);
-	//ABMOD loadScalar(&(duct->stdBacklog), totEnqueued);
+	//loadScalar(&(duct->stdBacklog), totEnqueued);
 	strncpy(duct->name, getOutductName(jOutduct, buf), MAX_CL_DUCT_NAME_LEN);
-	/*ABMOD*/
-	 long bulkBacklog = getOutductBulkBacklog(jOutduct);
-	  long normBacklog = getOutductNormBacklog(jOutduct);
-	  long expBacklog = getOutductExpBacklog(jOutduct);
-	  loadScalar(&(duct->bulkBacklog), bulkBacklog);
-	  loadScalar(&(duct->stdBacklog), normBacklog);
-	  loadScalar(&(duct->urgentBacklog), expBacklog);
-	 /*ABMOD END*/
+
+	long bulkBacklog = getOutductBulkBacklog(jOutduct);
+	long normBacklog = getOutductNormBacklog(jOutduct);
+	long expBacklog = getOutductExpBacklog(jOutduct);
+	loadScalar(&(duct->bulkBacklog), bulkBacklog);
+	loadScalar(&(duct->stdBacklog), normBacklog);
+	loadScalar(&(duct->urgentBacklog), expBacklog);
+
 }
 
 void init_ouduct_list()
@@ -447,4 +444,9 @@ int testMessage(jobject message)
 	sdr_write(getIonsdr(), bundleObj, (char*) bundle, sizeof(Bundle));
 	free(bundle);
 	return 0;
+}
+
+int one_manage_overbooking()
+{
+
 }

@@ -30,6 +30,7 @@
 #endif
 
 
+
 /*		Perform a trace if a trace callback exists.		*/
 #define TRACE(...) do \
 { \
@@ -2198,7 +2199,9 @@ static int 	cgrForward(Bundle *bundle, Object bundleObj,
 				putErrmsg("Can't queue for neighbor.", NULL);
 				return -1;
 			}
-
+#ifdef ONE_SIMULATION
+			one_manage_overbooking(selectedNeighbor,bundle);
+#endif
 #if (MANAGE_OVERBOOKING == 1)
 			/*	Handle any contact overbooking caused
 			 *	by enqueuing this bundle.		*/

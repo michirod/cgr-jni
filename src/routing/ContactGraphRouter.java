@@ -23,7 +23,7 @@ public class ContactGraphRouter extends ActiveRouter {
 		public static final int NONE_ID = -2;
 		private DTNHost host;
 		private LinkedList<Message> queue;
-		protected long totalEnqueuedBytes; //modificato
+		protected long totalEnqueuedBytes; 
 		
 		public Outduct(DTNHost host) {
 			this.host = host;
@@ -128,10 +128,10 @@ public class ContactGraphRouter extends ActiveRouter {
 	protected int deliveredCount = 0;
 	private boolean contactPlanChanged = false;
 	/** Used as reference for round-robin outducts sorting */
-	protected DTNHost firstOutductIndex; //modificato
+	protected DTNHost firstOutductIndex; 
 	protected String contactPlanPath;
 	
-	protected TreeMap<DTNHost, Outduct> outducts = new TreeMap<DTNHost, Outduct>(); //modificati
+	protected TreeMap<DTNHost, Outduct> outducts = new TreeMap<DTNHost, Outduct>(); 
 	protected Outduct limbo = new Outduct(null);
 
 	/**

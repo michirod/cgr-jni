@@ -16,7 +16,7 @@ library.o :
 	gcc -c $(OPT) $(J_INCLUDES) library/*.c
 
 cgr.o : 
-	gcc -c $(OPT) $(J_INCLUDES) cgr/*.c
+	gcc -c $(OPT) $(J_INCLUDES) -DMANAGE_OVERBOOKING=0 -DONE_SIMULATION cgr/*.c
 	
 clean:
 	rm -rf *.so *.o
