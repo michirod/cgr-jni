@@ -4,6 +4,9 @@ public class PriorityMessage extends Message {
 
 	/** priority of the message */
 	private int priority;
+	private boolean reforwarded;
+	private DTNHost reforwardedFrom;
+	private int reforwardIndex;
 	
 	/**
 	 * Creates a new PriorityMessage.
@@ -17,6 +20,7 @@ public class PriorityMessage extends Message {
 	public PriorityMessage(DTNHost from, DTNHost to, String id, int size, int priority) {
 		super(from, to, id, size);
 		this.priority = priority;
+		this.reforwarded = false;
 	}
 
 	/** Returns the priority of the PriorityMessage 
@@ -26,6 +30,7 @@ public class PriorityMessage extends Message {
 		return priority;
 	}
 
+	
 	@Override
 	protected void copyFrom(Message m) {
 		super.copyFrom(m);
@@ -37,6 +42,30 @@ public class PriorityMessage extends Message {
 		PriorityMessage m = new PriorityMessage(this.getFrom(), this.getTo(), this.getId(), this.getSize(), priority);
 		m.copyFrom(this);
 		return m;
+	}
+
+	public boolean isReforwarded() {
+		return reforwarded;
+	}
+
+	public void setReforwarded(boolean reforwarded) {
+		this.reforwarded = reforwarded;
+	}
+
+	public DTNHost getReforwardedFrom() {
+		return reforwardedFrom;
+	}
+
+	public void setReforwardedFrom(DTNHost reforwardedFrom) {
+		this.reforwardedFrom = reforwardedFrom;
+	}
+
+	public int getReforwardIndex() {
+		return reforwardIndex;
+	}
+
+	public void setReforwardIndex(int reforwardIndex) {
+		this.reforwardIndex = reforwardIndex;
 	}
 	
 	

@@ -22,5 +22,5 @@ int bpEnqueONE(FwdDirective *directive, Bundle *bundle, Object bundleObj);
 int bpCloneONE(Bundle *oldBundle, Bundle *newBundle, Object *newBundleObj);
 int testMessage(jobject message);
 int testOutduct(jobject jOuduct);
-int one_manage_overbooking();
+int one_manage_overbooking(double overbooked,double protect,Bundle *lastSent);
 #endif /* JNI_JNI_INTERFACE_INCLUDE_ONETOION_INTERFACE_H_ */

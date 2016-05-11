@@ -219,7 +219,7 @@ static int getMessagePriority(jobject message)
 {
 	JNIEnv * jniEnv = getThreadLocalEnv();
 	jclass interfaceClass =(*jniEnv)->FindClass(jniEnv,ONEtoION_interfaceClass);
-	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv, interfaceClass, "getMessagePriority","(Lcore/Message;)I" ); //javap sulcompilato
+	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv, interfaceClass, "getMessagePriority","(Lcore/Message;)I" );
 	jint result = (*jniEnv)->CallStaticIntMethod(jniEnv,interfaceClass, method, message);
 	return (int) result;
 }
@@ -251,6 +251,14 @@ static long getOutductExpBacklog(jobject jOutduct)
 	return (long) result;
 }
 
+static int callManageOverbooking(uvast localNodeNbr,uvast proximateNodeNbr,double overbooked,double protect)
+{
+	JNIEnv * jniEnv = getThreadLocalEnv();
+	jclass interfaceClass =(*jniEnv)->FindClass(jniEnv,ONEtoION_interfaceClass);
+	jmethodID method = (*jniEnv)->GetStaticMethodID(jniEnv, interfaceClass, "manageOverbooking","(JJDD)I" );
+	jint result = (*jniEnv)->CallStaticIntMethod(jniEnv,interfaceClass, method, localNodeNbr,proximateNodeNbr,overbooked,protect);
+	return (int) result;
+}
 
 /**
  * Convert a java Message object to an ION Bundle
@@ -446,7 +454,17 @@ int testMessage(jobject message)
 	return 0;
 }
 
-int one_manage_overbooking()
+int one_manage_overbooking(double overbooked,double protect,Bundle *lastSent)
 {
+	uvast localNodeNbr, proximateNodeNbr;
+	int priority;
+
+	priority= COS_FLAGS(lastSent->bundleProcFlags) & 0x03;
+	if(priority==0 || overbooked == 0.0)
+		return 0; //no overbooking
+
+	localNodeNbr = getNodeNum();
+	proximateNodeNbr = interfaceInfo->forwardResult;
+	return callManageOverbooking(localNodeNbr,proximateNodeNbr,overbooked,protect);
 
 }

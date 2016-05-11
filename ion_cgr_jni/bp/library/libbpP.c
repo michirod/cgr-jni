@@ -38,14 +38,14 @@ void	computePriorClaims(ClProtocol *protocol, Outduct *duct, Bundle *bundle,
 	}
 
 }
-
+//ABMOD
 int	guessBundleSize(Bundle *bundle)
 {
-	return (NOMINAL_PRIMARY_BLKSIZE
+	return /*(NOMINAL_PRIMARY_BLKSIZE
 		+ bundle->dictionaryLength
 		+ bundle->extensionsLength[PRE_PAYLOAD]
-		+ bundle->payload.length
-		+ bundle->extensionsLength[POST_PAYLOAD]);
+		+*/ bundle->payload.length
+		/*+ bundle->extensionsLength[POST_PAYLOAD])*/;
 }
 int	computeECCC(int bundleSize, ClProtocol *protocol)
 {

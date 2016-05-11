@@ -2,6 +2,7 @@ package cgr_jni;
 
 import routing.ContactGraphRouter;
 import routing.ContactGraphRouter.Outduct;
+import routing.PriorityContactGraphRouter;
 import routing.PriorityContactGraphRouter.PriorityOutduct;
 import core.DTNHost;
 import core.Message;
@@ -128,5 +129,18 @@ public class IONInterface {
 		return 0;
 	}
 	
-	
+	static int manageOverbooking(long localNodeNbr, long proximateNodeNbr, double overbooked, double protect)
+	{
+		DTNHost local = getNodeFromNbr(localNodeNbr);
+		DTNHost to = getNodeFromNbr(proximateNodeNbr);
+		PriorityContactGraphRouter localRouter;
+		if(local.getRouter() instanceof PriorityContactGraphRouter)
+		{
+			localRouter = (PriorityContactGraphRouter)local.getRouter();
+			localRouter.setManageOverbooking(to,overbooked,protect);
+		}
+		
+		return 0;
+	}
+
 }

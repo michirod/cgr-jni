@@ -2200,7 +2200,12 @@ static int 	cgrForward(Bundle *bundle, Object bundleObj,
 				return -1;
 			}
 #ifdef ONE_SIMULATION
-			one_manage_overbooking(selectedNeighbor,bundle);
+			double 	overbooked = (ONE_GIG * selectedNeighbor->overbooked.gigs)
+					+ selectedNeighbor->overbooked.units;
+			double 	protected = (ONE_GIG * selectedNeighbor->protected.gigs)
+					+ selectedNeighbor->protected.units;
+
+			one_manage_overbooking(overbooked,protected,bundle);
 #endif
 #if (MANAGE_OVERBOOKING == 1)
 			/*	Handle any contact overbooking caused

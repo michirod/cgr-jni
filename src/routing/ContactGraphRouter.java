@@ -133,7 +133,7 @@ public class ContactGraphRouter extends ActiveRouter {
 	
 	protected TreeMap<DTNHost, Outduct> outducts = new TreeMap<DTNHost, Outduct>(); 
 	protected Outduct limbo = new Outduct(null);
-
+	
 	/**
 	 * Copy constructor.
 	 * @param r The router prototype where setting values are copied from
