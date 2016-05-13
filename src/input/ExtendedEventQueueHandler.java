@@ -9,6 +9,7 @@ public class ExtendedEventQueueHandler extends EventQueueHandler
 {
 	public ExtendedEventQueueHandler()
 	{
+		super();
 		Settings settings = new Settings(SETTINGS_NAMESPACE);
 		int nrof = settings.getInt(NROF_SETTING);
 		
