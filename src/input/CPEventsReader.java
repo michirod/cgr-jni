@@ -11,7 +11,7 @@ import java.util.StringTokenizer;
 
 import core.SimError;
 
-public class CPEventsReader implements ExternalEventsReader
+public class CPEventsReader extends StandardEventsReader
 {
 	/** Identifier for ContactPlan Range between nodes */
 	public static final String RANGE = "range";
@@ -30,6 +30,7 @@ public class CPEventsReader implements ExternalEventsReader
 	
 	public CPEventsReader(File eventsFile)
 	{
+		super(eventsFile);	
 		try
 		{
 			this.reader = new BufferedReader(new FileReader(eventsFile));

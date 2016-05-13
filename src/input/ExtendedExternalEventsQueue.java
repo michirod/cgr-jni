@@ -8,7 +8,6 @@ import core.Settings;
 
 public class ExtendedExternalEventsQueue extends ExternalEventsQueue 
 {
-	
 	public ExtendedExternalEventsQueue(Settings s) 
 	{
 		super(s);
@@ -17,29 +16,21 @@ public class ExtendedExternalEventsQueue extends ExternalEventsQueue
 	public ExtendedExternalEventsQueue(String filePath, int nrofPreload)
 	{
 		super(filePath, nrofPreload);
-		init(filePath);
 	}
 	
-	private void init(String eeFilePath)
+	@Override
+	protected void init(String eeFilePath)
 	{
 		this.eventsFile = new File(eeFilePath);
-
-		if (BinaryEventsReader.isBinaryEeFile(eventsFile))
-		{
-			this.reader = new BinaryEventsReader(eventsFile);
-		}
-		else 
-		{
-			this.reader = new CPEventsReader(eventsFile);
-		}
 		
-//		this.reader = new CPEventsReader(eventsFile);
+		this.reader = new CPEventsReader(eventsFile);
 
 		this.queue = readEvents(nrofPreload);
 		this.nextEventIndex = 0;
 	}
 	
-	private List<ExternalEvent> readEvents(int nrof) 
+	@Override
+	protected List<ExternalEvent> readEvents(int nrof) 
 	{
 		if (allEventsRead) 
 		{
