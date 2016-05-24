@@ -93,7 +93,7 @@ public class CPEventsReader extends StandardEventsReader
 					String endTimeStr = stk.nextToken();
 					String host1Addr = stk.nextToken();
 					String host2Addr = stk.nextToken();
-					String transmitRangeStr = stk.nextToken();
+					String transmitSpeedStr = stk.nextToken();
 					
 					startTimeStr = startTimeStr.substring(1);
 					endTimeStr = endTimeStr.substring(1);
@@ -107,12 +107,12 @@ public class CPEventsReader extends StandardEventsReader
 					if (host1 < 0 && host2 < 0)
 						throw new SimError("Unknown Hosts");
 					
-					int transmitRange = Integer.parseInt(transmitRangeStr);
-					if (transmitRange < 0)
-						throw new IllegalArgumentException("TransmitRange must be higher than zero");
+					int transmitSpeed = Integer.parseInt(transmitSpeedStr);
+					if (transmitSpeed < 0)
+						throw new IllegalArgumentException("TransmitSpeed must be higher than zero");
 					
-					events.add(new ConnectionEvent(host1, host2, null, true, startTime));
-					events.add(new ConnectionEvent(host1, host2, null, false, endTime));
+					events.add(new CPConnectionEvent(host1, host2, null, true, startTime, transmitSpeed));
+					events.add(new CPConnectionEvent(host1, host2, null, false, endTime, transmitSpeed));
 				}
 				else throw new SimError("Unknown Action" +action+ " specified");
 			}
