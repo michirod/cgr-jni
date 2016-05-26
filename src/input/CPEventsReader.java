@@ -83,7 +83,7 @@ public class CPEventsReader extends StandardEventsReader
 					
 					long startTime = Long.parseLong(startTimeStr);
 					long endTime = Long.parseLong(endTimeStr);
-					if (startTime >= endTime) throw new IllegalArgumentException(timeError);
+					if (startTime > endTime) throw new IllegalArgumentException(timeError);
 					
 					int host1 = Integer.parseInt(host1Addr);
 					int host2 = Integer.parseInt(host2Addr);
@@ -115,10 +115,10 @@ public class CPEventsReader extends StandardEventsReader
 					
 					long startTime = Long.parseLong(startTimeStr);
 					long endTime = Long.parseLong(endTimeStr);
-					if (startTime >= endTime) throw new IllegalArgumentException(timeError);
+					if (startTime > endTime) throw new IllegalArgumentException(timeError);
 					
-					int host1 = Integer.parseInt(host1Addr);
-					int host2 = Integer.parseInt(host2Addr);
+					int host1 = Integer.parseInt(host1Addr)-1;
+					int host2 = Integer.parseInt(host2Addr)-1;
 					if (host1 < 0 && host2 < 0)
 						throw new SimError("Unknown Hosts");
 					
