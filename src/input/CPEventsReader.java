@@ -11,6 +11,9 @@ import java.util.StringTokenizer;
 
 import core.SimError;
 
+/** Class used for ContactPlan reading from an external file, in order to
+ * create a list of external events used by the simulation */
+
 public class CPEventsReader extends StandardEventsReader
 {
 	/** Identifier for ContactPlan Range between nodes */
@@ -28,6 +31,12 @@ public class CPEventsReader extends StandardEventsReader
 	private static final String timeError = "Start time must be lower than end time of contact";
 	private static final String rangeHostError = "Host1 must be lower than Host2 for bidirectional communication";
 	
+	/** Constructor 
+	 * 
+	 * @param eventsFile: the file read in order to obtain the Contact Plan.
+	 * It's possible to specify either a defined file (with its absolute path) or a 
+	 * filePath in the settings.txt file. 
+	 * **it calls the superclass constructor** */
 	public CPEventsReader(File eventsFile)
 	{
 		super(eventsFile);	
@@ -59,8 +68,8 @@ public class CPEventsReader extends StandardEventsReader
 				
 				String action = stk.nextToken();
 				
-				/** Domandone: come cazzo glielo inserisco questo negli Events? 
-				 * Mannaggia al secchio */
+				/** Do not perform anything: unused 
+				 * TODO use "range" in order to specify further informations about Contact Plan */
 				if (action.equals(RANGE))
 				{
 					String startTimeStr = stk.nextToken();
@@ -89,6 +98,12 @@ public class CPEventsReader extends StandardEventsReader
 				}
 				else if (action.equals(CONTACT))
 				{
+					/** Parameters of a Contact Plan, read with StringTokenizer
+					 * StartTime of contact, in simulation time 
+					 * EndTime of contact, in simulation time
+					 * Host1 and Host2: DTNHosts involved in the connection event
+					 * TransmitSpeed of the network interface used (default: bluetooth) */ 
+					
 					String startTimeStr = stk.nextToken();
 					String endTimeStr = stk.nextToken();
 					String host1Addr = stk.nextToken();

@@ -4,11 +4,16 @@ import core.DTNHost;
 import core.Settings;
 import core.World;
 
-@SuppressWarnings("serial")
+/** Class used to define a specific ConnectionEvent, made by the ContactPlan reading class.
+ *  It extends ConnectionEvent adding the transmit datarate between hosts (param: speed)
+ *  
+ *   The constructor calls the superclass' one and extends it by adding the speed parameter */
+
 public class CPConnectionEvent extends ConnectionEvent
 {
 	public Settings settings;
 	
+	/** Speed of the connection between two nodes. It's simply the datarate used by the network interface */
 	private int speed;
 
 	public CPConnectionEvent(int from, int to, String interf, boolean up, double time, int speed) 

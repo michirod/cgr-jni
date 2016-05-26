@@ -5,6 +5,12 @@ import java.util.List;
 
 import core.Settings;
 
+/** Handler for managing extended event queues. It only supports
+ * external events queue, in particular those obtained by input.CPEventsReader. 
+ * 
+ * In the constructor there's the specification of ExtendedExternalEventsQueue, called in order to 
+ * obtain an event queue from the external Contact Plan file */
+
 public class ExtendedEventQueueHandler extends EventQueueHandler
 {
 	public ExtendedEventQueueHandler()
